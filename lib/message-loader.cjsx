@@ -10,6 +10,15 @@ openpgp = require 'openpgp'
 {Utils, FileDownloadStore, React} = require 'nylas-exports'
 {EventedIFrame} = require 'nylas-component-kit'
 
+# Error class to not print a stack trace
+# Useful for stopping a Promise chain
+class FlowError extends Error
+  name: 'FlowError'
+  constructor: (@message, @display = false) ->
+    super
+    Error.captureStackTrace @, arguments.callee
+    @title = @message
+
 #MessageLoader = React.createClass
 #  displayName: 'MessageLoader'
 
@@ -19,25 +28,25 @@ class MessageLoader extends React.Component
   @propTypes:
     message: React.PropTypes.object.isRequired
 
-  render: =>
-    indicatorBox =
-      display: 'block'
-      boxSizing: 'border-box'
-      WebkitPrintColorAdjust: 'exact'
-      padding: '8px 12px'
-      marginBottom: '5px'
-      border: '1px solid rgb(235, 204, 209)'
-      borderRadius: '4px'
-      color: 'rgb(169, 68, 66)'
-      backgroundColor: 'rgb(242, 222, 222)'
+  @state:
+    _notDecryptable: false
+    _lastError: 0
 
-    notDecryptable = @_notDecryptable or @props.message.files.length is 0
+  constructor: ->
+    @_lastComputedHeight = 0
+
+  render: =>
+    notDecryptable = @state?._notDecryptable or @props.message.files.length is 0
 
     if @_decryptedHTML
       <EventedIFrame ref="iframe" seamless="seamless" onResize={@_setFrameHeight}/>
     else if not notDecryptable
-      <div style={indicatorBox}>
+      <div className="indicatorBox">
         <p>Decrypting message</p>
+      </div>
+    else if @state?._lastError and @state?._lastError.display
+      <div className="errorBox">
+        <p><b>Error:</b> {@state._lastError.message}</p>
       </div>
     else
       <span />
@@ -45,8 +54,6 @@ class MessageLoader extends React.Component
   # taken from
   # https://github.com/nylas/N1/blob/master/internal_packages/message-list/lib/email-frame.cjsx
   componentDidMount: =>
-    @_lastComputedHeight ?= 0
-
     @_mounted = true
     #@_writeContent()
     #@_setFrameHeight()
@@ -121,7 +128,7 @@ class MessageLoader extends React.Component
         else
           throw new Error("[PGP] Attachment file not readable")
     else
-      throw new Error("[PGP] No attachments")
+      throw new FlowError("[PGP] No attachments")
 
   # Retrieves the attachment and encrypted secret key for code divergence later
   _getAttachmentAndKey: =>
@@ -159,7 +166,7 @@ class MessageLoader extends React.Component
       SECRET_KEY_DECRYPT_TIME: 5
       MESSAGE_DECRYPT_TIME: 6
       DECRYPTED_TEXT: 7
-      ERROR: 8
+      ERROR_OCCURRED: 8
 
     @_getAttachmentAndKey().spread((text, pgpkey) =>
       child = child_process.fork require('path').join(__dirname, 'worker-decrypt.js')
@@ -170,8 +177,10 @@ class MessageLoader extends React.Component
           console.log message
           if message.method is protocol.DECRYPTED_TEXT
             resolve message.text
-          else if message.method is protocol.ERROR
-            reject message.error
+          else if message.method is protocol.ERROR_OCCURRED
+            error = new FlowError("[PGP] #{message.errorMessage}", true)
+            error.childStackTrace = message.errorStackTrace
+            reject error
 
       child.send
         method: protocol.SECRET_KEY
@@ -203,7 +212,7 @@ class MessageLoader extends React.Component
         console.log "[PGP] HTML found in decrypted"
         matches[1]
       else
-        throw new Error("[PGP] no HTML found in decrypted")
+        throw new FlowError("[PGP] no HTML found in decrypted")
     ).then((match) =>
       @_decryptedHTML = match
       @forceUpdate()
@@ -212,6 +221,13 @@ class MessageLoader extends React.Component
         @_setFrameHeight()
     ).catch (error) =>
       @_notDecryptable = true
-      console.log error.stack
+      @_lastError = error
+      if error instanceof FlowError
+        console.log error.title
+      else
+        console.log error.stack
+      @setState
+        _notDecryptable: true
+        _lastError: error
 
 module.exports = MessageLoader
