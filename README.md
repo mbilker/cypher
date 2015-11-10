@@ -17,4 +17,4 @@ No spec tests are available for this package at the moment. I have not designed
 them yet.
 
 Do not trust the security of this package. It is not audited, fully tested,
-and completely safe.
+or safe at all.
