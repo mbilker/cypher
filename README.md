@@ -1,6 +1,6 @@
 
-## Email PGP
-# by Matt Bilker <me@mbilker.us>
+# Email PGP
+## by Matt Bilker <me@mbilker.us>
 
 ### PROOF OF CONCEPT
 
