@@ -1,0 +1,17 @@
+{
+  "name": "email-pgp",
+  "main": "./lib/main",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "engines": {
+    "atom": ">=0.3.22"
+  },
+  "description": "Enter a description of your package!",
+  "dependencies": {
+    "openpgp": "^1.3.0"
+  },
+  "license": "MIT"
+}
