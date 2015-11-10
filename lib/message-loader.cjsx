@@ -103,8 +103,7 @@ class MessageLoader extends React.Component
       setImmediate => @_setFrameHeight()
 
   _getKey: ->
-    fs.readFileAsync(require('path').join(process.env.HOME, 'gpgkey'), 'utf8').then (secretKeyEncrypted) ->
-      openpgp.key.readArmored(secretKeyEncrypted).keys[0]
+    fs.readFileAsync(require('path').join(process.env.HOME, 'pgpkey'), 'utf8')
 
   _retrievePGPAttachment: =>
     {message} = @props
@@ -130,13 +129,17 @@ class MessageLoader extends React.Component
       resolve [@_retrievePGPAttachment(), @_getKey()]
     ).spread((text, pgpkey) =>
       throw new Error("[PGP] No text in attachment") if not text
+      throw new Error("[PGP] No key in pgpkey variable") if not pgpkey
       [text, pgpkey]
     )
 
   _decryptInCurrentThread: =>
     @_getAttachmentAndKey().spread((text, pgpkey) =>
-      throw new Error("[PGP] No text in attachment") if not text
-      [text, pgpkey]
+      key = openpgp.key.readArmored(pgpkey)
+      if key.error
+        throw key.error
+
+      [text, key.keys[0]]
     ).spread((text, pgpkey) =>
       console.log "[PGP] Decrypting secret key"
       pgpkey.decrypt("") # TODO: switch to loading this from user interface
@@ -159,7 +162,8 @@ class MessageLoader extends React.Component
       ERROR: 8
 
     @_getAttachmentAndKey().spread((text, pgpkey) =>
-      child = child_process.fork 'worker-decrypt.js'
+      child = child_process.fork require('path').join(__dirname, 'worker-decrypt.js')
+      passphrase = ''
 
       promise = new Promise (resolve, reject) ->
         child.on 'message', (message) ->
@@ -171,13 +175,13 @@ class MessageLoader extends React.Component
 
       child.send
         method: protocol.SECRET_KEY
-        secretKey: pgpkey
+        secretKey: pgpkey.toString()
       child.send
         method: protocol.ENCRYPTED_MESSAGE
         encryptedMessage: text
       child.send
         method: protocol.PASSPHRASE
-        passphrase: passphrase
+        passphrase: passphrase.toString()
       child.send
         method: protocol.DECRYPT
 
@@ -190,7 +194,9 @@ class MessageLoader extends React.Component
   # decrypted content back. We parse the HTML out of the content, then store the
   # value in *this* and force an update
   _decryptMail: =>
-    @_decryptInCurrentThread().then((text) ->
+    window.loader = @
+
+    @_decryptInForkedWorker().then((text) ->
       console.log "[PGP] Decrypted message"
       matches = /\n--[^\n\r]*\r?\nContent-Type: text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)\n\r?\n--/gim.exec(text);
       if matches
