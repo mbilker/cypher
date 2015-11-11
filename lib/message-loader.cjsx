@@ -149,14 +149,15 @@ class MessageLoader extends React.Component
   # triggers a page update
   _decryptMail: =>
     window.loader = @
+
     console.group "[PGP] Message: #{@props.message.id}"
+
     decrypter = @_selectDecrypter()
     startDecrypt = process.hrtime()
-    #console.time "Decrypted message"
+
     @_getAttachmentAndKey().spread(decrypter).then((text) ->
       endDecrypt = process.hrtime(startDecrypt)
       console.log "%cTotal message decrypt time: #{endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms", "color:blue"
-      #console.timeEnd "Decrypted message"
 
       start = process.hrtime()
       matches = /\n--[^\n\r]*\r?\nContent-Type: text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)\n\r?\n--/gim.exec(text);
