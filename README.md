@@ -11,7 +11,8 @@ I receive.
 
 Also, *currently* you need to stick your encrypted secret key at `$HOME/gpgkey`.
 I am working on configuration options. The passphrase is also tricky. Currently
-its embedded in the source code.
+its stored in the N1 configuration as `email-pgp.passphrase-b64` encoded in
+base64.
 
 No spec tests are available for this package at the moment. I have not designed
 them yet.
