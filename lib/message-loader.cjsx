@@ -36,11 +36,11 @@ class MessageLoader extends React.Component
     if @_decryptedHTML
       <EventedIFrame ref="iframe" seamless="seamless" onResize={@_setFrameHeight}/>
     else if not notDecryptable
-      <div className="indicatorBox">
+      <div className="statusBox indicatorBox">
         <p>Decrypting message</p>
       </div>
     else if @state?._lastError and @state?._lastError.display
-      <div className="errorBox">
+      <div className="statusBox errorBox">
         <p><b>Error:</b> {@state._lastError.message}</p>
       </div>
     else
@@ -63,9 +63,9 @@ class MessageLoader extends React.Component
     @_setFrameHeight()
 
   _writeContent: =>
-    return unless @_decryptedHTML
+    return unless @_decryptedHTML and @refs.iframe
 
-    doc = React.findDOMNode(@).contentDocument
+    doc = React.findDOMNode(@refs.iframe).contentDocument
     doc.open()
 
     # NOTE: The iframe must have a modern DOCTYPE. The lack of this line
@@ -87,9 +87,9 @@ class MessageLoader extends React.Component
     @refs.iframe.documentWasReplaced()
 
   _setFrameHeight: =>
-    return unless @_mounted and @_decryptedHTML
+    return unless @_mounted and @_decryptedHTML and @refs.iframe
 
-    domNode = React.findDOMNode(@)
+    domNode = React.findDOMNode(@refs.iframe)
     wrapper = domNode.contentDocument.getElementsByTagName('html')[0]
     height = wrapper.scrollHeight
 
