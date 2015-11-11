@@ -1,6 +1,8 @@
 child_process = require 'child_process'
 openpgp = require 'openpgp'
 
+FlowError = require './flow-error'
+
 # This must be the same as worker-decrypt.js
 SECRET_KEY              = 1
 PASSPHRASE              = 2
