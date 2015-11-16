@@ -136,7 +136,7 @@ class MessageLoader extends React.Component {
     let matches = /\n--[^\n\r]*\r?\nContent-Type: text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)\n\r?\n--/gim.exec(text);
     let end = process.hrtime(start);
     if (matches) {
-      console.log("%cHTML found in decrypted: #{end[0] * 1e3 + end[1] / 1e6}ms", "color:blue");
+      console.log(`%cHTML found in decrypted: ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
       return matches[1];
     } else {
       throw new FlowError("no HTML found in decrypted");
