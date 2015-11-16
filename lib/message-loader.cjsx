@@ -19,8 +19,8 @@ class MessageLoader extends React.Component
 
   constructor: (@props) ->
     @state =
-      _decryptable: false
-      _lastError: 0
+      decrypting: false
+      lastError: 0
       # Holds the downloadData (if any) for all of our files. It's a hash
       # keyed by a fileId. The value is the downloadData.
       downloads: FileDownloadStore.downloadDataForFiles(@props.message.fileIds())
@@ -39,18 +39,15 @@ class MessageLoader extends React.Component
     not Utils.isEqualReact(nextState, @state)
 
   render: =>
-    decryptable = @state?._decryptable or @props.message.files.length > 0
-    displayError = @state?._lastError and @state?._lastError.display
+    decrypting = @state?.decrypting and @props.message.files.length > 0
+    displayError = @state?.lastError and @state?.lastError.display
 
-    if decryptable and not @props.message.body
+    if decrypting and not @props.message.body
       @_renderDecryptingMessage()
     else if displayError
       @_renderErrorMessage()
     else
       <span />
-
-  _renderIFrame: =>
-    <EventedIFrame ref="iframe" seamless="seamless" onResize={@_setFrameHeight}/>
 
   _renderDecryptingMessage: =>
     <div className="statusBox indicatorBox">
@@ -122,10 +119,12 @@ class MessageLoader extends React.Component
   # parallel. We parse the HTML out of the content, then update the state which
   # triggers a page update
   _decryptMail: =>
-    {message} = @props
     window.loader = @
 
-    console.group "[PGP] Message: #{message.id}"
+    console.group "[PGP] Message: #{@props.message.id}"
+
+    @setState
+      decrypting: true
 
     decrypter = @_selectDecrypter()
     startDecrypt = process.hrtime()
@@ -134,18 +133,18 @@ class MessageLoader extends React.Component
       console.log "%cTotal message decrypt time: #{endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms", "color:blue"
       text
     ).then(@_extractHTML).then((match) =>
-      message.body = match
+      @props.message.body = match
       MessageBodyProcessor.resetCache()
-      if @isMounted()
-        @forceUpdate()
+      @setState
+        decrypting: false
     ).catch((error) =>
       if error instanceof FlowError
         console.log error.title
       else
         console.log error.stack
       @setState
-        _decryptable: false
-        _lastError: error
+        decrypting: false
+        lastError: error
     ).finally ->
       console.groupEnd()
 
