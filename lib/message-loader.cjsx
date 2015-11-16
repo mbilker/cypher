@@ -32,7 +32,7 @@ class MessageLoader extends React.Component
     @_decryptMail()
 
   componentDidUpdate: =>
-    @_decryptMail()
+    #@_decryptMail()
 
   shouldComponentUpdate: (nextProps, nextState) =>
     not Utils.isEqualReact(nextProps, @props) or
@@ -63,6 +63,8 @@ class MessageLoader extends React.Component
     </div>
 
   _onDownloadStoreChange: =>
+    console.log '_onDownloadStoreChange'
+    console.log @props.message
     @setState
       downloads: FileDownloadStore.downloadDataForFiles(@props.message.fileIds())
 
@@ -134,7 +136,8 @@ class MessageLoader extends React.Component
     ).then(@_extractHTML).then((match) =>
       message.body = match
       MessageBodyProcessor.resetCache()
-      @forceUpdate()
+      if @isMounted()
+        @forceUpdate()
     ).catch((error) =>
       if error instanceof FlowError
         console.log error.title
