@@ -47,22 +47,22 @@ class MessageLoader extends React.Component {
     let displayError = this.state.lastError && this.state.lastError.display
 
     if (decrypting && !this.props.message.body) {
-      this._renderDecryptingMessage();
+      return this._renderDecryptingMessage();
     } else if (displayError) {
-      this._renderErrorMessage();
+      return this._renderErrorMessage();
     } else {
-      <span />
+      return <span />
     }
   }
 
   _renderDecryptingMessage() {
-    <div className="statusBox indicatorBox">
+    return <div className="statusBox indicatorBox">
       <p>Decrypting message</p>
     </div>
   }
 
   _renderErrorMessage() {
-    <div className="statusBox errorBox">
+    return <div className="statusBox errorBox">
       <p><b>Error:</b>{this.state._lastError.message}</p>
     </div>
   }
@@ -74,4 +74,111 @@ class MessageLoader extends React.Component {
       downloads: FileDownloadStore.downloadDataForFiles(this.props.message.fileIds())
     });
   }
+
+  _getKey() {
+    var keyLocation = require('path').join(process.env.HOME, 'pgpkey');
+    return fs.readFileAsync(keyLocation, 'utf8');
+  }
+
+  _retrievePGPAttachment() {
+    var {message} = this.props;
+    console.log("Attachments: %d", message.files.length);
+    if (message.files.length >= 1) {
+      let path = FileDownloadStore.pathForFile(message.files[1]);
+
+      // async fs.exists was throwing because the first argument was true,
+      // found fs.access as a suitable replacement
+      return fs.accessAsync(path, fs.F_OK | fs.R_OK).then((err) => {
+        if (!err) {
+          return fs.readFileAsync(path, 'utf8').then((text) => {
+            console.log("Read attachment from disk");
+            return text;
+          });
+        } else {
+          throw new Error("Attachment file not readable", true);
+        }
+      });
+    } else {
+      throw new FlowError("No attachments");
+    }
+  }
+
+  // Retrieves the attachment and encrypted secret key for code divergence later
+  _getAttachmentAndKey() {
+    return new Promise((resolve) => {
+      resolve([ this._retrievePGPAttachment(), this._getKey() ]);
+    }).spread((text, pgpkey) => {
+      if (!text) {
+        throw new Error("No text in attachment");
+      }
+      if (!pgpkey) {
+        throw new Error("No key in pgpkey variable");
+      }
+      return [text, pgpkey];
+    });
+  }
+
+  _selectDecrypter() {
+    const chosen = "WORKER_PROCESS";
+    var decrypter;
+
+    if (chosen === "WORKER_PROCESS") {
+      decrypter = new WorkerProcessDecrypter().decrypt;
+    } else { // IN_PROCESS
+      decrypter = new InProcessDecrypter().decrypt;
+    }
+
+    return decrypter;
+  }
+
+  _extractHTML(text) {
+    let start = process.hrtime();
+    let matches = /\n--[^\n\r]*\r?\nContent-Type: text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)\n\r?\n--/gim.exec(text);
+    let end = process.hrtime(start);
+    if (matches) {
+      console.log("%cHTML found in decrypted: #{end[0] * 1e3 + end[1] / 1e6}ms", "color:blue");
+      return matches[1];
+    } else {
+      throw new FlowError("no HTML found in decrypted");
+    }
+  }
+
+  // The main brains of this project. This retrieves the attachment and secret
+  // key (someone help me find a (secure) way to store the secret key) in
+  // parallel. We parse the HTML out of the content, then update the state which
+  // triggers a page update
+  _decryptMail() {
+    window.loader = this;
+
+    console.group(`[PGP] Message: ${this.props.message.id}`);
+
+    this.setState({ decrypting: true });
+
+    let decrypter = this._selectDecrypter();
+    let startDecrypt = process.hrtime();
+    this._getAttachmentAndKey().spread(decrypter).then((text) => {
+      let endDecrypt = process.hrtime(startDecrypt)
+      console.log(`%cTotal message decrypt time: ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
+      return text;
+    }).then(this._extractHTML).then((match) => {
+      this.props.message.body = match;
+      MessageBodyProcessor.resetCache();
+      this.setState({ decrypting: false });
+    }).catch((error) => {
+      if (error instanceof FlowError) {
+        console.log(error.title);
+      } else {
+        console.log(error.stack);
+      }
+      this.setState({
+        decrypting: false,
+        lastError: error
+      });
+    }).finally(() => {
+      console.groupEnd()
+    });
+  }
 }
+
+export default MessageLoader;
+module.exports = exports.default;
