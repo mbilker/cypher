@@ -93,7 +93,7 @@ class MessageLoader extends React.Component {
         console.log(`Checking ${file.fileId}`);
         // TODO: Dedupe the file reading logic into separate method
         fs.accessAsync(file.targetPath, fs.F_OK | fs.R_OK).then(() => {
-          console.log(`Found finished downloaded attachment ${fileId}`);
+          console.log(`Found downloaded attachment ${fileId}`);
           return fs.readFileAsync(file.targetPath, 'utf8').then((text) => {
             this.pendingReceives[file.fileId].resolve(text);
           });
