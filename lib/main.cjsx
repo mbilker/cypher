@@ -1,6 +1,6 @@
 {ComponentRegistry} = require 'nylas-exports'
 
-MessageLoader = require './message-loader.es6'
+MessageLoader = require './components/message-loader.es6'
 
 module.exports =
   # Activate is called when the package is loaded. If your package previously

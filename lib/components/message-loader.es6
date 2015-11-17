@@ -7,9 +7,9 @@
 import fs from 'fs';
 import {Utils, FileDownloadStore, MessageBodyProcessor, React} from 'nylas-exports';
 
-import InProcessDecrypter from './in-process-decrypter';
-import WorkerProcessDecrypter from './worker-process-decrypter';
-import FlowError from './flow-error';
+import InProcessDecrypter from '../in-process-decrypter';
+import WorkerProcessDecrypter from '../worker-process-decrypter';
+import FlowError from '../flow-error.es6';
 
 class MessageLoader extends React.Component {
   static displayName = 'MessageLoader'
@@ -171,6 +171,7 @@ class MessageLoader extends React.Component {
       MessageBodyProcessor.resetCache();
       this.setState({ decrypting: false });
     }).catch((error) => {
+      console.log(error);
       if (error instanceof FlowError) {
         console.log(error.title);
       } else {
