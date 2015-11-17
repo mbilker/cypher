@@ -18,18 +18,23 @@ class MessageLoader extends React.Component {
     message: React.PropTypes.object.isRequired
   }
 
+  // Holds the downloadData (if any) for all of our files. It's a hash
+  // keyed by a fileId. The value is the downloadData.
+  state = {
+    decrypting: false,
+    lastError: 0,
+    downloads: FileDownloadStore.downloadDataForFiles(this.props.message.fileIds())
+  }
+
   constructor(props) {
     super(props);
 
-    // Holds the downloadData (if any) for all of our files. It's a hash
-    // keyed by a fileId. The value is the downloadData.
-    this.state = {
-      decrypting: false,
-      lastError: 0,
-      downloads: FileDownloadStore.downloadDataForFiles(this.props.message.fileIds())
-    }
+    // Array of promises of attachments needed for decryption
+    this.pendingReceives = {};
 
+    // All the methods that depend on `this` instance
     this.componentDidMount = this.componentDidMount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this);
     this.render = this.render.bind(this);
     this._renderErrorMessage = this._renderErrorMessage.bind(this);
@@ -38,11 +43,15 @@ class MessageLoader extends React.Component {
     this._decryptMail = this._decryptMail.bind(this);
   }
 
-  // taken from
-  // https://github.com/nylas/N1/blob/master/internal_packages/message-list/lib/email-frame.cjsx
   componentDidMount() {
     this._storeUnlisten = FileDownloadStore.listen(this._onDownloadStoreChange);
     this._decryptMail();
+  }
+
+  componentWillUnmount() {
+    if (this._storeUnlisten) {
+      this._storeUnlisten();
+    }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -71,15 +80,30 @@ class MessageLoader extends React.Component {
 
   _renderErrorMessage() {
     return <div className="statusBox errorBox">
-      <p><b>Error:</b>{this.state._lastError.message}</p>
+      <p><b>Error:</b>{this.state.lastError.message}</p>
     </div>
   }
 
   _onDownloadStoreChange() {
     console.log('_onDownloadStoreChange');
-    console.log(this.props.message);
+    let changes = FileDownloadStore.downloadDataForFiles(this.props.message.fileIds());
+    Object.keys(changes).forEach((fileId) => {
+      let file = changes[fileId];
+      if (file.state === 'finished' && this.pendingReceives[file.fileId]) {
+        console.log(`Checking ${file.fileId}`);
+        // TODO: Dedupe the file reading logic into separate method
+        fs.accessAsync(file.targetPath, fs.F_OK | fs.R_OK).then(() => {
+          console.log(`Found finished downloaded attachment ${fileId}`);
+          return fs.readFileAsync(file.targetPath, 'utf8').then((text) => {
+            this.pendingReceives[file.fileId].resolve(text);
+          });
+        }, (err) => {
+          this.pendingReceives[file.fileId].reject(new FlowError('Downloaded attachment inaccessable', true));
+        });
+      }
+    });
     this.setState({
-      downloads: FileDownloadStore.downloadDataForFiles(this.props.message.fileIds())
+      downloads: changes
     });
   }
 
@@ -96,15 +120,21 @@ class MessageLoader extends React.Component {
 
       // async fs.exists was throwing because the first argument was true,
       // found fs.access as a suitable replacement
-      return fs.accessAsync(path, fs.F_OK | fs.R_OK).then((err) => {
-        if (!err) {
-          return fs.readFileAsync(path, 'utf8').then((text) => {
-            console.log("Read attachment from disk");
-            return text;
-          });
-        } else {
-          throw new Error("Attachment file not readable", true);
-        }
+      return fs.accessAsync(path, fs.F_OK | fs.R_OK).then(() => {
+        return fs.readFileAsync(path, 'utf8').then((text) => {
+          console.log("Read attachment from disk");
+          return text;
+        });
+      }, (err) => {
+        console.log('Attachment file inaccessable, creating pending promise');
+        return new Promise((resolve, reject) => {
+          if (this.pendingReceives[message.files[1].id]) {
+            return this.pendingReceives[message.files[1].id];
+          } else {
+            this.pendingReceives[message.files[1].id] = { resolve, reject };
+          }
+        });
+        //throw new Error("Attachment file inaccessable");
       });
     } else {
       throw new FlowError("No attachments");
@@ -187,4 +217,3 @@ class MessageLoader extends React.Component {
 }
 
 export default MessageLoader;
-module.exports = exports.default;
