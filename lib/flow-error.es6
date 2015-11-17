@@ -6,6 +6,10 @@ class FlowError extends Error {
   constructor(message, display = false) {
     super(message);
     Error.captureStackTrace(this, arguments.callee);
+
+    this.message = message;
+    this.display = display;
+
     this.title = this.message;
   }
 }
