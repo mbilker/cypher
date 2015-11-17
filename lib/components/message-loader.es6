@@ -10,6 +10,7 @@ import {Utils, FileDownloadStore, MessageBodyProcessor, React} from 'nylas-expor
 import InProcessDecrypter from '../in-process-decrypter';
 import WorkerProcessDecrypter from '../worker-process-decrypter';
 import FlowError from '../flow-error.es6';
+import FileDownloadStoreMonkeyPatch from '../file-download-store-monkey-patch.es6';
 
 class MessageLoader extends React.Component {
   static displayName = 'MessageLoader'
@@ -44,6 +45,8 @@ class MessageLoader extends React.Component {
   }
 
   componentDidMount() {
+    FileDownloadStoreMonkeyPatch.patchMethod();
+
     this._storeUnlisten = FileDownloadStore.listen(this._onDownloadStoreChange);
     this._decryptMail();
   }
@@ -95,9 +98,11 @@ class MessageLoader extends React.Component {
           console.log(`Found downloaded attachment ${fileId}`);
           return fs.readFileAsync(file.targetPath, 'utf8').then((text) => {
             this.pendingReceives[file.fileId].resolve(text);
+            delete this.pendingReceives[file.fileId];
           });
         }, (err) => {
           this.pendingReceives[file.fileId].reject(new FlowError('Downloaded attachment inaccessable', true));
+          delete this.pendingReceives[file.fileId];
         });
       }
     });
