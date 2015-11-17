@@ -85,7 +85,6 @@ class MessageLoader extends React.Component {
   }
 
   _onDownloadStoreChange() {
-    console.log('_onDownloadStoreChange');
     let changes = FileDownloadStore.downloadDataForFiles(this.props.message.fileIds());
     Object.keys(changes).forEach((fileId) => {
       let file = changes[fileId];
