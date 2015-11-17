@@ -28,6 +28,14 @@ class MessageLoader extends React.Component {
       lastError: 0,
       downloads: FileDownloadStore.downloadDataForFiles(this.props.message.fileIds())
     }
+
+    this.componentDidMount = this.componentDidMount.bind(this);
+    this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this);
+    this.render = this.render.bind(this);
+    this._renderErrorMessage = this._renderErrorMessage.bind(this);
+    this._onDownloadStoreChange = this._onDownloadStoreChange.bind(this);
+    this._retrievePGPAttachment = this._retrievePGPAttachment.bind(this);
+    this._decryptMail = this._decryptMail.bind(this);
   }
 
   // taken from
@@ -120,15 +128,13 @@ class MessageLoader extends React.Component {
 
   _selectDecrypter() {
     const chosen = "WORKER_PROCESS";
-    var decrypter;
+    var decrypter = InProcessDecrypter; // IN_PROCESS
 
     if (chosen === "WORKER_PROCESS") {
-      decrypter = new WorkerProcessDecrypter().decrypt;
-    } else { // IN_PROCESS
-      decrypter = new InProcessDecrypter().decrypt;
+      decrypter = WorkerProcessDecrypter;
     }
 
-    return decrypter;
+    return new decrypter().decrypt;
   }
 
   _extractHTML(text) {
