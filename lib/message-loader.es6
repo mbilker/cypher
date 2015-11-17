@@ -51,8 +51,8 @@ class MessageLoader extends React.Component {
   }
 
   render() {
-    let decrypting = this.state.decrypting && this.props.message.files.length > 0
-    let displayError = this.state.lastError && this.state.lastError.display
+    let decrypting = this.state.decrypting && this.props.message.files.length > 0;
+    let displayError = this.state.lastError && this.state.lastError.display;
 
     if (decrypting && !this.props.message.body) {
       return this._renderDecryptingMessage();
@@ -163,7 +163,7 @@ class MessageLoader extends React.Component {
     let decrypter = this._selectDecrypter();
     let startDecrypt = process.hrtime();
     this._getAttachmentAndKey().spread(decrypter).then((text) => {
-      let endDecrypt = process.hrtime(startDecrypt)
+      let endDecrypt = process.hrtime(startDecrypt);
       console.log(`%cTotal message decrypt time: ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
       return text;
     }).then(this._extractHTML).then((match) => {
@@ -181,7 +181,7 @@ class MessageLoader extends React.Component {
         lastError: error
       });
     }).finally(() => {
-      console.groupEnd()
+      console.groupEnd();
     });
   }
 }
