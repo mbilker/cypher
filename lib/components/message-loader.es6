@@ -171,7 +171,6 @@ class MessageLoader extends React.Component {
       MessageBodyProcessor.resetCache();
       this.setState({ decrypting: false });
     }).catch((error) => {
-      console.log(error);
       if (error instanceof FlowError) {
         console.log(error.title);
       } else {
