@@ -1,5 +1,6 @@
 {ComponentRegistry} = require 'nylas-exports'
 
+ComposerLoader = require './components/composer-loader.es6'
 MessageLoader = require './components/message-loader.es6'
 
 module.exports =
@@ -7,6 +8,8 @@ module.exports =
   # saved state using `serialize` it is provided.
   #
   activate: (@state) ->
+    ComponentRegistry.register ComposerLoader,
+      role: 'Composer:ActionButton'
     ComponentRegistry.register MessageLoader,
       role: 'message:BodyHeader'
 
@@ -22,4 +25,5 @@ module.exports =
   # subscribing to events, release them here.
   #
   deactivate: ->
+    ComponentRegistry.unregister(ComposerLoader)
     ComponentRegistry.unregister(MessageLoader)
