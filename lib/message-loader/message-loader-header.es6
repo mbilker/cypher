@@ -5,12 +5,7 @@
 // attachment from disk asynchrnously with background tasks
 
 import fs from 'fs';
-import {Utils, FileDownloadStore, MessageBodyProcessor, React} from 'nylas-exports';
-
-import InProcessDecrypter from '../decryption/in-process-decrypter';
-import WorkerProcessDecrypter from '../decryption/worker-process-decrypter';
-import FlowError from '../flow-error.es6';
-import FileDownloadStoreMonkeyPatch from '../file-download-store-monkey-patch.es6';
+import {Utils, React} from 'nylas-exports';
 
 class MessageLoader extends React.Component {
   static displayName = 'MessageLoader'
@@ -29,9 +24,6 @@ class MessageLoader extends React.Component {
   constructor(props) {
     super(props);
 
-    // Array of promises of attachments needed for decryption
-    this.pendingReceives = {};
-
     // All the methods that depend on `this` instance
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
@@ -42,9 +34,6 @@ class MessageLoader extends React.Component {
   }
 
   componentDidMount() {
-    //FileDownloadStoreMonkeyPatch.patchMethod();
-
-    //this._storeUnlisten = FileDownloadStore.listen(this._onDownloadStoreChange);
     //this._decryptMail();
 
     window.loader = this;
