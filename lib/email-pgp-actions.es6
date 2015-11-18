@@ -7,7 +7,6 @@ Actions = [
 ];
 
 Actions.forEach((key) => {
-  console.log(name);
   Actions[key] = Reflux.createAction(name);
   Actions[key].sync = true;
 });
