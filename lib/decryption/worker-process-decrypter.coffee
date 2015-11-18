@@ -1,7 +1,7 @@
 child_process = require 'child_process'
 openpgp = require 'openpgp'
 
-FlowError = require './flow-error.es6'
+FlowError = require '../flow-error.es6'
 
 # This must be the same as worker-decrypt.js
 SECRET_KEY              = 1
