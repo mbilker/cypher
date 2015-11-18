@@ -41,6 +41,7 @@ class MessageLoader extends React.Component {
     this._renderErrorMessage = this._renderErrorMessage.bind(this);
     this._onDownloadStoreChange = this._onDownloadStoreChange.bind(this);
     this._retrievePGPAttachment = this._retrievePGPAttachment.bind(this);
+    this._extractHTML = this._extractHTML.bind(this);
     this._decryptMail = this._decryptMail.bind(this);
   }
 
@@ -194,6 +195,7 @@ class MessageLoader extends React.Component {
 
     this.setState({ decrypting: true });
 
+    // More decryption engines will be implemented
     let decrypter = this._selectDecrypter();
     let startDecrypt = process.hrtime();
     this._getAttachmentAndKey().spread(decrypter).then((text) => {
@@ -201,9 +203,20 @@ class MessageLoader extends React.Component {
       console.log(`%cTotal message decrypt time: ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
       return text;
     }).then(this._extractHTML).then((match) => {
+      //console.log(match);
       this.props.message.body = match;
-      MessageBodyProcessor.resetCache();
-      this.setState({ decrypting: false });
+      this.setState({ decrypting: false, decryptedMessage: match });
+    }).then(() => {
+      // Weird issue with unread email and undownloaded attachments
+      // where the body assignment above will be reset and the
+      // decrypted message won't be displayed
+      setImmediate(() => {
+        MessageBodyProcessor.resetCache();
+        if (this.props.message.body !== this.state.decryptedMessage) {
+          console.log('%cInconsistency with message body cache', 'color:red');
+        }
+        console.log(this.props.message.body);
+      });
     }).catch((error) => {
       if (error instanceof FlowError) {
         console.log(error.title);
