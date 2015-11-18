@@ -19,7 +19,7 @@ class WorkerProcessDecrypter
   # decrypted content back.
   # Returns: (@string) decryptedText
   decrypt: (text, pgpkey) ->
-    passphrase = atom.config.get("email-pgp.passphrase-b64") or ''
+    passphrase = NylasEnv.config.get("email-pgp.passphrase-b64") or ''
     child = null
 
     new Promise((resolve) =>

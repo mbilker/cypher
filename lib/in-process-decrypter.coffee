@@ -2,7 +2,7 @@ openpgp = require 'openpgp'
 
 class InProcessDecrypter
   decrypt: (text, pgpkey) ->
-    passphrase = atom.config.get("email-pgp.passphrase-b64") or ''
+    passphrase = NylasEnv.config.get("email-pgp.passphrase-b64") or ''
 
     new Promise((resolve) ->
       console.log "Reading secret key"
