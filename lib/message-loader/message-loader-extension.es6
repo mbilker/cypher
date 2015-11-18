@@ -8,10 +8,10 @@ class MessageLoaderExtension extends MessageStoreExtension {
   // properly and the main screen is stuck with the message
   // viewer
   static formatMessageBody(message) {
-    console.log(`[PGP] MessageLoaderExtension formatting ${message.id}`);
+    //console.log(`[PGP] MessageLoaderExtension formatting ${message.id}`);
     let cached = EmailPGPStore.getBodyIfCached(message);
     if (cached) {
-      console.log(`Have cached body for ${message.id}`);
+      //console.log(`Have cached body for ${message.id}`);
       return message.body = cached;
     }
 

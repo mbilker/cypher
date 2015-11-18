@@ -32,7 +32,7 @@ class MessageLoaderHeader extends React.Component {
   componentDidMount() {
     this._storeUnlisten = EmailPGPStore.listen(this._onPGPStoreChange);
 
-    window.loader = this;
+    window.loaderHeader = this;
   }
 
   componentWillUnmount() {

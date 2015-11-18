@@ -86,15 +86,7 @@ class EmailPGPStore extends NylasStore {
         });
       }, (err) => {
         console.log('Attachment file inaccessable, creating pending promise');
-        return new Promise((resolve, reject) => {
-          if (this.pendingReceives[message.files[1].id]) {
-            resolve(this.pendingReceives[message.files[1].id]);
-          } else {
-            this.pendingReceives[message.files[1].id] = { resolve, reject };
-          }
-        }).catch(() => {
-          throw new Error("Attachment file inaccessable");
-        });
+        return EmailPGPFileDownloadStoreWatcher.promiseForPendingFile(message.files[1].id);
       });
     } else {
       throw new FlowError("No attachments");
@@ -144,8 +136,6 @@ class EmailPGPStore extends NylasStore {
   // parallel. We parse the HTML out of the content, then update the state which
   // triggers a page update
   _mainDecrypt(message) {
-    window.loader = this;
-
     console.group(`[PGP] Message: ${message.id}`);
 
     this._setState(message.id, {
