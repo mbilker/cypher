@@ -1,7 +1,8 @@
-import {ComponentRegistry} from 'nylas-exports';
+import {ComponentRegistry, MessageStore} from 'nylas-exports';
 
+import MessageLoaderExtension from './message-loader/message-loader-extension';
 import ComposerLoader from './components/composer-loader';
-import MessageLoader from './components/message-loader';
+import MessageLoaderHeader from './message-loader/message-loader-header';
 
 module.exports = {
   // Activate is called when the package is loaded. If your package previously
@@ -10,16 +11,17 @@ module.exports = {
   activate(state) {
     this.state = state;
 
+    MessageStore.registerExtension(MessageLoaderExtension);
     ComponentRegistry.register(ComposerLoader, { role: 'Composer:ActionButton' });
-    ComponentRegistry.register(MessageLoader, { role: 'message:BodyHeader' });
-  }
+    ComponentRegistry.register(MessageLoaderHeader, { role: 'message:BodyHeader' });
+  },
 
   // Serialize is called when your package is about to be unmounted.
   // You can return a state object that will be passed back to your package
   // when it is re-activated.
   //
   serialize() {
-  }
+  },
 
   // This **optional** method is called when the window is shutting down,
   // or when your package is being updated or disabled. If your package is
@@ -27,7 +29,8 @@ module.exports = {
   // subscribing to events, release them here.
   //
   deactivate() {
+    MessageStore.unregisterExtension(MessageLoaderExtension);
     ComponentRegistry.unregister(ComposerLoader)
-    ComponentRegistry.unregister(MessageLoader)
+    ComponentRegistry.unregister(MessageLoaderHeader)
   }
 }
