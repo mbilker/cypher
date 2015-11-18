@@ -7,8 +7,8 @@
 import fs from 'fs';
 import {Utils, FileDownloadStore, MessageBodyProcessor, React} from 'nylas-exports';
 
-import InProcessDecrypter from '../in-process-decrypter';
-import WorkerProcessDecrypter from '../worker-process-decrypter';
+import InProcessDecrypter from '../decryption/in-process-decrypter';
+import WorkerProcessDecrypter from '../decryption/worker-process-decrypter';
 import FlowError from '../flow-error.es6';
 import FileDownloadStoreMonkeyPatch from '../file-download-store-monkey-patch.es6';
 
