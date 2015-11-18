@@ -4,21 +4,15 @@
 // puts the PGP encrypted document as the second attachment. It will read the
 // attachment from disk asynchrnously with background tasks
 
-import fs from 'fs';
 import {Utils, React} from 'nylas-exports';
 
-class MessageLoader extends React.Component {
+import EmailPGPStore from '../email-pgp-store';
+
+class MessageLoaderHeader extends React.Component {
   static displayName = 'MessageLoader'
 
   static propTypes = {
     message: React.PropTypes.object.isRequired
-  }
-
-  // Holds the downloadData (if any) for all of our files. It's a hash
-  // keyed by a fileId. The value is the downloadData.
-  state = {
-    decrypting: false,
-    lastError: 0
   }
 
   constructor(props) {
@@ -31,18 +25,20 @@ class MessageLoader extends React.Component {
     this.render = this.render.bind(this);
     this._renderErrorMessage = this._renderErrorMessage.bind(this);
     this._onPGPStoreChange = this._onPGPStoreChange.bind(this);
+
+    this.state = EmailPGPStore.getState(this.props.message.id);
   }
 
   componentDidMount() {
-    //this._decryptMail();
+    this._storeUnlisten = EmailPGPStore.listen(this._onPGPStoreChange);
 
     window.loader = this;
   }
 
   componentWillUnmount() {
-    //if (this._storeUnlisten) {
-      //this._storeUnlisten();
-    //}
+    if (this._storeUnlisten) {
+      this._storeUnlisten();
+    }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -75,9 +71,12 @@ class MessageLoader extends React.Component {
     </div>
   }
 
-  _onPGPStoreChange({ decrypting, lastError }) {
-    this.setState({ decrypting, lastError });
+  _onPGPStoreChange(messageId, { decrypting, lastError }) {
+    if (messageId === this.props.message.id) {
+      console.log('received event', { decrypting, lastError });
+      this.setState({ decrypting, lastError });
+    }
   }
 }
 
-export default MessageLoader;
+export default MessageLoaderHeader;
