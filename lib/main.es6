@@ -1,7 +1,7 @@
 import {ComponentRegistry, MessageStore} from 'nylas-exports';
 
 import MessageLoaderExtension from './message-loader/message-loader-extension';
-import ComposerLoader from './components/composer-loader';
+import ComposerLoader from './composer/composer-loader';
 import MessageLoaderHeader from './message-loader/message-loader-header';
 
 module.exports = {
