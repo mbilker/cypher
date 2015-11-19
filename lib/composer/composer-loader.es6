@@ -45,14 +45,18 @@ class ComposerLoader extends React.Component {
     return <Popover ref="popover"
                     className="pgp-menu-picker pull-right"
                     buttonComponent={this._renderButton()}>
-      <GeneratedForm id="keybase-encrypt" fieldsets={fieldsets} onChange={this.onChange} onSubmit={this.onSubmit} />
+      <GeneratedForm id="keybase-encrypt"
+                     fieldsets={fieldsets}
+                     onChange={this.onChange}
+                     onSubmit={this.onSubmit} />
     </Popover>
   }
 
   _renderButton() {
     return <button className="btn btn-toolbar">
       PGP Encrypt
-      <RetinaImg mode={RetinaImg.Mode.ContentPreserve} name="toolbar-chevron.png" />
+      <RetinaImg mode={RetinaImg.Mode.ContentPreserve}
+                 name="toolbar-chevron.png" />
     </button>
   }
 
