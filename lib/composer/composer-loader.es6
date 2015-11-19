@@ -23,7 +23,6 @@ class ComposerLoader extends React.Component {
     this._renderButton = this._renderButton.bind(this);
     this.onChange = this.onChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
-    this.onSelect = this.onSelect.bind(this);
   }
 
   render() {
@@ -48,11 +47,6 @@ class ComposerLoader extends React.Component {
                     buttonComponent={this._renderButton()}>
       <GeneratedForm id="keybase-encrypt" fieldsets={fieldsets} onChange={this.onChange} onSubmit={this.onSubmit} />
     </Popover>
-      //<FormItem id="j32ljlralksdf" type="text" placeholder="keybase username" value={this.state.value} label="PGP" onChange={this.handleChange} />
-      //<Menu items={items}
-      //      itemKey={(item) => {return item}}
-      //      itemContent={(item) => {return item}}
-      //      onSelect={this.onSelect} />
   }
 
   _renderButton() {
@@ -72,29 +66,24 @@ class ComposerLoader extends React.Component {
   onSubmit(e) {
     this.refs.popover.close();
 
+    let {username, fingerprint} = this.state;
+
     console.log('submit');
-    console.log(this.state.username);
+    console.log(username);
 
     let session = DraftStore.sessionForClientId(this.props.draftClientId).then((session) => {
       let draftHtml = session.draft().body;
-      let body = QuotedHTMLParser.appendQuotedHTML(`<pre style="white-sapce:pre">${this.state.username}</pre>`, draftHtml);
+      let bodyHeader = this._formatBodyHeader(username, '3838 8d8d 88daa 8d8f (example)');
+      let body = QuotedHTMLParser.appendQuotedHTML(bodyHeader, draftHtml);
 
       session.changes.add({ body });
       session.changes.commit();
     });
   }
 
-  onSelect(item) {
-    console.log(item);
-    let test = '-----BEGIN PGP MESSAGE-----\nVersion: GnuPG v2\n\nhQIMAxMSSYOQhLOQARAAnzad31etKn7w86qoExTgthcjQyOBRB4/cDP6s9KVbmVY\nfgY8z6Ny8W4EsqznNWkaiFjb7+sjzetPY+T4lOqYp3YY4xR83LbXQ+IVmpM4aMGl\nr+QMW8lo0YUV2xxYuoSfL+zXXUNVOL7J0EnY8TmbP/VPcakgeffhN/yVk+KTnkTL\nAqNIDFZIXiCZuz3MkLtMwYWKVXg0p+ZRhBBc7iTL4HhGUboPjTl1xOGp/Mb+lPMS\nzN5YBLdNf3zOI6AtHxpWLb8pd8kQ3nyc4viknc/NkX36htdUfvnr7GsYGlOAugnN\n74NhtXtQ17PCZAW6z8GOKfdMzFqMXWcYQwrNH7tlmAEpkdEugBbP57FhsUjFoCXW\no8/3cg2EBVExNYWFf8uqNnbpx4S8CruAsOkJCx2rj9kBr4vOjoH+0JUBE09CwFxr\nVlPyhmV90FnFe4O9ezpR1RIniwRfa9ow8Zo60bs5U3ieN5n8DWROgaUVhLCMU2KT\nkevz9hESOqcrP/N46rClkFLspieBN9BTP90/Gx8VaPfhSfClGkuQa5aJNlZmwRUa\nrjtZDaltTVQUqlR43LHK2n33dILishQQdwBdklO1OPRVPEOXQwnS5VOZkzONQDsk\n9n+97YwvuMzGNtDilWRFQvTxSrlHGjenFrAhaNgU18snPQKYN4EOwzz7zF9Wd/vS\nTgFlkN8qp0XidRE9+vIXFR341De+G54a9f506pF178iPyBii6VP4vSQOpJjm0R0O\n6IHjPuNQB10nPJBOD/1885m569BmpvBz1IzJio1vmA==\n=BYuj\n-----END PGP MESSAGE-----\n';
-    let session = DraftStore.sessionForClientId(this.props.draftClientId).then((session) => {
-      console.log('got draft session to work with', session);
-      let draftHtml = session.draft().body;
-      let body = QuotedHTMLParser.appendQuotedHTML(`<pre style="white-space:pre">${test}</pre>`, draftHtml);
-
-      session.changes.add({ body });
-      session.changes.commit();
-    });
+  _formatBodyHeader(username, fingerprint) {
+    let spanStyles = "font-family:monospace,monospace;white-space:pre;";
+    return `This message is encrypted for <span style="${spanStyles}">${username}</span> with key fingerprint <span style="${spanStyles}">${fingerprint}</span>.`;
   }
 }
 
