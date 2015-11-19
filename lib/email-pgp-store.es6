@@ -14,7 +14,8 @@ class EmailPGPStore extends NylasStore {
   constructor() {
     super();
 
-    // State-based variables for storing messages when resetting MessageBodyProcessor cache
+    // State-based variables for storing messages when resetting
+    // MessageBodyProcessor cache
     this._cachedMessages = {};
 
     // Store status of message decryption for MessageLoaderHeader
