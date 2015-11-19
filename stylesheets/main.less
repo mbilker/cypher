@@ -26,13 +26,33 @@
   background-color: hsl(396, 62%, 87%);
 }
 
-.pgp-menu-picker .menu {
-  .footer-container,
-  .header-container {
-    display:none;
+.pgp-menu-picker {
+  fieldset {
+    padding-top: 2px;
+    padding-right: 2px;
+    padding-bottom: 2px;
+    padding-left: 10px;
   }
+
+  .generated-form {
+    .fieldset-form-items .row {
+      margin-top: 2px;
+    }
+  }
+
+  .form-footer, button {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+}
+
+.pgp-menu-picker .menu {
+  //.footer-container,
+  //.header-container {
+  //  display:none;
+  //}
   .content-container {
-    height:185px;
+    height:200px;
     overflow:scroll;
   }
 }
