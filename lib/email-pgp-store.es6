@@ -14,9 +14,13 @@ class EmailPGPStore extends NylasStore {
   constructor() {
     super();
 
+    // State-based variables for storing messages when resetting MessageBodyProcessor cache
     this._cachedMessages = {};
+
+    // Store status of message decryption for MessageLoaderHeader
     this._state = {};
 
+    // Binding `this` to each method that uses `this`
     this._encryptMessage = this._encryptMessage.bind(this);
     this._decryptMessage = this._decryptMessage.bind(this);
     this._setState = this._setState.bind(this);
@@ -42,6 +46,10 @@ class EmailPGPStore extends NylasStore {
     return this._cachedMessages[message.id];
   }
 
+  getState(messageId) {
+    return this._state[messageId] || {};
+  }
+
   // PRIVATE
 
   // ACTION EVENTS
@@ -52,10 +60,6 @@ class EmailPGPStore extends NylasStore {
   _decryptMessage(message) {
     console.log('[PGP] Told to decrypt', message);
     this._mainDecrypt(message);
-  }
-
-  getState(messageId) {
-    return this._state[messageId];
   }
 
   // Utils
