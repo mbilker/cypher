@@ -47,7 +47,7 @@ class MessageLoaderHeader extends React.Component {
   }
 
   render() {
-    let decrypting = this.state.decrypting && this.props.message.files.length > 0;
+    let decrypting = this.state.decrypting;
     let displayError = this.state.lastError && this.state.lastError.display;
 
     if (decrypting && !this.props.message.body) {
