@@ -4,7 +4,7 @@
 // puts the PGP encrypted document as the second attachment. It will read the
 // attachment from disk asynchrnously with background tasks
 
-import {Utils, React} from 'nylas-exports';
+import {Utils, MessageBodyProcessor, React} from 'nylas-exports';
 
 import EmailPGPStore from '../email-pgp-store';
 
@@ -26,13 +26,34 @@ class MessageLoaderHeader extends React.Component {
     this._renderErrorMessage = this._renderErrorMessage.bind(this);
     this._onPGPStoreChange = this._onPGPStoreChange.bind(this);
 
-    this.state = EmailPGPStore.getState(this.props.message.id);
+    this.state = EmailPGPStore.getState(this.props.message.id) || {};
   }
 
   componentDidMount() {
     this._storeUnlisten = EmailPGPStore.listen(this._onPGPStoreChange);
 
     window.loaderHeader = this;
+
+    if (EmailPGPStore.shouldDecryptMessage(this.props.message)) {
+      let haveCachedMessageBody = EmailPGPStore.haveCachedBody(this.props.message);
+      let isntDecrypting = !this.state.decrypting;
+      let isntDoneDecrypting = !this.state.done;
+      if (!haveCachedMessageBody && isntDecrypting && isntDoneDecrypting) {
+        Actions.decryptMessage(this.props.message);
+      }
+    }
+
+    let cachedBody = EmailPGPStore.getCachedBody(this.props.message);
+    if (cachedBody) {
+      this.props.message.body = cachedBody;
+
+      let processed = MessageBodyProcessor.process(this.props.message);
+      MessageBodyProcessor._subscriptions.forEach(({message, callback}) => {
+        if (message.id === this.props.message.id) {
+          callback(processed);
+        }
+      });
+    }
   }
 
   componentWillUnmount() {
@@ -47,34 +68,40 @@ class MessageLoaderHeader extends React.Component {
   }
 
   render() {
-    let decrypting = this.state.decrypting;
-    let displayError = this.state.lastError && this.state.lastError.display;
-
-    if (decrypting && !this.props.message.body) {
-      return this._renderDecryptingMessage();
-    } else if (displayError) {
-      return this._renderErrorMessage();
-    } else {
-      return <span />
-    }
+    return <div>
+      {this._renderDecryptingMessage()}
+      {this._renderErrorMessage()}
+    </div>
   }
 
   _renderDecryptingMessage() {
-    return <div className="statusBox indicatorBox">
-      <p>Decrypting message</p>
-    </div>
+    if (this.state.decrypting) {
+      return <div className="statusBox indicatorBox">
+        <p>Decrypting message</p>
+      </div>
+    }
+
+    return null;
   }
 
   _renderErrorMessage() {
-    return <div className="statusBox errorBox">
-      <p><b>Error:</b>{this.state.lastError.message}</p>
-    </div>
+    if (this.state.lastError && this.state.lastError.display) {
+      return <div className="statusBox errorBox">
+        <p><b>Error:</b>{this.state.lastError.message}</p>
+      </div>
+    }
+
+    return null;
   }
 
-  _onPGPStoreChange(messageId, { decrypting, lastError }) {
+  _onPGPStoreChange(messageId, state) {
     if (messageId === this.props.message.id) {
-      console.log('received event', { decrypting, lastError });
-      this.setState({ decrypting, lastError });
+      console.log('received event', state);
+      this.setState(state);
+
+      if (state.decryptedMessage) {
+        this.props.message.body = state.decryptedMessage;
+      }
     }
   }
 }

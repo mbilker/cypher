@@ -9,7 +9,7 @@ class MessageLoaderExtension extends MessageStoreExtension {
   // viewer
   static formatMessageBody(message) {
     console.log(`[PGP] MessageLoaderExtension formatting ${message.id}`);
-    let cached = EmailPGPStore.getBodyIfCached(message);
+    let cached = EmailPGPStore.getCachedBody(message);
     if (cached) {
       console.log(`Have cached body for ${message.id}`);
       return message.body = cached;

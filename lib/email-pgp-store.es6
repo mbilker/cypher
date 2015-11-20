@@ -24,10 +24,11 @@ class EmailPGPStore extends NylasStore {
     // Binding `this` to each method that uses `this`
     this._encryptMessage = this._encryptMessage.bind(this);
     this._decryptMessage = this._decryptMessage.bind(this);
+    this.mainDecrypt = this.mainDecrypt.bind(this);
     this._setState = this._setState.bind(this);
     this._retrievePGPAttachment = this._retrievePGPAttachment.bind(this);
     this._extractHTML = this._extractHTML.bind(this);
-    this.mainDecrypt = this.mainDecrypt.bind(this);
+    this._decryptAndResetCache = this._decryptAndResetCache.bind(this);
 
     this.listenTo(EmailPGPActions.encryptMessage, this._encryptMessage);
     this.listenTo(EmailPGPActions.decryptMessage, this._decryptMessage);
@@ -66,7 +67,7 @@ class EmailPGPStore extends NylasStore {
 
   _decryptMessage(message) {
     console.log('[PGP] Told to decrypt', message);
-    this._mainDecrypt(message);
+    this._decryptAndResetCache(message);
   }
 
   // Utils
@@ -76,7 +77,53 @@ class EmailPGPStore extends NylasStore {
     this.trigger(messageId, this._state[messageId]);
   }
 
-  // PGP INTERFACE
+  // PGP MAIN
+
+  // The main brains of this project. This retrieves the attachment and secret
+  // key (someone help me find a (secure) way to store the secret key) in
+  // parallel. We parse the HTML out of the content, then update the state which
+  // triggers a page update
+  mainDecrypt(message) {
+    console.group(`[PGP] Message: ${message.id}`);
+
+    this._setState(message.id, {
+      decrypting: true
+    });
+
+    // More decryption engines will be implemented
+    let decrypter = this._selectDecrypter();
+    let startDecrypt = process.hrtime();
+    return this._getAttachmentAndKey(message).spread(decrypter).then((text) => {
+      let endDecrypt = process.hrtime(startDecrypt);
+      console.log(`%cTotal message decrypt time: ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
+      return text;
+    }).then(this._extractHTML).then((match) => {
+      this._cachedMessages[message.id] = match;
+
+      this._setState(message.id, {
+        decrypting: false,
+        decryptedMessage: match
+      });
+
+      return match;
+    }).catch((error) => {
+      if (error instanceof FlowError) {
+        console.log(error.title);
+      } else {
+        console.log(error.stack);
+      }
+      this._setState(message.id, {
+        decrypting: false,
+        done: true,
+        lastError: error
+      });
+    }).finally(() => {
+      console.groupEnd();
+      //delete this._state[message.id];
+    });
+  }
+
+  // PGP HELPER INTERFACE
 
   _getKey() {
     var keyLocation = require('path').join(process.env.HOME, 'pgpkey');
@@ -142,45 +189,9 @@ class EmailPGPStore extends NylasStore {
     }
   }
 
-  // The main brains of this project. This retrieves the attachment and secret
-  // key (someone help me find a (secure) way to store the secret key) in
-  // parallel. We parse the HTML out of the content, then update the state which
-  // triggers a page update
-  mainDecrypt(message) {
-    console.group(`[PGP] Message: ${message.id}`);
-
-    this._setState(message.id, {
-      decrypting: true
-    });
-
-    // More decryption engines will be implemented
-    let decrypter = this._selectDecrypter();
-    let startDecrypt = process.hrtime();
-    return this._getAttachmentAndKey(message).spread(decrypter).then((text) => {
-      let endDecrypt = process.hrtime(startDecrypt);
-      console.log(`%cTotal message decrypt time: ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
-      return text;
-    }).then(this._extractHTML).then((match) => {
-      this._cachedMessages[message.id] = match;
+  _decryptAndResetCache(message) {
+    return this.mainDecrypt(message).then(() => {
       MessageBodyProcessor.resetCache();
-
-      this._setState(message.id, {
-        decrypting: false,
-        decryptedMessage: match
-      });
-    }).catch((error) => {
-      if (error instanceof FlowError) {
-        console.log(error.title);
-      } else {
-        console.log(error.stack);
-      }
-      this._setState(message.id, {
-        decrypting: false,
-        lastError: error
-      });
-    }).finally(() => {
-      console.groupEnd();
-      //delete this._state[message.id];
     });
   }
 }
