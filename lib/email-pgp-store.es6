@@ -27,7 +27,7 @@ class EmailPGPStore extends NylasStore {
     this._setState = this._setState.bind(this);
     this._retrievePGPAttachment = this._retrievePGPAttachment.bind(this);
     this._extractHTML = this._extractHTML.bind(this);
-    this._mainDecrypt = this._mainDecrypt.bind(this);
+    this.mainDecrypt = this.mainDecrypt.bind(this);
 
     this.listenTo(EmailPGPActions.encryptMessage, this._encryptMessage);
     this.listenTo(EmailPGPActions.decryptMessage, this._decryptMessage);
@@ -146,7 +146,7 @@ class EmailPGPStore extends NylasStore {
   // key (someone help me find a (secure) way to store the secret key) in
   // parallel. We parse the HTML out of the content, then update the state which
   // triggers a page update
-  _mainDecrypt(message) {
+  mainDecrypt(message) {
     console.group(`[PGP] Message: ${message.id}`);
 
     this._setState(message.id, {
