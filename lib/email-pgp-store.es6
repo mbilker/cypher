@@ -31,6 +31,8 @@ class EmailPGPStore extends NylasStore {
 
     this.listenTo(EmailPGPActions.encryptMessage, this._encryptMessage);
     this.listenTo(EmailPGPActions.decryptMessage, this._decryptMessage);
+
+    global.EmailPGPStore = this;
   }
 
   // PUBLIC
@@ -43,12 +45,16 @@ class EmailPGPStore extends NylasStore {
     return false;
   }
 
-  getBodyIfCached(message) {
+  haveCachedBody(message) {
+    return !!this._cachedMessages[message.id];
+  }
+
+  getCachedBody(message) {
     return this._cachedMessages[message.id];
   }
 
   getState(messageId) {
-    return this._state[messageId] || {};
+    return this._state[messageId];
   }
 
   // PRIVATE
@@ -150,7 +156,7 @@ class EmailPGPStore extends NylasStore {
     // More decryption engines will be implemented
     let decrypter = this._selectDecrypter();
     let startDecrypt = process.hrtime();
-    this._getAttachmentAndKey(message).spread(decrypter).then((text) => {
+    return this._getAttachmentAndKey(message).spread(decrypter).then((text) => {
       let endDecrypt = process.hrtime(startDecrypt);
       console.log(`%cTotal message decrypt time: ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
       return text;
@@ -179,4 +185,4 @@ class EmailPGPStore extends NylasStore {
   }
 }
 
-export default new EmailPGPStore()
+export default new EmailPGPStore();
