@@ -5,6 +5,10 @@
 import {Utils, DraftStore, QuotedHTMLParser, React} from 'nylas-exports';
 import {Menu, GeneratedForm, Popover, RetinaImg} from 'nylas-component-kit';
 
+import openpgp from 'openpgp';
+
+import KeybaseIntegration from '../keybase';
+
 class ComposerLoader extends React.Component {
   static displayName = 'ComposerLoader'
 
@@ -15,6 +19,8 @@ class ComposerLoader extends React.Component {
   state = {
     username: ''
   }
+
+  spanStyles = "font-family:monospace,monospace;white-space:pre;";
 
   constructor(props) {
     super(props);
@@ -61,7 +67,7 @@ class ComposerLoader extends React.Component {
   }
 
   onChange(e) {
-    console.log('change', e);
+    //console.log('change', e);
     this.setState({
       username: e.fieldsets[0].formItems[0].value
     });
@@ -71,23 +77,40 @@ class ComposerLoader extends React.Component {
     this.refs.popover.close();
 
     let {username, fingerprint} = this.state;
+    let keybase = new KeybaseIntegration();
 
     console.log('submit');
     console.log(username);
 
-    let session = DraftStore.sessionForClientId(this.props.draftClientId).then((session) => {
-      let draftHtml = session.draft().body;
-      let bodyHeader = this._formatBodyHeader(username, '3838 8d8d 88daa 8d8f (example)');
-      let body = QuotedHTMLParser.appendQuotedHTML(bodyHeader, draftHtml);
+    keybase.pubKeyForUsername(username).then((armoredKey) => {
+      //console.log(armoredKey);
+      if (!armoredKey) {
+        throw new Error("No public key for username " + username);
+      }
+      let publicKey = openpgp.key.readArmored(armoredKey);
+      let bodyHeader = this._formatBodyHeader(username, '(put fingerprint here)');
 
-      session.changes.add({ body });
-      session.changes.commit();
+      return DraftStore.sessionForClientId(this.props.draftClientId).then((session) => {
+        let draftHtml = session.draft().body;
+
+        return openpgp.encryptMessage(publicKey.keys, draftHtml).then((pgpMessage) => {
+          let bodyPgp = this._formatBody(pgpMessage);
+          let body = QuotedHTMLParser.appendQuotedHTML(bodyPgp, bodyHeader);
+
+          session.changes.add({ body: bodyHeader });
+          session.changes.add({ body });
+          session.changes.commit();
+        });
+      });
     });
   }
 
   _formatBodyHeader(username, fingerprint) {
-    let spanStyles = "font-family:monospace,monospace;white-space:pre;";
-    return `This message is encrypted for <span style="${spanStyles}">${username}</span> with key fingerprint <span style="${spanStyles}">${fingerprint}</span>.`;
+    return `This message is encrypted for <span style="${this.spanStyles}">${username}</span> with key fingerprint <span style="${this.spanStyles}">${fingerprint}</span>.`;
+  }
+
+  _formatBody(pgpMessage) {
+    return `<pre style="white-space:pre;">${pgpMessage}</pre>`;
   }
 }
 
