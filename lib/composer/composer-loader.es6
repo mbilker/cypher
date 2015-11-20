@@ -97,6 +97,8 @@ class ComposerLoader extends React.Component {
           let bodyPgp = this._formatBody(pgpMessage);
           let body = QuotedHTMLParser.appendQuotedHTML(bodyPgp, bodyHeader);
 
+          console.log(body);
+
           session.changes.add({ body: bodyHeader });
           session.changes.add({ body });
           session.changes.commit();
