@@ -25,8 +25,6 @@ class MessageLoaderExtension extends MessageStoreExtension {
     if (EmailPGPStore.shouldDecryptMessage(message)) {
       Actions.decryptMessage(message);
     }
-
-    return message.body;
   }
 }
 
