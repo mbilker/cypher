@@ -9,12 +9,19 @@ class MessageLoaderExtension extends MessageStoreExtension {
   // viewer
   static formatMessageBody(message) {
     console.log(`[PGP] MessageLoaderExtension formatting ${message.id}`);
+
+    // Check for a cached message body for a decrypted message
+    // If we have one we should return the cached message so the
+    // proper message body is displayed
     let cached = EmailPGPStore.getCachedBody(message);
     if (cached) {
       console.log(`Have cached body for ${message.id}`);
       return message.body = cached;
     }
 
+    // If we don't have a cached copy and the message matches the parameters for
+    // decryption, then signal the `EmailPGPStore` to decrypt the message and
+    // pass on the cloned message
     if (EmailPGPStore.shouldDecryptMessage(message)) {
       Actions.decryptMessage(message);
     }
