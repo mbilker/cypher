@@ -92,14 +92,14 @@ class ComposerLoader extends React.Component {
 
       return DraftStore.sessionForClientId(this.props.draftClientId).then((session) => {
         let draftHtml = session.draft().body;
+        let text = QuotedHTMLParser.removeQuotedHTML(draftHtml);
 
-        return openpgp.encryptMessage(publicKey.keys, draftHtml).then((pgpMessage) => {
+        return openpgp.encryptMessage(publicKey.keys, text).then((pgpMessage) => {
           let bodyPgp = this._formatBody(pgpMessage);
-          let body = QuotedHTMLParser.appendQuotedHTML(bodyPgp, bodyHeader);
+          let body = QuotedHTMLParser.appendQuotedHTML(bodyHeader + bodyPgp, draftHtml);
 
           console.log(body);
 
-          session.changes.add({ body: bodyHeader });
           session.changes.add({ body });
           session.changes.commit();
         });
