@@ -5,7 +5,8 @@
 import {Utils, DraftStore, QuotedHTMLParser, React} from 'nylas-exports';
 import {Menu, GeneratedForm, Popover, RetinaImg} from 'nylas-component-kit';
 
-import openpgp from 'openpgp';
+//import openpgp from 'openpgp';
+import kbpgp from 'kbpgp';
 
 import KeybaseIntegration from '../keybase';
 
@@ -34,6 +35,16 @@ class ComposerLoader extends React.Component {
   render() {
     let items = ['first', 'second'];
     let fieldsets = [
+      /* {
+        id: "status-fieldset",
+        heading: "Status Heading",
+        formItems: [
+          {
+            row: 0,
+            id: "error-text"
+          }
+        ]
+      }, */
       {
         id: "pgp-fieldset",
         heading: "PGP Heading",
@@ -82,19 +93,30 @@ class ComposerLoader extends React.Component {
     console.log('submit');
     console.log(username);
 
-    keybase.pubKeyForUsername(username).then((armoredKey) => {
+    return keybase.pubKeyForUsername(username).then((armoredKey) => {
       //console.log(armoredKey);
       if (!armoredKey) {
         throw new Error("No public key for username " + username);
       }
-      let publicKey = openpgp.key.readArmored(armoredKey);
+
       let bodyHeader = this._formatBodyHeader(username, '(put fingerprint here)');
 
-      return DraftStore.sessionForClientId(this.props.draftClientId).then((session) => {
+      //let publicKey = openpgp.key.readArmored(armoredKey);
+      return Promise.promisify(kbpgp.KeyManager.import_from_armored_pgp)({
+        armored: armoredKey
+      }).then(([ keyManager, warnings ]) => {
+        return [
+          DraftStore.sessionForClientId(this.props.draftClientId),
+          keyManager
+        ];
+      }).spread((session, publicKey) => {
         let draftHtml = session.draft().body;
         let text = QuotedHTMLParser.removeQuotedHTML(draftHtml);
 
-        return openpgp.encryptMessage(publicKey.keys, text).then((pgpMessage) => {
+        return Promise.promisify(kbpgp.box)({
+          msg: text,
+          encrypt_for: publicKey
+        }).then(([ pgpMessage, pgpMessageBuffer ]) => {
           let bodyPgp = this._formatBody(pgpMessage);
           let body = QuotedHTMLParser.appendQuotedHTML(bodyHeader + bodyPgp, draftHtml);
 
@@ -103,6 +125,8 @@ class ComposerLoader extends React.Component {
           session.changes.add({ body });
           session.changes.commit();
         });
+      }).catch((err) => {
+        console.log(err);
       });
     });
   }
