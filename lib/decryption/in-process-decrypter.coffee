@@ -1,4 +1,9 @@
+path = require 'path'
+
 openpgp = require 'openpgp'
+openpgp.initWorker(path.join(__dirname, '..', '..', 'node_modules', 'openpgp', 'dist', 'openpgp.worker.js'))
+
+global.openpgp = openpgp
 
 class InProcessDecrypter
   decrypt: (text, pgpkey) ->
