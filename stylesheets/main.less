@@ -26,8 +26,14 @@
   background-color: hsl(396, 62%, 87%);
 }
 
+.preferences-wrap {
+  input {
+    margin: 4px 0 0 8px;
+  }
+}
+
 .pgp-menu-picker {
-  fieldset {
+  .form {
     padding-top: 2px;
     padding-right: 2px;
     padding-bottom: 2px;
@@ -44,15 +50,22 @@
     padding-top: 4px;
     padding-bottom: 4px;
   }
-}
 
-.pgp-menu-picker .menu {
-  //.footer-container,
-  //.header-container {
-  //  display:none;
-  //}
-  .content-container {
-    height:200px;
-    overflow:scroll;
+  .popover {
+    max-width: 400px !important;
+    width: 300px !important;
+  }
+
+  .menu {
+    .footer-container,
+    .header-container {
+      display:none;
+    }
+
+    .content-container {
+      max-height: 200px;
+      max-width: 200px;
+      overflow: scroll;
+    }
   }
 }
