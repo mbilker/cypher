@@ -10,6 +10,43 @@ import kbpgp from 'kbpgp';
 
 import KeybaseIntegration from '../keybase';
 
+class SettingsButton extends React.Component {
+  static displayName = 'SettingsButton';
+
+  static propTypes = {
+    hidePopover: React.PropTypes.func.isRequired
+  }
+
+  constructor(props) {
+    super(props);
+
+    this._onClick = this._onClick.bind(this);
+  }
+
+  render() {
+    return <button onClick={this._onClick}>
+      Settings
+    </button>
+  }
+
+  _onClick() {
+    this.props.hidePopover();
+
+    let BrowserWindow = require('remote').require('browser-window')
+    let w = new BrowserWindow({
+      nodeIntegration: false,
+      webPreferences: {
+        webSecurity: false
+      },
+      width: 700,
+      height: 600
+    });
+
+    let url = require('path').join(__dirname, '..', 'settings', 'index.html');
+    w.loadURL(`file://${url}`);
+  }
+}
+
 class ComposerLoader extends React.Component {
   static displayName = 'ComposerLoader'
 
@@ -30,6 +67,7 @@ class ComposerLoader extends React.Component {
     this._renderButton = this._renderButton.bind(this);
     this.onChange = this.onChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
+    this._hidePopover = this._hidePopover.bind(this);
   }
 
   render() {
@@ -56,17 +94,30 @@ class ComposerLoader extends React.Component {
             type: "text",
             placeholder: "(e.g. max)"
           }
+          /* {
+            row: 1,
+            id: 'settings-window',
+            label: '',
+            type: SettingsButton,
+            hidePopover: this._hidePopover
+          } */
         ]
       }
     ]
     return <Popover ref="popover"
                     className="pgp-menu-picker pull-right"
                     buttonComponent={this._renderButton()}>
-      <GeneratedForm id="keybase-encrypt"
-                     fieldsets={fieldsets}
-                     onChange={this.onChange}
-                     onSubmit={this.onSubmit} />
+      <form className="form">
+        <div>
+          <label>Keybase Username:</label>
+          <input type="text" placeholder="(e.g. max)" onChange={this.onChange} />
+        </div>
+      </form>
     </Popover>
+      //<GeneratedForm id="keybase-encrypt"
+      //               fieldsets={fieldsets}
+      //               onChange={this.onChange}
+      //               onSubmit={this.onSubmit} />
   }
 
   _renderButton() {
@@ -78,14 +129,14 @@ class ComposerLoader extends React.Component {
   }
 
   onChange(e) {
-    //console.log('change', e);
-    this.setState({
-      username: e.fieldsets[0].formItems[0].value
-    });
+    console.log('change', e);
+    //this.setState({
+    //  username: e.fieldsets[0].formItems[0].value
+    //});
   }
 
   onSubmit(e) {
-    this.refs.popover.close();
+    this._hidePopover();
 
     let {username, fingerprint} = this.state;
     let keybase = new KeybaseIntegration();
@@ -94,29 +145,22 @@ class ComposerLoader extends React.Component {
     console.log(username);
 
     return keybase.pubKeyForUsername(username).then((armoredKey) => {
-      //console.log(armoredKey);
       if (!armoredKey) {
         throw new Error("No public key for username " + username);
       }
 
       let bodyHeader = this._formatBodyHeader(username, '(put fingerprint here)');
 
-      //let publicKey = openpgp.key.readArmored(armoredKey);
-      return Promise.promisify(kbpgp.KeyManager.import_from_armored_pgp)({
-        armored: armoredKey
-      }).then(([ keyManager, warnings ]) => {
+      return this._importPublicKey(armoredKey).then((publicKey) => {
         return [
           DraftStore.sessionForClientId(this.props.draftClientId),
-          keyManager
+          publicKey
         ];
-      }).spread((session, publicKey) => {
+      }).then(([ session, publicKey ]) => {
         let draftHtml = session.draft().body;
         let text = QuotedHTMLParser.removeQuotedHTML(draftHtml);
 
-        return Promise.promisify(kbpgp.box)({
-          msg: text,
-          encrypt_for: publicKey
-        }).then(([ pgpMessage, pgpMessageBuffer ]) => {
+        return this._encryptMessage(msg, publicKey).then((pgpMessage) => {
           let bodyPgp = this._formatBody(pgpMessage);
           let body = QuotedHTMLParser.appendQuotedHTML(bodyHeader + bodyPgp, draftHtml);
 
@@ -131,12 +175,41 @@ class ComposerLoader extends React.Component {
     });
   }
 
+  _hidePopover() {
+    this.refs.popover.close();
+  }
+
   _formatBodyHeader(username, fingerprint) {
     return `This message is encrypted for <span style="${this.spanStyles}">${username}</span> with key fingerprint <span style="${this.spanStyles}">${fingerprint}</span>.`;
   }
 
   _formatBody(pgpMessage) {
     return `<pre style="white-space:pre;">${pgpMessage}</pre>`;
+  }
+
+  _importPublicKey(publicKey) {
+    //return new Promise((resolve) => {
+    //  resolve(openpgp.key.readArmored(publicKey));
+    //});
+
+    let import_from_armored_pgp = Promise.promisify(kbpgp.import_from_armored_pgp);
+
+    return import_from_armored_pgp({
+      armored: publicKey
+    }).then(([ keyManager, warnings ]) => {
+      return keyManager;
+    });
+  }
+
+  _encryptMessage(msg, publicKey) {
+    let box = Promise.promisify(kbpgp.box);
+
+    return box({
+      msg: msg,
+      encrypt_for: publicKey
+    }).then(([ pgpMessage, pgpMessageBuffer ]) => {
+      return pgpMessage;
+    });
   }
 }
 
