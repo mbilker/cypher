@@ -1,0 +1,7 @@
+fs.readFileSync('./json', 'utf8')
+.trim()
+.split('\n')
+.map((x) => x.replace(/"/,'').replace(/"$/,'').replace(/\\/g,''))
+.map((x) => JSON.parse(x))
+.filter((x) => x.body.type === 'track')
+.map((x) => x.body.track.basics)
