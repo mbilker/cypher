@@ -13,7 +13,8 @@
   "dependencies": {
     "kbpgp": "^2.0.49",
     "node-keybase": "0.0.5",
-    "openpgp": "^1.3.0"
+    "openpgp": "^1.3.0",
+    "request": "^2.67.0"
   },
   "devDependencies": {
     "babel-core": "^6.1.21",
