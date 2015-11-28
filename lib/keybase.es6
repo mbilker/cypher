@@ -4,10 +4,23 @@ class KeybaseIntegration {
   constructor() {
     this.keybase = new Keybase();
 
+    this.login = this.login.bind(this);
     this.pubKeyForUsername = this.pubKeyForUsername.bind(this);
   }
 
-  login(username, password) {
+  login(username, passphrase) {
+    if (!username || !passphrase) {
+      throw new Error('No username or no passphrase specified');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.keybase.login(username, passphrase, (err, res) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(res);
+      });
+    });
   }
 
   pubKeyForUsername(username, cb) {
@@ -16,7 +29,7 @@ class KeybaseIntegration {
         if (err) {
           return reject(err);
         }
-        resolve(res);
+        return resolve(res);
       });
     });
   }
