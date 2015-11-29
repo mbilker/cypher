@@ -6,6 +6,30 @@ import ComposerLoader from './composer/composer-loader';
 import MessageLoaderHeader from './message-loader/message-loader-header';
 
 module.exports = {
+  config: {
+    keybase: {
+      type: 'object',
+      properties: {
+        username: {
+          type: 'string',
+          default: ''
+        },
+        uid: {
+          type: 'string',
+          default: ''
+        },
+        csrf_token: {
+          type: 'string',
+          default: ''
+        },
+        session_token: {
+          type: 'string',
+          default: ''
+        }
+      }
+    }
+  },
+
   // Activate is called when the package is loaded. If your package previously
   // saved state using `serialize` it is provided.
   //
