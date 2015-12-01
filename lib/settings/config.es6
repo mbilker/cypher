@@ -1,14 +1,12 @@
-import {PreferencesSectionStore} from 'nylas-exports';
+import {PreferencesUIStore} from 'nylas-exports';
 
 import PreferencesComponent from './preferences-component';
 
-let {SectionConfig} = PreferencesSectionStore;
-
 export default function createSectionConfig() {
-  return new SectionConfig({
-    icon: 'nylas://preferences/tabs/ic-settigns-general@2x.png',
-    sectionId: "PGP",
+  return new PreferencesUIStore.TabItem({
+    tabId: "PGP",
     displayName: "PGP Mail",
+    icon: 'nylas://preferences/tabs/ic-settigns-general@2x.png',
     component: PreferencesComponent
-  })
+  });
 }

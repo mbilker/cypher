@@ -3,6 +3,10 @@ import {Flexbox} from 'nylas-component-kit';
 
 import KeybaseIntegration from '../keybase';
 
+// TODO: Branch out Keybase into own NylasStore to become more singleton-like
+// Right now I am just trying to get this working and public keys from
+// Keybase for other tracking users and download stored keys for decryption
+
 class PreferencesComponent extends React.Component {
   static displayName = 'PreferencesComponent';
 
@@ -17,13 +21,24 @@ class PreferencesComponent extends React.Component {
     this.loginToKeybase = this.loginToKeybase.bind(this);
 
     this.keybase = new KeybaseIntegration();
+    this.keybase.loadPreviousLogin();
+    global.keybase = this.keybase;
+
+    let {
+      username = '',
+      uid = '',
+      csrf_token = '',
+      session_token = ''
+    } = NylasEnv.config.get('email-pgp.keybase');
 
     this.defaultState = this.state = {
       error: '',
-      username: '',
-      passphrase: '',
-      uid: '',
-      csrfToken: ''
+      username: username,
+      passphrase: (csrf_token && session_token) ? '****' : '',
+      uid: uid,
+      csrf_token: csrf_token,
+      session_token: session_token,
+      userInfo: null
     }
   }
 
@@ -46,11 +61,11 @@ class PreferencesComponent extends React.Component {
             <label htmlFor="account.passphrase">Passphrase:</label>
           </div>
           <div className="setting-value">
-            <input id="account.passphrase" type="password" onChange={this.onChangePassphrase} />
+            <input id="account.passphrase" type="password" value={this.state.passphrase} onChange={this.onChangePassphrase} />
           </div>
         </Flexbox>
-        <button className="btn" onClick={this.loginToKeybase}>Login</button>
         {this._renderUserLoginInfo()}
+        <button className="btn" onClick={this.loginToKeybase}>Login</button>
       </section>
     </div>
   }
@@ -64,10 +79,10 @@ class PreferencesComponent extends React.Component {
   }
 
   _renderUserLoginInfo() {
-    let { uid, csrfToken, userInfo } = this.state;
+    let { uid, session_token } = this.state;
 
-    if (uid && csrfToken && userInfo) {
-      let body = `uid: ${uid}\ncsrf_token: ${csrfToken}`;
+    if (uid && session_token) {
+      let body = `uid: ${uid}\nsession_token: ${session_token}`;
 
       // Using substitution causes <span>s to be used, causes incorrect line
       // breaks
@@ -77,7 +92,6 @@ class PreferencesComponent extends React.Component {
 
   onChangeUsername(e) {
     console.log('username');
-    console.log(e.target.value);
 
     this.setState({
       username: e.target.value
@@ -86,7 +100,6 @@ class PreferencesComponent extends React.Component {
 
   onChangePassphrase(e) {
     console.log('passphrase');
-    console.log(e.target.value);
 
     this.setState({
       passphrase: e.target.value
@@ -99,7 +112,7 @@ class PreferencesComponent extends React.Component {
     let { username, passphrase } = this.state;
     console.log('%s %s', username, passphrase);
 
-    this.replaceState(this.defaultState);
+    this.setState(this.defaultState);
 
     this.keybase.login(username, passphrase).then((res) => {
       console.log(res);
@@ -116,12 +129,18 @@ class PreferencesComponent extends React.Component {
         });
       }
 
+      NylasEnv.config.set('email-pgp.keybase.username', username);
+      NylasEnv.config.set('email-pgp.keybase.uid', res.uid);
+      NylasEnv.config.set('email-pgp.keybase.csrf_token', res.csrf_token);
+      NylasEnv.config.set('email-pgp.keybase.session_token', res.session);
+
       this.setState({
         error: '',
         username: username,
         password: '****',
         uid: res.uid,
-        csrfToken: res.csrf_token,
+        csrf_token: res.csrf_token,
+        session_token: res.session,
         userInfo: res.me
       });
     });

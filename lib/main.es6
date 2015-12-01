@@ -1,4 +1,4 @@
-import {ComponentRegistry, MessageStore, PreferencesSectionStore} from 'nylas-exports';
+import {ComponentRegistry, ExtensionRegistry, PreferencesUIStore} from 'nylas-exports';
 
 import Config from './settings/config';
 import MessageLoaderExtension from './message-loader/message-loader-extension';
@@ -37,9 +37,9 @@ module.exports = {
     this.state = state;
     this.config = new Config();
 
-    PreferencesSectionStore.registerPreferenceSection(this.config);
+    PreferencesUIStore.registerPreferencesTab(this.config);
 
-    MessageStore.registerExtension(MessageLoaderExtension);
+    ExtensionRegistry.MessageView.register(MessageLoaderExtension);
     ComponentRegistry.register(ComposerLoader, { role: 'Composer:ActionButton' });
     ComponentRegistry.register(MessageLoaderHeader, { role: 'message:BodyHeader' });
   },
@@ -57,9 +57,9 @@ module.exports = {
   // subscribing to events, release them here.
   //
   deactivate() {
-    PreferencesSectionStore.unregisterPreferenceSection(this.config.sectionId);
+    PreferencesUIStore.unregisterPreferencesTab(this.config.tabId);
 
-    MessageStore.unregisterExtension(MessageLoaderExtension);
+    ExtensionRegistry.MessageView.unregister(MessageLoaderExtension);
     ComponentRegistry.unregister(ComposerLoader)
     ComponentRegistry.unregister(MessageLoaderHeader)
   }

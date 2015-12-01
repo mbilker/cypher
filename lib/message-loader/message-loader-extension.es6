@@ -1,9 +1,9 @@
-import {MessageStoreExtension} from 'nylas-exports';
+import {MessageViewExtension} from 'nylas-exports';
 
 import EmailPGPStore from '../email-pgp-store';
 import Actions from '../email-pgp-actions';
 
-class MessageLoaderExtension extends MessageStoreExtension {
+class MessageLoaderExtension extends MessageViewExtension {
   // CANNOT crash here. If we do, the whole app stops working
   // properly and the main screen is stuck with the message
   // viewer
