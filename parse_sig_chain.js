@@ -1,7 +1,13 @@
-fs.readFileSync('./json', 'utf8')
-.trim()
-.split('\n')
-.map((x) => x.replace(/"/,'').replace(/"$/,'').replace(/\\/g,''))
-.map((x) => JSON.parse(x))
-.filter((x) => x.body.type === 'track')
-.map((x) => x.body.track.basics)
+"use strict";
+
+let fs = require('fs');
+
+let parse = () => {
+  return JSON.parse(fs.readFileSync('./json', 'utf8'))
+    .sigs
+    .map((x) => JSON.parse(x.payload_json))
+    .filter((x) => x.body.type === 'sibkey')
+    .map((x) => x.body)
+}
+
+console.log(parse());
