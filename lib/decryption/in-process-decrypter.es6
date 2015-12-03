@@ -15,7 +15,7 @@ class InProcessDecrypter {
 
       if (key.err && key.err.length) {
         key.err.forEach((a, i) => {
-          console.log("Secret key read error [#{i}]:", a)
+          console.log(`Secret key read error [${i}]:`, a);
         });
         throw key.err[0];
       }
