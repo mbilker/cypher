@@ -1,6 +1,9 @@
 child_process = require 'child_process'
 openpgp = require 'openpgp'
 
+openpgp.initWorker(require('path').join(__dirname, '..', '..', 'node_modules', 'openpgp', 'dist', 'openpgp.worker.js'));
+global.openpgp = openpgp;
+
 FlowError = require '../flow-error.es6'
 
 # This must be the same as worker-decrypt.js
