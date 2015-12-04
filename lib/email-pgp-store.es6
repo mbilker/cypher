@@ -153,9 +153,10 @@ class EmailPGPStore extends NylasStore {
 
   // Retrieves the attachment and encrypted secret key for code divergence later
   _getAttachmentAndKey(message) {
-    return new Promise((resolve) => {
-      resolve([ this._retrievePGPAttachment(message), this._getKey() ]);
-    }).spread((text, pgpkey) => {
+    return Promise.all([
+      this._retrievePGPAttachment(message),
+      this._getKey()
+    ]).spread((text, pgpkey) => {
       if (!text) {
         throw new Error("No text in attachment");
       }
