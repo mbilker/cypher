@@ -1,6 +1,8 @@
 import {React} from 'nylas-exports';
 import {Flexbox} from 'nylas-component-kit';
 
+import openpgp from 'openpgp';
+
 import KeybaseIntegration from '../keybase';
 
 // TODO: Branch out Keybase into own NylasStore to become more singleton-like
@@ -19,10 +21,12 @@ class PreferencesComponent extends React.Component {
     this.onChangeUsername = this.onChangeUsername.bind(this);
     this.onChangePassphrase = this.onChangePassphrase.bind(this);
     this.loginToKeybase = this.loginToKeybase.bind(this);
+    this.fetchAndVerifySigChain = this.fetchAndVerifySigChain.bind(this);
 
     this.keybase = new KeybaseIntegration();
     this.keybase.loadPreviousLogin();
-    global.keybase = this.keybase;
+
+    global.$pgpPref = this;
 
     let {
       username = '',
@@ -144,6 +148,11 @@ class PreferencesComponent extends React.Component {
         userInfo: res.me
       });
     });
+  }
+
+  fetchAndVerifySigChain() {
+    let { username, uid } = this.state;
+    this.keybase.fetchAndVerifySigChain(username, uid);
   }
 }
 
