@@ -192,7 +192,9 @@ class EmailPGPStore extends NylasStore {
 
   _decryptAndResetCache(message) {
     return this.mainDecrypt(message).then(() => {
-      MessageBodyProcessor.resetCache();
+      if (this._state[message.id] && !this._state[message.id].lastError) {
+        MessageBodyProcessor.resetCache();
+      }
     });
   }
 }
