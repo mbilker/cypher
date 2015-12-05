@@ -71,6 +71,12 @@ class PreferencesComponent extends React.Component {
         {this._renderUserLoginInfo()}
         <button className="btn" onClick={this.loginToKeybase}>Login</button>
       </section>
+      <section>
+        <h2>SigChain status</h2>
+        <Flexbox className="keybase-sigchain item">
+          
+        </Flexbox>
+      </section>
     </div>
   }
 

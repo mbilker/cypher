@@ -1,12 +1,13 @@
 import Keybase from 'node-keybase';
 import request from 'request';
-import libkb from 'libkeybase';
 
 const API = 'https://keybase.io/_/api/1.0';
 
 class KeybaseIntegration {
   constructor() {
     this.keybase = new Keybase();
+
+    this.userLookup = Promise.promisify(this.keybase.user_lookup);
 
     this.loadPreviousLogin = this.loadPreviousLogin.bind(this);
     this.login = this.login.bind(this);
@@ -68,29 +69,37 @@ class KeybaseIntegration {
   }
 
   fetchAndVerifySigChain(username, uid) {
-    this.keybase.user_lookup({
-      usernames: [ username ]
-    }, (err, result) => {
+    let parseAsync = Promise.promisify(libkb.ParsedKeys.parse);
+    let replayAsync = Promise.promisify(libkb.SigChain.replay);
+
+    return this.userLookup({
+      usernames: [ username ],
+      fields: [ 'public_keys' ]
+    }).then((result) => {
       let key_bundles = result.them[0].public_keys.all_bundles;
-      libkb.ParsedKeys.parse({ key_bundles }, (err, parsed_keys) => {
-        console.log(parsed_keys);
+      return [
+        result.them[0].public_keys.eldest_kid,
+        parseAsync({ key_bundles })
+      ];
+    }).spread((eldest_kid, [ parsed_keys ]) => {
+      console.log(parsed_keys);
 
-        let log = (msg) => console.log(msg);
+      let log = (msg) => console.log(msg);
 
-        return this.sigChainForUid(uid).then((res) => {
-          libkb.SigChain.replay({
-            sig_blobs: res.sigs,
-            parsed_keys,
-            username,
-            uid,
-            eldest_kid: result.them[0].public_keys.eldest_kid,
-            log
-          }, (err, res) => {
-            console.log(err);
-            console.log(res);
-            global.$pgpSigchain = res;
-          });
+      return this.sigChainForUid(uid).then(({sigs_blobs: sigs}) => {
+        return replayAsync({
+          sig_blobs, parsed_keys,
+          username, uid,
+          eldest_kid,
+          log
         });
+      }).then((err, res) => {
+        console.log(err);
+        console.log(res);
+
+        global.$pgpSigchain = res;
+
+        return res;
       });
     });
   }
