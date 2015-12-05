@@ -2,7 +2,7 @@ import path from 'path';
 
 import openpgp from 'openpgp';
 
-openpgp.initWorker(path.join(__dirname, '..', '..', 'node_modules', 'openpgp', 'dist', 'openpgp.worker.js'));
+//openpgp.initWorker(path.join(__dirname, '..', '..', 'node_modules', 'openpgp', 'dist', 'openpgp.worker.js'));
 global.openpgp = openpgp;
 
 class InProcessDecrypter {
