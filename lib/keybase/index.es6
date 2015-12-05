@@ -87,7 +87,7 @@ class KeybaseIntegration {
 
       let log = (msg) => console.log(msg);
 
-      return this.sigChainForUid(uid).then(({sigs_blobs: sigs}) => {
+      return this.sigChainForUid(uid).then(({sigs: sig_blobs}) => {
         return replayAsync({
           sig_blobs, parsed_keys,
           username, uid,
