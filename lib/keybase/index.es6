@@ -1,4 +1,5 @@
 import Keybase from 'node-keybase';
+import libkb from 'libkeybase';
 import request from 'request';
 
 const API = 'https://keybase.io/_/api/1.0';
