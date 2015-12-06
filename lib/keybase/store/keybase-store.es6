@@ -11,6 +11,9 @@ class KeybaseStore extends NylasStore {
     this.keybaseRemote = new KeybaseRemote();
     this.keybaseRemote.loadPreviousLogin();
 
+
+    this._fetchAndVerifySigChain
+
     this._cachedPrimarySigChain = null;
 
     this._fetchAndVerifySigChain = this._fetchAndVerifySigChain.bind(this);
@@ -64,7 +67,7 @@ class KeybaseStore extends NylasStore {
 
   // Private methods
 
-  loadSavedCredentials() {
+  _loadSavedCredentials() {
     let { username, uid, csrf_token, session_token } = NylasEnv.config.get('email-pgp.keybase');
     this.username = username;
     this.uid = uid;
