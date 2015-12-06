@@ -11,9 +11,18 @@ class KeybaseStore extends NylasStore {
     this.keybaseRemote = new KeybaseRemote();
     this.keybaseRemote.loadPreviousLogin();
 
+    this._cachedPrimarySigChain = null;
+
     this._fetchAndVerifySigChain = this._fetchAndVerifySigChain.bind(this);
 
     this.listenTo(KeybaseActions.fetchAndVerifySigChain, this._fetchAndVerifySigChain);
+  }
+
+  // Helper methods
+
+  // SigChain for the stored login
+  getPrimarySigChain() {
+    return this._cachedPrimarySigChain;
   }
 
   // Action Trigges
@@ -42,14 +51,25 @@ class KeybaseStore extends NylasStore {
           log
         });
       }).then((res) => {
-        console.log(res);
+        if (username === this.username & uid === this.uid) {
+          global.$pgpSigchain = res;
+          this._cachedSigChain = res;
+        }
 
-        global.$pgpSigchain = res;
         this.trigger({ username, uid, res });
-
         return res;
       });
     });
+  }
+
+  // Private methods
+
+  loadSavedCredentials() {
+    let { username, uid, csrf_token, session_token } = NylasEnv.config.get('email-pgp.keybase');
+    this.username = username;
+    this.uid = uid;
+    this.csrf_token = csrf_token;
+    this.session_token = session_token;
   }
 }
 
