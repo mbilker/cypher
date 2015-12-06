@@ -1,3 +1,4 @@
+import libkb from 'libkeybase';
 import NylasStore from 'nylas-store';
 
 import KeybaseActions from './keybase-actions';
