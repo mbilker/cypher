@@ -10,9 +10,7 @@ class KeybaseStore extends NylasStore {
 
     this.keybaseRemote = new KeybaseRemote();
     this.keybaseRemote.loadPreviousLogin();
-
-
-    this._fetchAndVerifySigChain
+    this._loadSavedCredentials();
 
     this._cachedPrimarySigChain = null;
 
@@ -73,6 +71,10 @@ class KeybaseStore extends NylasStore {
     this.uid = uid;
     this.csrf_token = csrf_token;
     this.session_token = session_token;
+
+    if (this.username && this.uid) {
+      this._loadSavedCredentials(this.username, this.uid);
+    }
   }
 }
 
