@@ -31,7 +31,7 @@ class PreferencesComponent extends React.Component {
       uid = '',
       csrf_token = '',
       session_token = ''
-    } = NylasEnv.config.get('email-pgp.keybase');
+    } = NylasEnv.config.get('email-pgp.keybase') || {};
 
     this.defaultState = this.state = {
       error: '',
@@ -41,7 +41,7 @@ class PreferencesComponent extends React.Component {
       csrf_token: csrf_token,
       session_token: session_token,
       userInfo: null
-    }
+    };
   }
 
   componentDidMount() {
@@ -83,7 +83,6 @@ class PreferencesComponent extends React.Component {
       <section>
         <h2>SigChain status</h2>
         <Flexbox className="keybase-sigchain item">
-
         </Flexbox>
       </section>
     </div>
