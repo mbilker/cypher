@@ -1,9 +1,7 @@
 import {React} from 'nylas-exports';
 import {Flexbox} from 'nylas-component-kit';
 
-import openpgp from 'openpgp';
-
-import KeybaseIntegration from '../keybase';
+import {KeybaseActions, KeybaseStore} from '../keybase';
 
 // TODO: Branch out Keybase into own NylasStore to become more singleton-like
 // Right now I am just trying to get this working and public keys from
@@ -23,8 +21,8 @@ class PreferencesComponent extends React.Component {
     this.loginToKeybase = this.loginToKeybase.bind(this);
     this.fetchAndVerifySigChain = this.fetchAndVerifySigChain.bind(this);
 
-    this.keybase = new KeybaseIntegration();
-    this.keybase.loadPreviousLogin();
+    //this.keybase = new KeybaseIntegration();
+    //this.keybase.loadPreviousLogin();
 
     global.$pgpPref = this;
 
@@ -43,6 +41,17 @@ class PreferencesComponent extends React.Component {
       csrf_token: csrf_token,
       session_token: session_token,
       userInfo: null
+    }
+  }
+
+  componentDidMount() {
+    this.unsubscribe = KeybaseStore.listen(this.onKeybaseStore);
+  }
+
+  componentDidUnmount() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
     }
   }
 
@@ -74,7 +83,7 @@ class PreferencesComponent extends React.Component {
       <section>
         <h2>SigChain status</h2>
         <Flexbox className="keybase-sigchain item">
-          
+
         </Flexbox>
       </section>
     </div>
@@ -158,7 +167,11 @@ class PreferencesComponent extends React.Component {
 
   fetchAndVerifySigChain() {
     let { username, uid } = this.state;
-    this.keybase.fetchAndVerifySigChain(username, uid);
+    KeybaseActions.fetchAndVerifySigChain(username, uid);
+  }
+
+  onKeybaseStore({ username, uid, res }) {
+    console.log('listen:', username, uid, res);
   }
 }
 
