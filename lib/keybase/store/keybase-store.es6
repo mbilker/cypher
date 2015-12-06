@@ -13,9 +13,12 @@ class KeybaseStore extends NylasStore {
 
     this._cachedPrimarySigChain = null;
 
+    this.getPrimarySigChain = this.getPrimarySigChain.bind(this);
+    this._login = this._login.bind(this);
     this._fetchAndVerifySigChain = this._fetchAndVerifySigChain.bind(this);
     this._loadSavedCredentials = this._loadSavedCredentials.bind(this);
 
+    this.listenTo(KeybaseActions.login, this._login);
     this.listenTo(KeybaseActions.fetchAndVerifySigChain, this._fetchAndVerifySigChain);
 
     this._loadSavedCredentials();
@@ -29,6 +32,12 @@ class KeybaseStore extends NylasStore {
   }
 
   // Action Trigges
+
+  _login(username, passphrase) {
+    this.keybaseRemote.login(username, passphrase).then((res) => {
+      this.trigger({ type: 'LOGIN', username, res });
+    });
+  }
 
   _fetchAndVerifySigChain(username, uid) {
     let parseAsync = Promise.promisify(libkb.ParsedKeys.parse);

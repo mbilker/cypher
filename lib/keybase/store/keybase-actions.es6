@@ -2,6 +2,7 @@
 Reflux = require('nylas-exports').require('Reflux', '../node_modules/reflux');
 
 Actions = [
+  'login',
   'fetchAndVerifySigChain'
 ];
 

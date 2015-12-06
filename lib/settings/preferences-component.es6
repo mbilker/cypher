@@ -132,7 +132,16 @@ class PreferencesComponent extends React.Component {
 
     this.setState(this.defaultState);
 
-    this.keybase.login(username, passphrase).then((res) => {
+    KeybaseActions.login(username, passphrase);
+  }
+
+  fetchAndVerifySigChain() {
+    let { username, uid } = this.state;
+    KeybaseActions.fetchAndVerifySigChain(username, uid);
+  }
+
+  onKeybaseStore({ type, username, uid, res }) {
+    if (type === 'LOGIN') {
       console.log(res);
 
       let { status: { name } } = res;
@@ -161,16 +170,9 @@ class PreferencesComponent extends React.Component {
         session_token: res.session,
         userInfo: res.me
       });
-    });
-  }
-
-  fetchAndVerifySigChain() {
-    let { username, uid } = this.state;
-    KeybaseActions.fetchAndVerifySigChain(username, uid);
-  }
-
-  onKeybaseStore({ username, uid, res }) {
-    console.log('listen:', username, uid, res);
+    } else {
+      console.log('listen:', username, uid, res);
+    }
   }
 }
 
