@@ -82,7 +82,7 @@ class KeybaseStore extends NylasStore {
       }).then((res) => {
         if (username === this.username & uid === this.uid) {
           global.$pgpSigchain = res;
-          this._cachedSigChain = res;
+          this._cachedPrimarySigChain = res;
         }
 
         this.trigger({ username, uid, res });

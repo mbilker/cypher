@@ -16,6 +16,7 @@ class PreferencesComponent extends React.Component {
     this.render = this.render.bind(this);
     this._renderError = this._renderError.bind(this);
     this._renderUserLoginInfo = this._renderUserLoginInfo.bind(this);
+    this._renderSigChain = this._renderSigChain.bind(this);
     this.onChangeUsername = this.onChangeUsername.bind(this);
     this.onChangePassphrase = this.onChangePassphrase.bind(this);
     this.loadPreviousLogin = this.loadPreviousLogin.bind(this);
@@ -80,6 +81,9 @@ class PreferencesComponent extends React.Component {
       <section>
         <h2>SigChain Status</h2>
         <Flexbox className="keybase-sigchain item">
+          <div>
+            {this._renderSigChain()}
+          </div>
         </Flexbox>
       </section>
     </div>
@@ -105,6 +109,32 @@ class PreferencesComponent extends React.Component {
     }
   }
 
+  _renderSigChain() {
+    let sigchain = KeybaseStore.getPrimarySigChain();
+    if (!sigchain) {
+      return "Not loaded yet.";
+    }
+
+    return <table className="table">
+      <thead>
+        <tr>
+          <td>#</td>
+          <td>type</td>
+          <td>kid</td>
+        </tr>
+      </thead>
+      <tbody>
+      {sigchain.get_links().map((link, i) => {
+        return <tr key={i}>
+          <td>{link.seqno}</td>
+          <td>{link.type}</td>
+          <td>{link.kid}</td>
+        </tr>;
+      })}
+      </tbody>
+    </table>
+  }
+
   onChangeUsername(e) {
     console.log('username');
 
@@ -122,7 +152,12 @@ class PreferencesComponent extends React.Component {
   }
 
   loadPreviousLogin() {
-    let { username, uid, csrf_token, session_token } = NylasEnv.config.get('email-pgp.keybase') || {};
+    let {
+      username =  '',
+      uid = '',
+      csrf_token = '',
+      session_token = ''
+    } = NylasEnv.config.get('email-pgp.keybase') || {};
 
     return {
       error: '',
