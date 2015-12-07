@@ -115,7 +115,7 @@ class PreferencesComponent extends React.Component {
       return "Not loaded yet.";
     }
 
-    return <table className="table">
+    return <table>
       <thead>
         <tr>
           <td>#</td>
