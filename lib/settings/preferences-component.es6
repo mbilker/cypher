@@ -115,12 +115,23 @@ class PreferencesComponent extends React.Component {
       return "Not loaded yet.";
     }
 
+    let keytype = (kid) => {
+      if (kid.startsWith('0101')) {
+        return 'PGP';
+      } else if (kid.startsWith('0120')) {
+        return 'NaCL';
+      } else {
+        return 'Unknown';
+      }
+    }
+
     return <table>
       <thead>
         <tr>
           <td>#</td>
-          <td>type</td>
-          <td>kid</td>
+          <td>Type</td>
+          <td>Sig Key Type</td>
+          <td>Fingerprint or kid</td>
         </tr>
       </thead>
       <tbody>
@@ -128,7 +139,8 @@ class PreferencesComponent extends React.Component {
         return <tr key={i}>
           <td>{link.seqno}</td>
           <td>{link.type}</td>
-          <td>{link.kid}</td>
+          <td>{keytype(link.kid)}</td>
+          <td>{link.fingerprint || link.kid}</td>
         </tr>;
       })}
       </tbody>
