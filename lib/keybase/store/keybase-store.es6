@@ -35,6 +35,23 @@ class KeybaseStore extends NylasStore {
 
   _login(username, passphrase) {
     this.keybaseRemote.login(username, passphrase).then((res) => {
+      console.log(res);
+
+      let { status: { name } } = res;
+
+      if (name === 'BAD_LOGIN_PASSWORD') {
+        console.log('[PGP] Keybase login error: Bad Passphrase');
+      } else if (name === 'BAD_LOGIN_USER_NOT_FOUND') {
+        console.log('[PGP] Keybase login error: Bad Username or Email');
+      } else {
+        NylasEnv.config.set('email-pgp.keybase.username', username);
+        NylasEnv.config.set('email-pgp.keybase.uid', res.uid);
+        NylasEnv.config.set('email-pgp.keybase.csrf_token', res.csrf_token);
+        NylasEnv.config.set('email-pgp.keybase.session_token', res.session);
+
+        this._loadSavedCredentials();
+      }
+
       this.trigger({ type: 'LOGIN', username, res });
     });
   }

@@ -18,30 +18,27 @@ class PreferencesComponent extends React.Component {
     this._renderUserLoginInfo = this._renderUserLoginInfo.bind(this);
     this.onChangeUsername = this.onChangeUsername.bind(this);
     this.onChangePassphrase = this.onChangePassphrase.bind(this);
+    this.loadPreviousLogin = this.loadPreviousLogin.bind(this);
     this.loginToKeybase = this.loginToKeybase.bind(this);
     this.fetchAndVerifySigChain = this.fetchAndVerifySigChain.bind(this);
+    this.onKeybaseStore = this.onKeybaseStore.bind(this);
 
     //this.keybase = new KeybaseIntegration();
     //this.keybase.loadPreviousLogin();
 
     global.$pgpPref = this;
 
-    let {
-      username = '',
-      uid = '',
-      csrf_token = '',
-      session_token = ''
-    } = NylasEnv.config.get('email-pgp.keybase') || {};
-
     this.defaultState = this.state = {
       error: '',
-      username: username,
-      passphrase: (csrf_token && session_token) ? '****' : '',
-      uid: uid,
-      csrf_token: csrf_token,
-      session_token: session_token,
-      userInfo: null
+      username: '',
+      passphrase: '',
+      uid: '',
+      csrf_token: '',
+      session_token: '',
+      userInfo: ''
     };
+
+    this.state = this.loadPreviousLogin();
   }
 
   componentDidMount() {
@@ -81,7 +78,7 @@ class PreferencesComponent extends React.Component {
         <button className="btn" onClick={this.loginToKeybase}>Login</button>
       </section>
       <section>
-        <h2>SigChain status</h2>
+        <h2>SigChain Status</h2>
         <Flexbox className="keybase-sigchain item">
         </Flexbox>
       </section>
@@ -124,13 +121,29 @@ class PreferencesComponent extends React.Component {
     });
   }
 
+  loadPreviousLogin() {
+    let { username, uid, csrf_token, session_token } = NylasEnv.config.get('email-pgp.keybase') || {};
+
+    return {
+      error: '',
+      username: username,
+      passphrase: (csrf_token && session_token) ? '****' : '',
+      uid: uid,
+      csrf_token: csrf_token,
+      session_token: session_token,
+      userInfo: null
+    };
+  }
+
   loginToKeybase() {
     console.log('login');
 
     let { username, passphrase } = this.state;
     console.log('%s %s', username, passphrase);
 
-    this.setState(this.defaultState);
+    this.setState(Object.assign({}, this.defaultState, {
+      username
+    }));
 
     KeybaseActions.login(username, passphrase);
   }
@@ -142,34 +155,17 @@ class PreferencesComponent extends React.Component {
 
   onKeybaseStore({ type, username, uid, res }) {
     if (type === 'LOGIN') {
-      console.log(res);
-
       let { status: { name } } = res;
 
       if (name === 'BAD_LOGIN_PASSWORD') {
-        return this.setState({
-          error: 'Bad Passphrase'
-        });
+        return this.setState({ error: 'Bad Passphrase' });
       } else if (name === 'BAD_LOGIN_USER_NOT_FOUND') {
-        return this.setState({
-          error: 'Bad Username or Email'
-        });
+        return this.setState({ error: 'Bad Username or Email' });
       }
 
-      NylasEnv.config.set('email-pgp.keybase.username', username);
-      NylasEnv.config.set('email-pgp.keybase.uid', res.uid);
-      NylasEnv.config.set('email-pgp.keybase.csrf_token', res.csrf_token);
-      NylasEnv.config.set('email-pgp.keybase.session_token', res.session);
-
-      this.setState({
-        error: '',
-        username: username,
-        password: '****',
-        uid: res.uid,
-        csrf_token: res.csrf_token,
-        session_token: res.session,
+      this.setState(Object.assign({}, this.loadPreviousLogin(), {
         userInfo: res.me
-      });
+      }));
     } else {
       console.log('listen:', username, uid, res);
     }

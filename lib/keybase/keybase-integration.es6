@@ -7,7 +7,7 @@ class KeybaseRemote {
   constructor() {
     this.keybase = new Keybase();
 
-    this.login = Promise.promisify(this.keybase.login);
+    this.login = Promise.promisify(this.keybase.login.bind(this.keybase));
     this.userLookup = Promise.promisify(this.keybase.user_lookup);
     this.publicKeyForUsername = Promise.promisify(this.keybase.public_key_for_username);
 
