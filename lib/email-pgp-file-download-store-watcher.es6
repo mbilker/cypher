@@ -1,12 +1,8 @@
 import fs from 'fs';
 import {FileDownloadStore} from 'nylas-exports';
 
-import FileDownloadStoreMonkeyPatch from './file-download-store-monkey-patch';
-
 class EmailPGPFileDownloadStoreWatcher {
   constructor() {
-    FileDownloadStoreMonkeyPatch.patchMethod();
-
     // Object of promises of attachments needed for decryption
     this._pendingPromises = {};
     this._watchingFileIds = {};
