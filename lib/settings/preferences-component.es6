@@ -81,9 +81,7 @@ class PreferencesComponent extends React.Component {
       <section>
         <h2>SigChain Status</h2>
         <Flexbox className="keybase-sigchain item">
-          <div>
-            {this._renderSigChain()}
-          </div>
+          {this._renderSigChain()}
         </Flexbox>
       </section>
     </div>
@@ -136,7 +134,7 @@ class PreferencesComponent extends React.Component {
       </thead>
       <tbody>
       {sigchain.get_links().map((link, i) => {
-        return <tr key={i}>
+        return <tr key={i} className="bg-green">
           <td>{link.seqno}</td>
           <td>{link.type}</td>
           <td>{keytype(link.kid)}</td>
@@ -148,7 +146,7 @@ class PreferencesComponent extends React.Component {
   }
 
   onChangeUsername(e) {
-    console.log('username');
+    //console.log('username');
 
     this.setState({
       username: e.target.value
@@ -156,7 +154,7 @@ class PreferencesComponent extends React.Component {
   }
 
   onChangePassphrase(e) {
-    console.log('passphrase');
+    //console.log('passphrase');
 
     this.setState({
       passphrase: e.target.value
@@ -183,10 +181,10 @@ class PreferencesComponent extends React.Component {
   }
 
   loginToKeybase() {
-    console.log('login');
+    console.log('[PGP] Keybase Login');
 
     let { username, passphrase } = this.state;
-    console.log('%s %s', username, passphrase);
+    //console.log('%s %s', username, passphrase);
 
     this.setState(Object.assign({}, this.defaultState, {
       username
@@ -214,7 +212,12 @@ class PreferencesComponent extends React.Component {
         userInfo: res.me
       }));
     } else {
-      console.log('listen:', username, uid, res);
+      console.log('listen: type=%s, username=%s, uid=%s, res=', type, username, uid, res);
+      /* this.setState({
+        username,
+        uid
+      }); */
+      this.forceUpdate();
     }
   }
 }
