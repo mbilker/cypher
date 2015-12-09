@@ -43,6 +43,7 @@ class EmailPGPFileDownloadStoreWatcher {
 
   _onDownloadStoreChange() {
     let changes = FileDownloadStore.downloadDataForFiles(Object.keys(this._watchingFileIds));
+    //console.log('Download Store Changes:', changes);
     Object.keys(changes).forEach((fileId) => {
       let file = changes[fileId];
       if (file.state === 'finished' && this._watchingFileIds[file.fileId]) {
