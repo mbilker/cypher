@@ -10,43 +10,6 @@ import kbpgp from 'kbpgp';
 
 import KeybaseIntegration from '../keybase';
 
-class SettingsButton extends React.Component {
-  static displayName = 'SettingsButton';
-
-  static propTypes = {
-    hidePopover: React.PropTypes.func.isRequired
-  }
-
-  constructor(props) {
-    super(props);
-
-    this._onClick = this._onClick.bind(this);
-  }
-
-  render() {
-    return <button onClick={this._onClick}>
-      Settings
-    </button>
-  }
-
-  _onClick() {
-    this.props.hidePopover();
-
-    let BrowserWindow = require('remote').require('browser-window')
-    let w = new BrowserWindow({
-      nodeIntegration: false,
-      webPreferences: {
-        webSecurity: false
-      },
-      width: 700,
-      height: 600
-    });
-
-    let url = require('path').join(__dirname, '..', 'settings', 'index.html');
-    w.loadURL(`file://${url}`);
-  }
-}
-
 class ComposerLoader extends React.Component {
   static displayName = 'ComposerLoader'
 
@@ -94,13 +57,6 @@ class ComposerLoader extends React.Component {
             type: "text",
             placeholder: "(e.g. max)"
           }
-          /* {
-            row: 1,
-            id: 'settings-window',
-            label: '',
-            type: SettingsButton,
-            hidePopover: this._hidePopover
-          } */
         ]
       }
     ]
