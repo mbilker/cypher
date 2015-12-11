@@ -73,7 +73,7 @@ class EmailPGPStore extends NylasStore {
   // Utils
 
   _setState(messageId, state) {
-    this._state[messageId] = state;
+    this._state[messageId] = Object.assign(this._state[messageId] || {}, state);
     this.trigger(messageId, this._state[messageId]);
   }
 
@@ -140,9 +140,12 @@ class EmailPGPStore extends NylasStore {
       return fs.accessAsync(path, fs.F_OK | fs.R_OK).then(() => {
         return fs.readFileAsync(path, 'utf8').then((text) => {
           console.log("Read attachment from disk");
+          if (!text) {
+            throw new FlowError("No text in attachment", true);
+          }
           return text;
         });
-      }, (err) => {
+      }).catch((err) => {
         console.log('Attachment file inaccessable, creating pending promise');
         return EmailPGPFileDownloadStoreWatcher.promiseForPendingFile(message.files[1].id);
       });
@@ -158,10 +161,10 @@ class EmailPGPStore extends NylasStore {
       this._getKey()
     ]).spread((text, pgpkey) => {
       if (!text) {
-        throw new Error("No text in attachment");
+        throw new FlowError("No text in attachment", true);
       }
       if (!pgpkey) {
-        throw new Error("No key in pgpkey variable");
+        throw new FlowError("No key in pgpkey variable", true);
       }
       return [text, pgpkey];
     });
