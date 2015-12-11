@@ -3,10 +3,6 @@ import {Flexbox} from 'nylas-component-kit';
 
 import {KeybaseActions, KeybaseStore} from '../keybase';
 
-// TODO: Branch out Keybase into own NylasStore to become more singleton-like
-// Right now I am just trying to get this working and public keys from
-// Keybase for other tracking users and download stored keys for decryption
-
 class PreferencesComponent extends React.Component {
   static displayName = 'PreferencesComponent';
 
