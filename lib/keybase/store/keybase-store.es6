@@ -19,6 +19,7 @@ class KeybaseStore extends NylasStore {
     this._configurationDirPath = path.join(NylasEnv.getConfigDirPath(), 'email-pgp');
 
     this.getPrimarySigChain = this.getPrimarySigChain.bind(this);
+    this.getTrackedUsers = this.getTrackedUsers.bind(this);
     this._login = this._login.bind(this);
     this._fetchAndVerifySigChain = this._fetchAndVerifySigChain.bind(this);
     this._checkConfigurationDirectoryExists = this._checkConfigurationDirectoryExists.bind(this);
@@ -36,6 +37,35 @@ class KeybaseStore extends NylasStore {
   // SigChain for the stored login
   getPrimarySigChain() {
     return this._cachedPrimarySigChain;
+  }
+
+  getPrimaryTrackedUsers() {
+    return this.getTrackedUsers(this._cachedPrimarySigChain);
+  }
+
+  getTrackedUsers(sigchain) {
+    if (!sigchain) {
+      throw new Error('No sigchain provided');
+    }
+
+    let trackingStatus = sigchain
+      .get_links()
+      .filter((a) => a.type === 'track' || a.type === 'untrack')
+      .reduce((origValue, value) => {
+        origValue[value.payload.body[value.type].basics.username] = origValue[value.payload.body[value.type].basics.username] || 0;
+        if (value.type === 'track') {
+          origValue[value.payload.body[value.type].basics.username] += 1;
+        } else if (value.type === 'untrack') {
+          origValue[value.payload.body[value.type].basics.username] -= 1;
+        }
+        return origValue;
+      }, {});
+
+    return Object.keys(b).reduce((array, name) => {
+      if (b[name] % 2 === 0) {
+        array.push(name);
+      }
+    }, []);
   }
 
   // Action Trigges
