@@ -81,8 +81,6 @@ class MessageLoaderHeader extends React.Component {
         <p>Decrypting message</p>
       </div>
     }
-
-    return null;
   }
 
   _renderErrorMessage() {
@@ -91,8 +89,6 @@ class MessageLoaderHeader extends React.Component {
         <p><b>Error:</b>{this.state.lastError.message}</p>
       </div>
     }
-
-    return null;
   }
 
   _onPGPStoreChange(messageId, state) {
