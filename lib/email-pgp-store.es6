@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 
 import NylasStore from 'nylas-store';
 import {Utils, FileDownloadStore, MessageBodyProcessor} from 'nylas-exports';
@@ -39,7 +40,7 @@ class EmailPGPStore extends NylasStore {
   // PUBLIC
 
   shouldDecryptMessage(message) {
-    if (message.files.length >= 1) {
+    if (message.files.length > 1) {
       return true;
     }
 
@@ -84,6 +85,11 @@ class EmailPGPStore extends NylasStore {
   // parallel. We parse the HTML out of the content, then update the state which
   // triggers a page update
   mainDecrypt(message) {
+    if (this._state[message.id]) {
+      console.log(`Already decrypting ${message.id}`);
+      return Promise.reject(`Already decrypting ${message.id}`);
+    }
+
     console.group(`[PGP] Message: ${message.id}`);
 
     this._setState(message.id, {
@@ -126,7 +132,7 @@ class EmailPGPStore extends NylasStore {
   // PGP HELPER INTERFACE
 
   _getKey() {
-    var keyLocation = require('path').join(process.env.HOME, 'pgpkey');
+    var keyLocation = path.join(process.env.HOME, 'pgpkey');
     return fs.readFileAsync(keyLocation, 'utf8');
   }
 
@@ -181,6 +187,8 @@ class EmailPGPStore extends NylasStore {
     return new decrypter().decrypt;
   }
 
+  // Uses regex to extract HTML component from a multipart message. Does not
+  // contribute a significant amount of time to the decryption process.
   _extractHTML(text) {
     let start = process.hrtime();
     let matches = /\n--[^\n\r]*\r?\nContent-Type: text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)\n\r?\n--/gim.exec(text);
@@ -196,8 +204,13 @@ class EmailPGPStore extends NylasStore {
   _decryptAndResetCache(message) {
     return this.mainDecrypt(message).then(() => {
       if (this._state[message.id] && !this._state[message.id].lastError) {
+        // Runs resetCache every run, and there can be many messages in a thread
+        // that are encrypted. TODO: need a way to track currently processing
+        // messages and run resetCache once, or only reprocess one message.
         MessageBodyProcessor.resetCache();
       }
+    }).catch((err) => {
+      console.log('[PGP] %s', err);
     });
   }
 }
