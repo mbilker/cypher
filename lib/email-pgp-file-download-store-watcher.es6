@@ -52,8 +52,13 @@ class EmailPGPFileDownloadStoreWatcher {
         fs.accessAsync(file.targetPath, fs.F_OK | fs.R_OK).then(() => {
           console.log(`Found downloaded attachment ${fileId}`);
           return fs.readFileAsync(file.targetPath, 'utf8').then((text) => {
-            this._watchingFileIds[file.fileId].resolve(text);
-            delete this._watchingFileIds[file.fileId];
+            if (!this._watchingFileIds[file.fileId].resolve) {
+              console.error('resolve undefined for some reason');
+              console.error(this._watchingFileIds[file.fileId]);
+            } else {
+              this._watchingFileIds[file.fileId].resolve(text);
+              delete this._watchingFileIds[file.fileId];
+            }
           });
         }, (err) => {
           this._watchingFileIds[file.fileId].reject(new FlowError('Downloaded attachment inaccessable', true));
