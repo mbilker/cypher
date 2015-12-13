@@ -1,4 +1,4 @@
 /node_modules
 
 /basscss/compiled.css
-/basscss/compiled.css.min
+/basscss/compiled.min.css
