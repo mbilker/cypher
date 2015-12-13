@@ -2,12 +2,14 @@
 var fs = require('fs');
 var path = require('path');
 var Cleancss = require('clean-css');
-var cssnext = require('cssnext');
 var cssstats = require('cssstats');
 var filesize = require('filesize');
 var postcss = require('postcss');
+var cssnext = require('postcss-cssnext');
+var importCSS = require('postcss-import');
 var reporter = require('postcss-reporter');
 var removeComments = require('postcss-discard-comments');
+var selectorPrefix = require('postcss-selector-prefix');
 
 var removeRoot = postcss.plugin('remove-root', function() {
   return function(root) {
@@ -19,12 +21,13 @@ var removeRoot = postcss.plugin('remove-root', function() {
   }
 });
 
-compile = function() {
+function compile() {
   var src = fs.readFileSync(path.join(__dirname, 'base.css'), 'utf8');
   var dest = path.join(__dirname, '/');
 
   var result =
     postcss()
+    .use(importCSS())
     .use(cssnext({
       features: {
         customProperties: {
@@ -37,6 +40,7 @@ compile = function() {
     }))
     .use(removeComments({ removeAll: true }))
     .use(removeRoot())
+    .use(selectorPrefix('.container-pgp-mail .keybase-sigchain'))
     .use(cssstats())
     .use(reporter())
     .process(src)

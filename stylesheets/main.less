@@ -1,13 +1,14 @@
 @import "ui-variables";
 @import "ui-mixins";
 
+@import (inline) "../basscss/compiled.min.css";
+
 .statusBox {
   display: block;
   padding-top: 6px;
   padding-right: 4px;
   padding-bottom: 6px;
   padding-left: 12px;
-  //padding: 6px 4px 2px 12px;
 }
 
 .statusBox p:last-child {
@@ -15,8 +16,6 @@
 }
 
 .errorBox {
-  //color: rgb(169, 68, 66);
-  //background-color: rgb(242, 222, 222);
   color: #a03232;
   background-color: rgba(255, 0, 0, 0.1);
 }
@@ -27,12 +26,6 @@
 }
 
 .container-pgp-mail {
-  //.item {
-  //  input {
-  //    margin: 0 0 0 8px;
-  //  }
-  //}
-
   .setting-name {
     max-width: 110px;
     flex: 1;
@@ -44,130 +37,6 @@
   }
 
   .keybase-sigchain {
-    /*
-
-      Basscss
-      http://basscss.com
-
-      670 B
-      45 Rules
-      48 Selectors
-      63 Declarations
-      Generated with http://basscss.com/customize
-
-    */
-    table {
-      border-collapse: separate;
-      border-spacing: 0;
-      max-width: 100%;
-      width: 100%;
-    }
-
-    th {
-      text-align: left;
-      font-weight: bold;
-    }
-
-    th,
-    td {
-      padding: .25rem 1rem;
-      line-height: inherit;
-    }
-
-    th { vertical-align: bottom }
-    td { vertical-align: top }
-
-    .table-light th,
-    .table-light td {
-      border-bottom-width: 1px;
-      border-bottom-style: solid;
-      border-bottom-color: rgba(0,0,0,.125);
-    }
-
-    .table-light tr:last-child td {
-      border-bottom: 0;
-    }
-
-    .inline       { display: inline }
-    .block        { display: block }
-    .inline-block { display: inline-block }
-    .table        { display: table }
-    .table-cell   { display: table-cell }
-
-    .overflow-hidden { overflow: hidden }
-    .overflow-scroll { overflow: scroll }
-    .overflow-auto   { overflow: auto }
-
-    .clearfix:before,
-    .clearfix:after {
-      content: " ";
-      display: table
-    }
-    .clearfix:after { clear: both }
-
-    .left  { float: left }
-    .right { float: right }
-
-    .fit { max-width: 100% }
-
-    .border-box { box-sizing: border-box }
-
-    .relative { position: relative }
-    .absolute { position: absolute }
-    .fixed    { position: fixed }
-
-    .top-0    { top: 0 }
-    .right-0  { right: 0 }
-    .bottom-0 { bottom: 0 }
-    .left-0   { left: 0 }
-
-    .z1 { z-index: 1 }
-    .z2 { z-index: 2 }
-    .z3 { z-index: 3 }
-    .z4 { z-index: 4 }
-
-    .border {
-      border-style: solid;
-      border-width: 1px;
-      border-color: rgba(0,0,0,.125);
-    }
-
-    .border-top {
-      border-top-style: solid;
-      border-top-width: 1px;
-      border-top-color: rgba(0,0,0,.125);
-    }
-
-    .border-right {
-      border-right-style: solid;
-      border-right-width: 1px;
-      border-right-color: rgba(0,0,0,.125);
-    }
-
-    .border-bottom {
-      border-bottom-style: solid;
-      border-bottom-width: 1px;
-      border-bottom-color: rgba(0,0,0,.125);
-    }
-
-    .border-left {
-      border-left-style: solid;
-      border-left-width: 1px;
-      border-left-color: rgba(0,0,0,.125);
-    }
-
-    .border-none { border: 0 }
-
-    .rounded { border-radius: 3px }
-    .circle  { border-radius: 50% }
-
-    .rounded-top    { border-radius: 3px 3px 0 0 }
-    .rounded-right  { border-radius: 0 3px 3px 0 }
-    .rounded-bottom { border-radius: 0 0 3px 3px }
-    .rounded-left   { border-radius: 3px 0 0 3px }
-
-    .not-rounded { border-radius: 0 }
-
     .bg-green { background-color: @state-success-bg }
   }
 }
@@ -178,22 +47,6 @@
     padding-right: 2px;
     padding-bottom: 2px;
     padding-left: 10px;
-  }
-
-  .generated-form {
-    .fieldset-form-items .row {
-      margin-top: 2px;
-    }
-  }
-
-  .form-footer, button {
-    padding-top: 4px;
-    padding-bottom: 4px;
-  }
-
-  .popover {
-    max-width: 400px !important;
-    width: 300px !important;
   }
 
   .menu {
