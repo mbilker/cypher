@@ -18,3 +18,21 @@ designed them yet.
 
 **Do not** trust the security of this package. It is not audited, fully tested,
 or safe at all.
+
+## TODO
+
+- [x] Config page
+- Encryption
+  - [ ] Form to enter Keybase username
+  - [ ] Allow for method of encryption to be set in settings (e.g. smart card through GPG)
+- Integrate with Keybase.io
+  - [x] Login
+  - [x] Encryption
+  - [ ] Decryption
+  - [x] Download "tracked" users list
+    - Thanks to libkeybase-js, this is much easier. Can verify the list as well.
+- Preferences
+  - Option to encrypt whole email with quoted text or without it
+- [ ] Better detection of PGP encrypted emails
+- [ ] Text input for passphrase
+- [ ] Spec tests for all features
