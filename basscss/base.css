@@ -1,8 +1,8 @@
+@import 'basscss-base-forms';
 @import 'basscss-base-tables';
-@import 'basscss-color-forms';
-@import 'basscss-color-tables';
 @import 'basscss-utility-typography';
 @import 'basscss-utility-layout';
+@import 'basscss-white-space';
 @import 'basscss-positions';
 @import 'basscss-borders';
 

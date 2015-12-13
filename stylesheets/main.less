@@ -9,10 +9,10 @@
   padding-right: 4px;
   padding-bottom: 6px;
   padding-left: 12px;
-}
 
-.statusBox p:last-child {
-  margin-bottom: 0;
+  p:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .errorBox {
@@ -37,6 +37,11 @@
   }
 
   .keybase-sigchain {
+    .btn-primary {
+      color: @text-color-selected;
+      background-color: @info-color;
+    }
+
     .bg-green { background-color: @state-success-bg }
   }
 }
@@ -47,18 +52,5 @@
     padding-right: 2px;
     padding-bottom: 2px;
     padding-left: 10px;
-  }
-
-  .menu {
-    .footer-container,
-    .header-container {
-      display:none;
-    }
-
-    .content-container {
-      max-height: 200px;
-      max-width: 200px;
-      overflow: scroll;
-    }
   }
 }
