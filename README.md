@@ -33,6 +33,7 @@ or safe at all.
     - Thanks to libkeybase-js, this is much easier. Can verify the list as well.
 - Preferences
   - Option to encrypt whole email with quoted text or without it
+  - Clearsign Signature and Encrypt
 - [ ] Better detection of PGP encrypted emails
 - [ ] Text input for passphrase
 - [ ] Spec tests for all features
