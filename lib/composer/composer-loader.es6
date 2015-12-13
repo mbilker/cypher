@@ -34,46 +34,16 @@ class ComposerLoader extends React.Component {
   }
 
   render() {
-    let items = ['first', 'second'];
-    let fieldsets = [
-      /* {
-        id: "status-fieldset",
-        heading: "Status Heading",
-        formItems: [
-          {
-            row: 0,
-            id: "error-text"
-          }
-        ]
-      }, */
-      {
-        id: "pgp-fieldset",
-        heading: "PGP Heading",
-        formItems: [
-          {
-            row: 0,
-            id: "enter-username",
-            label: "Keybase Username",
-            type: "text",
-            placeholder: "(e.g. max)"
-          }
-        ]
-      }
-    ]
     return <Popover ref="popover"
                     className="pgp-menu-picker pull-right"
                     buttonComponent={this._renderButton()}>
-      <form className="form">
+      <form className="pgp form">
         <div>
           <label>Keybase Username:</label>
           <input type="text" placeholder="(e.g. max)" onChange={this.onChange} />
         </div>
       </form>
     </Popover>
-      //<GeneratedForm id="keybase-encrypt"
-      //               fieldsets={fieldsets}
-      //               onChange={this.onChange}
-      //               onSubmit={this.onSubmit} />
   }
 
   _renderButton() {

@@ -50,7 +50,7 @@ class PreferencesComponent extends React.Component {
   }
 
   render() {
-    return <div className="container-pgp-mail">
+    return <div className="pgp container-pgp-mail">
       <section>
         <h2>Keybase Login</h2>
         <div><i>Sorry, tab to next field does not work</i></div>

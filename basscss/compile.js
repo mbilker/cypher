@@ -40,7 +40,7 @@ function compile() {
     }))
     .use(removeComments({ removeAll: true }))
     .use(removeRoot())
-    .use(selectorPrefix('.container-pgp-mail .keybase-sigchain'))
+    .use(selectorPrefix('.pgp'))
     .use(cssstats())
     .use(reporter())
     .process(src)
