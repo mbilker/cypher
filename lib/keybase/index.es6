@@ -4,7 +4,8 @@
 
 import KeybaseIntegration from './keybase-integration';
 
-import {KeybaseActions, KeybaseStore} from './store';
+import KeybaseActions from './store/keybase-actions';
+import KeybaseStore from './store/keybase-store';
 
 export { KeybaseIntegration };
 export { KeybaseActions, KeybaseStore };
