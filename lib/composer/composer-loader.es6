@@ -8,7 +8,7 @@ import {Menu, GeneratedForm, Popover, RetinaImg} from 'nylas-component-kit';
 //import openpgp from 'openpgp';
 import kbpgp from 'kbpgp';
 
-import KeybaseIntegration from '../keybase';
+import {KeybaseStore} from '../keybase';
 
 class ComposerLoader extends React.Component {
   static displayName = 'ComposerLoader'
@@ -38,10 +38,9 @@ class ComposerLoader extends React.Component {
                     className="pgp-menu-picker pull-right"
                     buttonComponent={this._renderButton()}>
       <form className="pgp form">
-        <div>
-          <label>Keybase Username:</label>
-          <input type="text" placeholder="(e.g. max)" onChange={this.onChange} />
-        </div>
+        <label>Keybase Username:</label>
+        <input className="field mb1 block" type="text" placeholder="(e.g. max)" onChange={this.onChange} />
+        <button className="btn btn-primary block" onClick={this.onSubmit}>Encrypt</button>
       </form>
     </Popover>
   }
@@ -56,21 +55,20 @@ class ComposerLoader extends React.Component {
 
   onChange(e) {
     console.log('change', e);
-    //this.setState({
-    //  username: e.fieldsets[0].formItems[0].value
-    //});
+    this.setState({
+      username: e.target.value
+    });
   }
 
   onSubmit(e) {
     this._hidePopover();
 
     let {username, fingerprint} = this.state;
-    let keybase = new KeybaseIntegration();
 
     console.log('submit');
     console.log(username);
 
-    return keybase.pubKeyForUsername(username).then((armoredKey) => {
+    return KeybaseStore.keybaseRemote.publicKeyForUsername(username).then((armoredKey) => {
       if (!armoredKey) {
         throw new Error("No public key for username " + username);
       }
@@ -82,7 +80,7 @@ class ComposerLoader extends React.Component {
           DraftStore.sessionForClientId(this.props.draftClientId),
           publicKey
         ];
-      }).then(([ session, publicKey ]) => {
+      }).spread((session, publicKey) => {
         let draftHtml = session.draft().body;
         let text = QuotedHTMLParser.removeQuotedHTML(draftHtml);
 
@@ -118,7 +116,7 @@ class ComposerLoader extends React.Component {
     //  resolve(openpgp.key.readArmored(publicKey));
     //});
 
-    let import_from_armored_pgp = Promise.promisify(kbpgp.import_from_armored_pgp);
+    let import_from_armored_pgp = Promise.promisify(kbpgp.KeyManager.import_from_armored_pgp);
 
     return import_from_armored_pgp({
       armored: publicKey
