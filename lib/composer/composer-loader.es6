@@ -87,7 +87,9 @@ class ComposerLoader extends React.Component {
 
         return this._encryptMessage(text, publicKey).then((pgpMessage) => {
           let bodyPgp = this._formatBody(pgpMessage);
-          let body = QuotedHTMLTransformer.appendQuotedHTML(bodyHeader + bodyPgp, draftHtml);
+          let body = QuotedHTMLTransformer.appendQuotedHTML(bodyHeader, draftHtml);
+
+          // TODO: add bodyPgp as an attachment
 
           console.log(body);
 
