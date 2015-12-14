@@ -2,7 +2,9 @@
 // User needs to specify which user to encrypt with. Script will download the
 // key and present the user's Keybase profile to ensure verification.
 
-import {Utils, DraftStore, QuotedHTMLTransformer, React} from 'nylas-exports';
+import path from 'path';
+
+import {Actions, DraftStore, QuotedHTMLTransformer, React, Utils} from 'nylas-exports';
 import {Menu, GeneratedForm, Popover, RetinaImg} from 'nylas-component-kit';
 
 //import openpgp from 'openpgp';
@@ -10,18 +12,14 @@ import kbpgp from 'kbpgp';
 
 import {KeybaseStore} from '../keybase';
 
+const SPAN_STYLES = "font-family:monospace,monospace;white-space:pre;";
+
 class ComposerLoader extends React.Component {
   static displayName = 'ComposerLoader'
 
   static propTypes = {
     draftClientId: React.PropTypes.string.isRequired
   }
-
-  state = {
-    username: ''
-  }
-
-  spanStyles = "font-family:monospace,monospace;white-space:pre;";
 
   constructor(props) {
     super(props);
@@ -31,6 +29,14 @@ class ComposerLoader extends React.Component {
     this.onChange = this.onChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this._hidePopover = this._hidePopover.bind(this);
+
+    this.temporaryAttachmentLocation = path.join(KeybaseStore._configurationDirPath, 'attachments');
+
+    this.state = {
+      username: ''
+    }
+
+    global.$pgpComposer = this;
   }
 
   render() {
@@ -91,6 +97,7 @@ class ComposerLoader extends React.Component {
 
           // TODO: add bodyPgp as an attachment
 
+
           console.log(body);
 
           session.changes.add({ body });
@@ -107,7 +114,7 @@ class ComposerLoader extends React.Component {
   }
 
   _formatBodyHeader(username, fingerprint) {
-    return `This message is encrypted for <span style="${this.spanStyles}">${username}</span> with key fingerprint <span style="${this.spanStyles}">${fingerprint}</span>.`;
+    return `This message is encrypted for <span style="${SPAN_STYLES}">${username}</span> with key fingerprint <span style="${SPAN_STYLES}">${fingerprint}</span>.`;
   }
 
   _formatBody(pgpMessage) {

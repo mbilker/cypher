@@ -30,6 +30,8 @@ class KeybaseStore extends NylasStore {
 
     this._checkConfigurationDirectoryExists();
     this._loadSavedCredentials();
+
+    global.$pgpKeybaseStore = this;
   }
 
   // Helper methods
@@ -160,7 +162,6 @@ class KeybaseStore extends NylasStore {
         });
       }).then((res) => {
         if (username === this.username & uid === this.uid) {
-          global.$pgpSigchain = res;
           this._cachedPrimarySigChain = res;
         }
 

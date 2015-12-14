@@ -34,7 +34,7 @@ class EmailPGPStore extends NylasStore {
     this.listenTo(EmailPGPActions.encryptMessage, this._encryptMessage);
     this.listenTo(EmailPGPActions.decryptMessage, this._decryptMessage);
 
-    global.EmailPGPStore = this;
+    global.$pgpEmailPGPStore = this;
   }
 
   // PUBLIC
