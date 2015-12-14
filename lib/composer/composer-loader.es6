@@ -2,7 +2,7 @@
 // User needs to specify which user to encrypt with. Script will download the
 // key and present the user's Keybase profile to ensure verification.
 
-import {Utils, DraftStore, QuotedHTMLParser, React} from 'nylas-exports';
+import {Utils, DraftStore, QuotedHTMLTransformer, React} from 'nylas-exports';
 import {Menu, GeneratedForm, Popover, RetinaImg} from 'nylas-component-kit';
 
 //import openpgp from 'openpgp';
@@ -73,8 +73,6 @@ class ComposerLoader extends React.Component {
         throw new Error("No public key for username " + username);
       }
 
-      let bodyHeader = this._formatBodyHeader(username, '(put fingerprint here)');
-
       return this._importPublicKey(armoredKey).then((publicKey) => {
         return [
           DraftStore.sessionForClientId(this.props.draftClientId),
@@ -82,11 +80,14 @@ class ComposerLoader extends React.Component {
         ];
       }).spread((session, publicKey) => {
         let draftHtml = session.draft().body;
-        let text = QuotedHTMLParser.removeQuotedHTML(draftHtml);
+        let text = QuotedHTMLTransformer.removeQuotedHTML(draftHtml);
 
-        return this._encryptMessage(msg, publicKey).then((pgpMessage) => {
+        let fingerprint = kbpgp.util.format_fingerprint(publicKey.get_pgp_fingerprint());
+        let bodyHeader = this._formatBodyHeader(username, fingerprint);
+
+        return this._encryptMessage(text, publicKey).then((pgpMessage) => {
           let bodyPgp = this._formatBody(pgpMessage);
-          let body = QuotedHTMLParser.appendQuotedHTML(bodyHeader + bodyPgp, draftHtml);
+          let body = QuotedHTMLTransformer.appendQuotedHTML(bodyHeader + bodyPgp, draftHtml);
 
           console.log(body);
 
