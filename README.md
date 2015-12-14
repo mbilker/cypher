@@ -25,6 +25,8 @@ or safe at all.
 - Encryption
   - [ ] Form to enter Keybase username
   - [ ] Allow for method of encryption to be set in settings (e.g. smart card through GPG)
+- Decryption
+  - [ ] TTL for decryption key passphrase
 - Integrate with Keybase.io
   - [x] Login
   - [x] Encryption
