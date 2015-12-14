@@ -43,7 +43,7 @@ class EmailPGPFileDownloadStoreWatcher {
 
   _onDownloadStoreChange() {
     let changes = FileDownloadStore.downloadDataForFiles(Object.keys(this._watchingFileIds));
-    //console.log('Download Store Changes:', changes);
+    console.log('Download Store Changes:', changes);
     Object.keys(changes).forEach((fileId) => {
       let file = changes[fileId];
       if (file.state === 'finished' && this._watchingFileIds[file.fileId]) {
@@ -52,9 +52,8 @@ class EmailPGPFileDownloadStoreWatcher {
         fs.accessAsync(file.targetPath, fs.F_OK | fs.R_OK).then(() => {
           console.log(`Found downloaded attachment ${fileId}`);
           return fs.readFileAsync(file.targetPath, 'utf8').then((text) => {
-            if (!this._watchingFileIds[file.fileId].resolve) {
-              console.error('resolve undefined for some reason');
-              console.error(this._watchingFileIds[file.fileId]);
+            if (!this._watchingFileIds[file.fileId] || !this._watchingFileIds[file.fileId].resolve) {
+              console.error('watching promise undefined');
             } else {
               this._watchingFileIds[file.fileId].resolve(text);
               delete this._watchingFileIds[file.fileId];
