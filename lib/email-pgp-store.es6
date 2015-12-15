@@ -209,7 +209,7 @@ class EmailPGPStore extends NylasStore {
         });
       }).catch((err) => {
         console.log('Attachment file inaccessable, creating pending promise');
-        return EmailPGPFileDownloadStoreWatcher.promiseForPendingFile(dataPart);
+        return EmailPGPFileDownloadStoreWatcher.promiseForPendingFile(dataPart.id);
       });
     } else {
       throw new FlowError("No valid attachment");
