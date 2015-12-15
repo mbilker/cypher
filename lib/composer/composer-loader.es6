@@ -2,6 +2,7 @@
 // User needs to specify which user to encrypt with. Script will download the
 // key and present the user's Keybase profile to ensure verification.
 
+import fs from 'fs';
 import path from 'path';
 
 import {Actions, DraftStore, QuotedHTMLTransformer, React, Utils} from 'nylas-exports';
@@ -29,8 +30,10 @@ class ComposerLoader extends React.Component {
     this.onChange = this.onChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this._hidePopover = this._hidePopover.bind(this);
+    this._ensureConfigurationDirectoryExists = this._ensureConfigurationDirectoryExists.bind(this);
 
     this.temporaryAttachmentLocation = path.join(KeybaseStore._configurationDirPath, 'attachments');
+    this._ensureConfigurationDirectoryExists();
 
     this.state = {
       username: ''
@@ -92,13 +95,18 @@ class ComposerLoader extends React.Component {
         let bodyHeader = this._formatBodyHeader(username, fingerprint);
 
         return this._encryptMessage(text, publicKey).then((pgpMessage) => {
-          let bodyPgp = this._formatBody(pgpMessage);
+          let temporaryDir = path.join(this.temporaryAttachmentLocation, this.props.draftClientId);
+          let attachmentPath = path.join(temporaryDir, 'encrypted.asc');
+          return fs.mkdirAsync(temporaryDir).then(() => {
+            return fs.writeFileAsync(attachmentPath, pgpMessage);
+          }).then(() => {
+            Actions.attachFilePath({
+              path: attachmentPath,
+              messageClientId: this.props.draftClientId
+            });
+          });
+        }).then(() => {
           let body = QuotedHTMLTransformer.appendQuotedHTML(bodyHeader, draftHtml);
-
-          // TODO: add bodyPgp as an attachment
-
-
-          console.log(body);
 
           session.changes.add({ body });
           session.changes.commit();
@@ -143,6 +151,21 @@ class ComposerLoader extends React.Component {
       encrypt_for: publicKey
     }).then(([ pgpMessage, pgpMessageBuffer ]) => {
       return pgpMessage;
+    });
+  }
+
+  _ensureConfigurationDirectoryExists() {
+    fs.access(this.temporaryAttachmentLocation, fs.F_OK, (err) => {
+      if (err) {
+        console.log('[PGP] Temporary attachment directory missing, creating');
+        fs.mkdir(this.temporaryAttachmentLocation, (err) => {
+          if (err) {
+            console.error('[PGP] Temporary attachment directory creation unsuccessful', err);
+          } else {
+            console.log('[PGP] Temporary attachment directory creation successful');
+          }
+        });
+      }
     });
   }
 }

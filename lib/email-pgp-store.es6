@@ -4,12 +4,17 @@ import path from 'path';
 import NylasStore from 'nylas-store';
 import {Utils, FileDownloadStore, MessageBodyProcessor} from 'nylas-exports';
 
+import MimeParser from 'mimeparser';
+
 import EmailPGPFileDownloadStoreWatcher from './email-pgp-file-download-store-watcher';
 import EmailPGPActions from './email-pgp-actions';
 
 import InProcessDecrypter from './decryption/in-process-decrypter';
 import WorkerProcessDecrypter from './decryption/worker-process-decrypter';
 import FlowError from './flow-error.es6';
+
+// THANK YOU GPGTOOLS! The `MimePart+GPGMail.m` is such a good guide to PGP
+// mail decryption
 
 class EmailPGPStore extends NylasStore {
   constructor() {
@@ -39,12 +44,39 @@ class EmailPGPStore extends NylasStore {
 
   // PUBLIC
 
+  // GPGTools (and other clients) send two attachments, where the first
+  // "metadata" attachment contains the string "Version: 1" and the second
+  // attachment is the encrypted message.
+  //
+  // Though, the "metadata" attachment's `contentType` is
+  // 'application/pgp-encrypted' and the encrypted message attachment is
+  // 'application/octet-stream', which is annoying to deal with.
   shouldDecryptMessage(message) {
-    if (message.files.length > 1) {
-      return true;
+    if (message.files.length < 1) {
+      console.log(`[PGP] ${message.id}: Failed attachment test`);
+      return false;
     }
 
-    return false;
+    let extensionTest = (file) => {
+      let ext = file.displayExtension();
+
+      // [@"pgp", @"gpg", @"asc"]
+      // https://github.com/GPGTools/GPGMail/blob/master/Source/MimePart%2BGPGMail.m#L643
+      if (ext === 'pgp' ||
+          ext === 'gpg' ||
+          ext === 'asc') {
+        return true;
+      }
+
+      return false;
+    }
+
+    if (!message.files.some(extensionTest)) {
+      console.log(`[PGP] ${message.id}: Failed extension test`);
+      return false;
+    }
+
+    return true;
   }
 
   haveCachedBody(message) {
@@ -138,8 +170,32 @@ class EmailPGPStore extends NylasStore {
 
   _retrievePGPAttachment(message) {
     console.log("Attachments: %d", message.files.length);
+
+    // Check for GPGTools-like message, even though we aren't MIME parsed yet,
+    // this still applies because the `octet-stream` attachments take
+    // precedence
+    // https://github.com/GPGTools/GPGMail/blob/master/Source/MimePart%2BGPGMail.m#L665
+    var dataPart = null;
+    var dataIndex = null;
+    var lastContentType = '';
     if (message.files.length >= 1) {
-      let path = FileDownloadStore.pathForFile(message.files[1]);
+      let {files} = message;
+
+      files.forEach((file, i) => {
+        if ((file.contentType === 'application/pgp-signature') || // EmailPGP-style encryption
+            ((file.contentType === 'application/octet-stream' && !dataPart) ||
+             (lastContentType === 'application/pgp-encrypted')) || // GPGTools-style encryption
+            (file.contentType === 'application/pgp-encrypted' && !dataPart)) { // Fallback
+          dataPart = file;
+          dataIndex = i;
+          lastContentType = file.contentType;
+        }
+      });
+    }
+
+    if (dataPart) {
+      let path = FileDownloadStore.pathForFile(dataPart);
+      console.log(`Using file[${dataIndex}] = %O`, dataPart);
 
       // async fs.exists was throwing because the first argument was true,
       // found fs.access as a suitable replacement
@@ -153,10 +209,10 @@ class EmailPGPStore extends NylasStore {
         });
       }).catch((err) => {
         console.log('Attachment file inaccessable, creating pending promise');
-        return EmailPGPFileDownloadStoreWatcher.promiseForPendingFile(message.files[1].id);
+        return EmailPGPFileDownloadStoreWatcher.promiseForPendingFile(dataPart);
       });
     } else {
-      throw new FlowError("No attachments");
+      throw new FlowError("No valid attachment");
     }
   }
 
@@ -191,14 +247,27 @@ class EmailPGPStore extends NylasStore {
   // contribute a significant amount of time to the decryption process.
   _extractHTML(text) {
     let start = process.hrtime();
-    let matches = /\n--[^\n\r]*\r?\nContent-Type: text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)\n\r?\n--/gim.exec(text);
-    let end = process.hrtime(start);
-    if (matches) {
-      console.log(`%cHTML found in decrypted: ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
-      return matches[1];
-    } else {
-      throw new FlowError("no HTML found in decrypted");
-    }
+    let parser = new MimeParser();
+    return new Promise((resolve, reject) => {
+      parser.onbody = (node, chunk) => {
+        console.log(node, chunk);
+      }
+      parser.onend = () => {
+        console.log('Parsing is finished');
+      }
+
+      parser.write(text);
+      parser.end();
+
+      let matches = /\n--[^\n\r]*\r?\nContent-Type: text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)\n\r?\n--/gim.exec(text);
+      let end = process.hrtime(start);
+      if (matches) {
+        console.log(`%cHTML found in decrypted: ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
+        resolve(matches[1]);
+      } else {
+        reject(new FlowError("no HTML found in decrypted"));
+      }
+    });
   }
 
   _decryptAndResetCache(message) {
