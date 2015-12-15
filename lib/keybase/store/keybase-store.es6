@@ -22,13 +22,13 @@ class KeybaseStore extends NylasStore {
     this.getTrackedUsers = this.getTrackedUsers.bind(this);
     this._login = this._login.bind(this);
     this._fetchAndVerifySigChain = this._fetchAndVerifySigChain.bind(this);
-    this._checkConfigurationDirectoryExists = this._checkConfigurationDirectoryExists.bind(this);
+    this._ensureConfigurationDirectoryExists = this._ensureConfigurationDirectoryExists.bind(this);
     this._loadSavedCredentials = this._loadSavedCredentials.bind(this);
 
     this.listenTo(KeybaseActions.login, this._login);
     this.listenTo(KeybaseActions.fetchAndVerifySigChain, this._fetchAndVerifySigChain);
 
-    this._checkConfigurationDirectoryExists();
+    this._ensureConfigurationDirectoryExists();
     this._loadSavedCredentials();
 
     global.$pgpKeybaseStore = this;
@@ -173,7 +173,7 @@ class KeybaseStore extends NylasStore {
 
   // Private methods
 
-  _checkConfigurationDirectoryExists() {
+  _ensureConfigurationDirectoryExists() {
     fs.access(this._configurationDirPath, fs.F_OK, (err) => {
       if (err) {
         console.log('[PGP] Configuration directory missing, creating');
