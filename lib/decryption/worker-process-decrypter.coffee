@@ -1,7 +1,9 @@
 child_process = require 'child_process'
+path = require 'path'
+
 openpgp = require 'openpgp'
 
-#openpgp.initWorker(require('path').join(__dirname, '..', '..', 'node_modules', 'openpgp', 'dist', 'openpgp.worker.js'));
+#openpgp.initWorker(path.join(__dirname, '..', '..', 'node_modules', 'openpgp', 'dist', 'openpgp.worker.js'));
 global.openpgp = openpgp;
 
 FlowError = require '../flow-error.es6'
@@ -26,7 +28,7 @@ class WorkerProcessDecrypter
     child = null
 
     new Promise((resolve) =>
-      child = child_process.fork require('path').join(__dirname, 'worker-decrypt.js')
+      child = child_process.fork path.join(__dirname, 'worker-decrypt.js')
 
       promise = new Promise (resolve, reject) ->
         child.on 'message', (message) ->
