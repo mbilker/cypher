@@ -23,7 +23,6 @@ class MessageLoaderHeader extends React.Component {
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this);
     this.render = this.render.bind(this);
-    this._renderErrorMessage = this._renderErrorMessage.bind(this);
     this._onPGPStoreChange = this._onPGPStoreChange.bind(this);
 
     this.state = EmailPGPStore.getState(this.props.message.id) || {};
@@ -69,26 +68,22 @@ class MessageLoaderHeader extends React.Component {
   }
 
   render() {
-    return <div>
-      {this._renderDecryptingMessage()}
-      {this._renderErrorMessage()}
-    </div>
-  }
+    var style, decryptingMessage, errorMessage;
 
-  _renderDecryptingMessage() {
     if (this.state.decrypting) {
-      return <div className="statusBox indicatorBox">
-        <p>Decrypting message</p>
-      </div>
+      decryptingMessage = <span>Decrypting message</span>;
+    } else if (this.state.lastError && this.state.lastError.display) {
+      errorMessage = <span className="error">
+        <b>Error:</b>{this.state.lastError.message}
+      </span>
+    } else {
+      style = { display: 'none' };
     }
-  }
 
-  _renderErrorMessage() {
-    if (this.state.lastError && this.state.lastError.display) {
-      return <div className="statusBox errorBox">
-        <p><b>Error:</b>{this.state.lastError.message}</p>
-      </div>
-    }
+    return <div className="pgp-message-header" style={style}>
+      {decryptingMessage}
+      {errorMessage}
+    </div>
   }
 
   _onPGPStoreChange(messageId, state) {

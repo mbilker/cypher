@@ -3,26 +3,19 @@
 
 @import (inline) "../basscss/compiled.min.css";
 
-.statusBox {
+.pgp-message-header {
   display: block;
-  padding-top: 6px;
-  padding-right: 4px;
-  padding-bottom: 6px;
-  padding-left: 12px;
+  background-color: mix(@background-primary, #FFCC11, 80%);
+  border: 1px solid darken(mix(@background-primary, #FFCC11, 50%), 30%);
+  color: fade(mix(@text-color-subtle, #FFCC11, 80%), 70%);
+  margin: @padding-base-vertical 0;
+  padding: @padding-base-vertical @padding-base-horizontal;
 
-  p:last-child {
-    margin-bottom: 0;
+  .error {
+    background-color: mix(@background-primary, #A03232, 80%);
+    border: 1px solid darken(mix(@background-primary, #A03232, 80%), 10%);
+    color: mix(@text-color-subtle, @text-color-alert, 80%);
   }
-}
-
-.errorBox {
-  color: #a03232;
-  background-color: rgba(255, 0, 0, 0.1);
-}
-
-.indicatorBox {
-  color: hsl(396, 50%, 34%);
-  background-color: hsl(396, 62%, 87%);
 }
 
 .container-pgp-mail {
