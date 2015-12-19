@@ -68,7 +68,8 @@ class MessageLoaderHeader extends React.Component {
   }
 
   render() {
-    var style, decryptingMessage, errorMessage;
+    var display = true;
+    var decryptingMessage, errorMessage;
 
     if (this.state.decrypting) {
       decryptingMessage = <span>Decrypting message</span>;
@@ -77,13 +78,17 @@ class MessageLoaderHeader extends React.Component {
         <b>Error:</b>{this.state.lastError.message}
       </span>
     } else {
-      style = { display: 'none' };
+      display = false;
     }
 
-    return <div className="pgp-message-header" style={style}>
-      {decryptingMessage}
-      {errorMessage}
-    </div>
+    if (display) {
+      return <div className="pgp-message-header">
+        {decryptingMessage}
+        {errorMessage}
+      </div>
+    } else {
+      return <div />;
+    }
   }
 
   _onPGPStoreChange(messageId, state) {
