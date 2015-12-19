@@ -35,7 +35,7 @@ var encryptedMessage = null;
 
 function decryptRoutine() {
   var startTime = process.hrtime();
-  console.log(ring);
+  //console.log(ring);
   kbpgp.unbox({ keyfetch: ring, armored: encryptedMessage }, d.intercept(function(literals) {
     var elapsed = process.hrtime(startTime);
 
