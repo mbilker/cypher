@@ -59,7 +59,7 @@ class EmailPGPFileDownloadStoreWatcher {
               delete this._watchingFileIds[file.fileId];
             }
           });
-        }, (err) => {
+        }).catch((err) => {
           this._watchingFileIds[file.fileId].reject(new FlowError('Downloaded attachment inaccessable', true));
           delete this._watchingFileIds[file.fileId];
         });
