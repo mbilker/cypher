@@ -6,15 +6,21 @@
 .pgp-message-header {
   display: block;
   background-color: mix(@background-primary, #FFCC11, 80%);
-  border: 1px solid darken(mix(@background-primary, #FFCC11, 50%), 30%);
+  border: 1px solid darken(mix(@background-primary, #FFCC11, 50%), 25%);
   color: fade(mix(@text-color-subtle, #FFCC11, 80%), 70%);
   margin: @padding-base-vertical 0;
   padding: @padding-base-vertical @padding-base-horizontal;
 
   .error {
     background-color: mix(@background-primary, #A03232, 80%);
-    border: 1px solid darken(mix(@background-primary, #A03232, 80%), 10%);
+    border: 1px solid darken(mix(@background-primary, #A03232, 50%), 10%);
     color: mix(@text-color-subtle, @text-color-alert, 80%);
+  }
+
+  .success {
+    background-color: mix(@background-primary, @text-color-success, 80%);
+    border: 1px solid darken(mix(@background-primary, @text-color-success, 50%), 10%);
+    color: mix(@text-color-subtle, @text-color-success, 80%);
   }
 }
 
