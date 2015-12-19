@@ -11,7 +11,7 @@
   },
   "description": "Enter a description of your package!",
   "dependencies": {
-    "kbpgp": "^2.0.49",
+    "kbpgp": "git://github.com/keybase/kbpgp.git",
     "libkeybase": "^1.2.22",
     "mimeparser": "^0.3.8",
     "node-keybase": "0.0.5",
