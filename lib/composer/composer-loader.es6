@@ -26,7 +26,6 @@ class ComposerLoader extends React.Component {
     super(props);
 
     this.render = this.render.bind(this);
-    this._renderButton = this._renderButton.bind(this);
     this.onChange = this.onChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this._hidePopover = this._hidePopover.bind(this);
@@ -43,23 +42,21 @@ class ComposerLoader extends React.Component {
   }
 
   render() {
+    let button = <button className="btn btn-toolbar">
+      PGP Encrypt
+      <RetinaImg mode={RetinaImg.Mode.ContentPreserve}
+                 name="toolbar-chevron.png" />
+    </button>
+
     return <Popover ref="popover"
                     className="pgp-menu-picker pull-right"
-                    buttonComponent={this._renderButton()}>
+                    buttonComponent={button}>
       <form className="pgp form">
         <label>Keybase Username:</label>
         <input className="field mb1 block" type="text" placeholder="(e.g. max)" onChange={this.onChange} />
         <button className="btn btn-primary block" onClick={this.onSubmit}>Encrypt</button>
       </form>
     </Popover>
-  }
-
-  _renderButton() {
-    return <button className="btn btn-toolbar">
-      PGP Encrypt
-      <RetinaImg mode={RetinaImg.Mode.ContentPreserve}
-                 name="toolbar-chevron.png" />
-    </button>
   }
 
   onChange(e) {
