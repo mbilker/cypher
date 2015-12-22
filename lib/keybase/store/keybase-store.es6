@@ -91,7 +91,12 @@ class KeybaseStore extends NylasStore {
         NylasEnv.config.set('email-pgp.keybase.csrf_token', res.csrf_token);
         NylasEnv.config.set('email-pgp.keybase.session_token', res.session);
 
-        promise = fs.writeFileAsync(path.join(this._configurationDirPath, ))
+        promise = fs.writeFileAsync(path.join(this._configurationDirPath, 'keybase_login.json'), JSON.stringify({
+          username: username,
+          uid: res.uid,
+          csrf_token: res.csrf_token,
+          session_token: res.session
+        }));
 
         this._loadSavedCredentials();
       }

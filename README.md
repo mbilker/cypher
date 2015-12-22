@@ -21,7 +21,6 @@ or safe at all.
 
 ## TODO
 
-- [x] Config page
 - Encryption
   - [ ] Form to enter Keybase username
   - [ ] Allow for method of encryption to be set in settings (e.g. smart card through GPG)
@@ -34,8 +33,9 @@ or safe at all.
   - [x] Download "tracked" users list
     - Thanks to libkeybase-js, this is much easier. Can verify the list as well.
 - Preferences
-  - Option to encrypt whole email with quoted text or without it
-  - Clearsign Signature and Encrypt
+  - [ ] Option to encrypt whole email with quoted text or without it
+  - [ ] Clearsign Signature and Encrypt
+  - Fix the error bar to use new CSS classes
 - [ ] Better detection of PGP encrypted emails
 - [ ] Text input for passphrase
 - [ ] Spec tests for all features
