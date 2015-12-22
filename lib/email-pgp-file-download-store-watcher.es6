@@ -46,6 +46,7 @@ class EmailPGPFileDownloadStoreWatcher {
     console.log('Download Store Changes:', changes);
     Object.keys(changes).forEach((fileId) => {
       let file = changes[fileId];
+
       if (file.state === 'finished' && this._watchingFileIds[file.fileId]) {
         console.log(`Checking ${file.fileId}`);
         // TODO: Dedupe the file reading logic into separate method
