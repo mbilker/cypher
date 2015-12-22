@@ -292,12 +292,36 @@ class EmailPGPStore extends NylasStore {
   }
 
   _decryptAndResetCache(message) {
+    let key = MessageBodyProcessor._key(message);
+
     return this.mainDecrypt(message).then(() => {
       if (this._state[message.id] && !this._state[message.id].lastError) {
         // Runs resetCache every run, and there can be many messages in a thread
         // that are encrypted. TODO: need a way to track currently processing
         // messages and run resetCache once, or only reprocess one message.
-        MessageBodyProcessor.resetCache();
+        //MessageBodyProcessor.resetCache();
+
+        var messageIndex = null;
+        MessageBodyProcessor._recentlyProcessedA.some(({key: _key, body}, i) => {
+          if (key === _key) {
+            messageIndex = i;
+            return true;
+          }
+
+          return false;
+        });
+
+        if (messageIndex !== null) {
+          MessageBodyProcessor._recentlyProcessedA.splice(messageIndex, 1);
+          delete MessageBodyProcessor._recentlyProcessedD[key];
+        }
+
+        let processed = MessageBodyProcessor.process(message);
+        MessageBodyProcessor._subscriptions.forEach(({message: _message, callback}) => {
+          if (message.id === _message.id) {
+            callback(processed);
+          }
+        });
       }
     }).catch((err) => {
       console.log('[PGP] %s', err);
