@@ -1,9 +1,9 @@
 // Decrypt Worker
 //
-// Decrypting function of openpgpjs takes too much time. This worked will
+// Decrypting function of openpgpjs takes too much time. This worker will
 // prevent UI freezing.
 
-var kbpgp = require('kbpgp');
+var kbpgp = require('../kbpgp/browser/kbpgp.js');
 
 if (!process.send) {
   return console.error('This is an IPC worker. Use as is intended');
@@ -83,7 +83,7 @@ process.on('message', d.bind(function(message) {
   } else if (message.method == ENCRYPTED_MESSAGE) {
     console.log('parent sent encrypted message');
 
-    encryptedMessage = message.encryptedMessage;
+    encryptedMessage = message.encryptedMessage.toString();
   } else if (message.method == DECRYPT) {
     decryptRoutine();
   }
