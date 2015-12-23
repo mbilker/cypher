@@ -9,7 +9,8 @@ import MimeParser from 'mimeparser';
 import EmailPGPFileDownloadStoreWatcher from './email-pgp-file-download-store-watcher';
 import EmailPGPActions from './email-pgp-actions';
 
-import InProcessDecrypter from './decryption/in-process-decrypter';
+//import InProcessDecrypter from './decryption/in-process-decrypter';
+import InProcessDecrypter from './decryption/kbpgp-in-process';
 import WorkerProcessDecrypter from './decryption/worker-process-decrypter';
 import FlowError from './flow-error.es6';
 
@@ -165,7 +166,7 @@ class EmailPGPStore extends NylasStore {
 
   _getKey() {
     var keyLocation = path.join(process.env.HOME, 'pgpkey');
-    return fs.readFileAsync(keyLocation, 'utf8');
+    return fs.readFileAsync(keyLocation);
   }
 
   _retrievePGPAttachment(message) {
@@ -236,9 +237,9 @@ class EmailPGPStore extends NylasStore {
     const chosen = "WORKER_PROCESS";
     var decrypter = InProcessDecrypter; // IN_PROCESS
 
-    if (chosen === "WORKER_PROCESS") {
-      decrypter = WorkerProcessDecrypter;
-    }
+    //if (chosen === "WORKER_PROCESS") {
+    //  decrypter = WorkerProcessDecrypter;
+    //}
 
     return new decrypter().decrypt;
   }
