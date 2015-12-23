@@ -1,4 +1,4 @@
-import kbpgp from 'kbpgp';
+import kbpgp from '../../kbpgp';
 
 import KeyStore from '../kbpgp/key-store';
 
@@ -32,7 +32,7 @@ class InProcessDecrypter {
       } else {
         return secretKey;
       }
-    }).then(() => {
+    }).then((secretKey) => {
       console.log('secret key unlocked');
 
       KeyStore.addKeyManager(secretKey);
