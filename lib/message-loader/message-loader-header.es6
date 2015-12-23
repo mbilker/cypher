@@ -7,6 +7,7 @@
 import {Utils, MessageBodyProcessor, React} from 'nylas-exports';
 
 import EmailPGPStore from '../email-pgp-store';
+import FlowError from '../flow-error';
 
 class MessageLoaderHeader extends React.Component {
   static displayName = 'MessageLoader'
@@ -70,19 +71,21 @@ class MessageLoaderHeader extends React.Component {
   render() {
     var display = true;
     var decryptingMessage, errorMessage;
+    var className = "pgp-message-header";
 
     if (this.state.decrypting) {
       decryptingMessage = <span>Decrypting message</span>;
-    } else if (this.state.lastError && this.state.lastError.display) {
-      errorMessage = <span className="error">
-        <b>Error:</b>{this.state.lastError.message}
-      </span>
+    } else if (this.state.lastError &&
+               ((this.state.lastError instanceof FlowError && this.state.lastError.display) ||
+                !(this.state.lastError instanceof FlowError))) {
+      className += ' error';
+      errorMessage = <span><b>Error: </b>{this.state.lastError.message}</span>;
     } else {
       display = false;
     }
 
     if (display) {
-      return <div className="pgp-message-header">
+      return <div className={className}>
         {decryptingMessage}
         {errorMessage}
       </div>
