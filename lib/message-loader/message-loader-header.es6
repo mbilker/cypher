@@ -78,7 +78,7 @@ class MessageLoaderHeader extends React.Component {
     } else if (this.state.lastError &&
                ((this.state.lastError instanceof FlowError && this.state.lastError.display) ||
                 !(this.state.lastError instanceof FlowError))) {
-      className += ' error';
+      className += ' pgp-message-header-error';
       errorMessage = <span><b>Error: </b>{this.state.lastError.message}</span>;
     } else {
       display = false;
