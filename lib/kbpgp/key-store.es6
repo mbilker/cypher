@@ -1,3 +1,5 @@
+import kbpgp from '../../kbpgp';
+
 let hexkid = (k) => k.toString('hex');
 
 class HKP {
@@ -46,6 +48,8 @@ class KeyStore {
     this.fetch = this.fetch.bind(this);
     this.findBestKey = this.findBestKey.bind(this);
     this.lookup = this.lookup.bind(this);
+
+    global.$pgpKeyStore = this;
   }
 
   addKeyManager(km) {
@@ -78,21 +82,42 @@ class KeyStore {
       return _results;
     })();
 
-    console.log(key_ids);
-
-    for (var _i = 0, _len = key_ids.length; _i < _len; _i++) {
-      let id = key_ids[_i];
-      let k = this._keys[id];
-      if (k != null ? (_ref = k.key) != null ? _ref.can_perform(ops) : void 0 : void 0) {
-        ret_i = i;
-        km = this._kms[id];
-        break;
+    let check_for_key = () => {
+      for (var _i = 0, _len = key_ids.length; _i < _len; _i++) {
+        let id = key_ids[_i];
+        let k = this._keys[id];
+        if (k != null ? (_ref = k.key) != null ? _ref.can_perform(ops) : void 0 : void 0) {
+          ret_i = _i;
+          km = this._kms[id];
+          break;
+        }
       }
     }
+
+    check_for_key();
+
     if (km == null) {
-      err = new Error(`key not found: ${JSON.stringify(key_ids)}`);
+      let promises = key_ids.map((k) => {
+        return this.fetchRemotePublicKey(k).then(([km, warn]) => {
+          this.addKeyManager(km);
+        });
+      });
+
+      Promise.all(promises).then(() => {
+        check_for_key();
+
+        if (km == null) {
+          err = new Error(`key not found: ${JSON.stringify(key_ids)}`);
+          cb(err, km, ret_i);
+        } else {
+          cb(err, km, ret_i);
+        }
+      }).catch((err) => {
+        cb(err, km, ret_i);
+      });
+    } else {
+      cb(err, km, ret_i);
     }
-    cb(err, km, ret_i);
   }
 
   // Pick the best key to fill the flags asked for by the flags.
