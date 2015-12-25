@@ -35,6 +35,7 @@
     "basscss-utility-layout": "^2.0.3",
     "basscss-utility-typography": "^2.0.0",
     "basscss-white-space": "^1.1.2",
+    "bluebird": "^3.1.1",
     "clean-css": "^3.4.8",
     "cssstats": "^2.1.2",
     "filesize": "^3.1.4",
