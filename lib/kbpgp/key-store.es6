@@ -1,39 +1,8 @@
 import kbpgp from '../../kbpgp';
 
+import HKP from './hkp';
+
 let hexkid = (k) => k.toString('hex');
-
-class HKP {
-  constructor(keyServerBaseUrl, fetch) {
-    this._baseUrl = keyServerBaseUrl ? keyServerBaseUrl : 'https://pgp.mit.edu';
-    this._fetch = fetch ? fetch : typeof window !== 'undefined' && window.fetch;
-
-    this.lookup = this.lookup.bind(this);
-  }
-
-  lookup(options) {
-    var uri = this._baseUrl + '/pks/lookup?op=get&options=mr&search=';
-
-    // Really obsure bug here. If we replace fetch(url) later, Electron throws
-    // an "Illegal invocation error" unless we unwrap the variable here.
-    var fetch = this._fetch;
-
-    if (options.keyId) {
-      uri += '0x' + options.keyId;
-    } else if (options.query) {
-      uri += options.query;
-    } else {
-      throw new Error('You must provide a query parameter!');
-    }
-
-    return fetch(uri).then((response) => {
-      return response.text();
-    }).then((publicKeyArmored) => {
-      if (publicKeyArmored && publicKeyArmored.indexOf('-----END PGP PUBLIC KEY BLOCK-----') > -1) {
-        return publicKeyArmored.trim();
-      }
-    });
-  }
-}
 
 // Adapted from PgpKeyRing in kbpgp
 class KeyStore {
@@ -48,6 +17,7 @@ class KeyStore {
     this.fetch = this.fetch.bind(this);
     this.findBestKey = this.findBestKey.bind(this);
     this.lookup = this.lookup.bind(this);
+    this.lookupKeyManager = this.lookupKeyManager.bind(this);
 
     global.$pgpKeyStore = this;
   }
@@ -71,7 +41,7 @@ class KeyStore {
   }
 
   fetch(key_ids, ops, cb) {
-    var ret_i;
+    var ret_i, key_material, err, obj, km, _ref;
     var key_material = err = obj = km = null;
 
     key_ids = (() => {
@@ -98,8 +68,8 @@ class KeyStore {
 
     if (km == null) {
       let promises = key_ids.map((k) => {
-        return this.fetchRemotePublicKey(k).then(([km, warn]) => {
-          this.addKeyManager(km);
+        return this.fetchRemotePublicKey(k).then(([kmm, warn]) => {
+          this.addKeyManager(kmm);
         });
       });
 
@@ -123,7 +93,8 @@ class KeyStore {
   // Pick the best key to fill the flags asked for by the flags.
   // See C.openpgp.key_flags for ideas of what the flags might be.
   findBestKey({key_id, flags}, cb) {
-    let km = this._kms[(kid = hexkid(key_id))];
+    let kid = hexkid(key_id);
+    let km = this._kms[kid];
 
     if (km == null) {
       err = new Error("Could not find key for fingerprint " + kid);
@@ -135,7 +106,11 @@ class KeyStore {
   }
 
   lookup(key_id) {
-    return this._keys(hexkid(key_id));
+    return this._keys[hexkid(key_id)];
+  }
+
+  lookupKeyManager(key_id) {
+    return this._kms[hexkid(key_id)];
   }
 }
 
