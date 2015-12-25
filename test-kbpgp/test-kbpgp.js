@@ -2,7 +2,7 @@ var child_process = require('child_process');
 var fs = require('fs');
 var path = require('path');
 
-var child = child_process.fork(path.join(__dirname, 'worker-decrypt2.js'));
+var child = child_process.fork(path.join(__dirname, 'kbpgp-worker-decrypt.js'));
 
 child.on('message', function(message) {
   console.log('Child sent message:', message);

@@ -3,7 +3,7 @@
 // Decrypting function of openpgpjs takes too much time. This worker will
 // prevent UI freezing.
 
-var kbpgp = require('../kbpgp/browser/kbpgp.js');
+var kbpgp = require('../kbpgp');
 
 if (!process.send) {
   return console.error('This is an IPC worker. Use as is intended');
