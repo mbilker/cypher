@@ -38,7 +38,7 @@ export default class HKP {
       return new Promise((resolve, reject) => {
         request(uri, (error, response, body) => {
           if (!error && response.statusCode == 200) {
-            resolve(body);
+            resolve({ text: () => body });
           } else {
             reject(error);
           }

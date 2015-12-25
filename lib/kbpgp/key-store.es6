@@ -33,9 +33,15 @@ class KeyStore {
   }
 
   fetchRemotePublicKey(keyId) {
-    return this._hkp.lookup({ keyId }).then((publicKeyArmored) => {
-      return Promise.promisify(kbpgp.KeyManager.import_from_armored_pgp)({
-        armored: publicKeyArmored
+    return this._hkp.lookup({ keyId }).then((armored) => {
+      return new Promise((resolve, reject) => {
+        kbpgp.KeyManager.import_from_armored_pgp({ armored }, (err, km, warn) => {
+          if (err) {
+            reject(err, km, warn);
+          } else {
+            resolve(km, warn);
+          }
+        });
       });
     });
   }
@@ -68,7 +74,7 @@ class KeyStore {
 
     if (km == null) {
       let promises = key_ids.map((k) => {
-        return this.fetchRemotePublicKey(k).then(([kmm, warn]) => {
+        return this.fetchRemotePublicKey(k).then((kmm, warn) => {
           this.addKeyManager(kmm);
         });
       });
