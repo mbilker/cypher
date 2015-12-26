@@ -97,7 +97,7 @@ class MessageLoaderHeader extends React.Component {
   _onPGPStoreChange(messageId, state) {
     if (messageId === this.props.message.id) {
       console.log('received event', state);
-      this.setState(state);
+      this.replaceState(state);
 
       // Fixed in nylas/N1@39a142ddcb80c7e1fce22dfe1e0e628272154523
       //if (state.decryptedMessage) {
