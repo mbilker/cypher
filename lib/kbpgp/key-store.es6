@@ -33,7 +33,7 @@ class KeyStore {
   }
 
   fetchRemotePublicKey(keyId) {
-    return this._hkp.lookup({ keyId }).then((armored) => {
+    return this._hkp.lookup(keyId).then((armored) => {
       return new Promise((resolve, reject) => {
         kbpgp.KeyManager.import_from_armored_pgp({ armored }, (err, km, warn) => {
           if (err) {

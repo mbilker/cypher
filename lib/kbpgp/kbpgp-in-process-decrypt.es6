@@ -12,22 +12,26 @@ class InProcessDecrypter {
     let importFromArmoredPGP = Promise.promisify(kbpgp.KeyManager.import_from_armored_pgp);
     let unbox = Promise.promisify(kbpgp.unbox);
 
+    var startTime;
+
     return importFromArmoredPGP({
       armored: pgpkey
     }).then(([secretKey, warnings]) => {
-      console.log(secretKey.get_pgp_fingerprint());
       let cachedKey = KeyStore.lookupKeyManager(secretKey.get_pgp_key_id());
-      console.log(cachedKey);
-      if (!cachedKey) {
+      if (cachedKey) {
+        console.log('[InProcessDecrypter] Found cached key %O', cachedKey);
+      } else {
         return this.decryptKey(secretKey);
       }
     }).then(() => {
+      startTime = process.hrtime();
       return unbox({
         keyfetch: KeyStore,
         armored: text
       });
     }).then(([literals]) => {
-      console.log(literals);
+      let elapsed = process.hrtime(startTime);
+      console.log(`[InProcessDecrypter] %cDecrypted literals in ${elapsed[0] * 1e3 + elapsed[1] / 1e6}ms`, 'color:red');
 
       return literals[0].toString();
     });
@@ -37,7 +41,6 @@ class InProcessDecrypter {
     let passphrase = NylasEnv.config.get("email-pgp.passphrase-b64") || '';
 
     return new Promise((resolve) => {
-      console.log(secretKey);
       if (secretKey.is_pgp_locked()) {
         let startTime = process.hrtime();
         secretKey.unlock_pgp({
@@ -48,7 +51,7 @@ class InProcessDecrypter {
           }
 
           let elapsed = process.hrtime(startTime);
-          console.log(elapsed);
+          console.log(`[InProcessDecrypter] %cUnlocked secret key in ${elapsed[0] * 1e3 + elapsed[1] / 1e6}ms`, "color:red");
 
           resolve(secretKey);
         });
@@ -56,8 +59,6 @@ class InProcessDecrypter {
         resolve(secretKey);
       }
     }).then((secretKey) => {
-      console.log('secret key unlocked');
-
       KeyStore.addKeyManager(secretKey);
     });
   }

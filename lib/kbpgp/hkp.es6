@@ -1,5 +1,7 @@
 // HKP Public Key Fetcher
 
+import HKPCacher from './hkp-cacher';
+
 export default class HKP {
   constructor(keyServerBaseUrl) {
     this.lookup = this.lookup.bind(this);
@@ -9,23 +11,22 @@ export default class HKP {
     this._fetch = (typeof window !== 'undefined' && window.fetch) ? window.fetch : this._makeFetch();
   }
 
-  lookup(options) {
-    var uri = this._baseUrl + '/pks/lookup?op=get&options=mr&search=';
+  lookup(keyId) {
+    var uri = this._baseUrl + `/pks/lookup?op=get&options=mr&search=0x${keyId}`;
 
     // Really obsure bug here. If we replace fetch(url) later, Electron throws
     // an "Illegal invocation error" unless we unwrap the variable here.
     var fetch = this._fetch;
 
-    if (options.keyId) {
-      uri += '0x' + options.keyId;
-    } else if (options.query) {
-      uri += options.query;
-    } else {
-      throw new Error('You must provide a query parameter!');
-    }
+    return HKPCacher.isCached(keyId).then((result) => {
+      if (!result) {
+        return fetch(uri).then((response) => response.text()).then((text) => {
+          HKPCacher.cacheResult(keyId, text);
+          return text;
+        });
+      }
 
-    return fetch(uri).then((response) => {
-      return response.text();
+      return result;
     }).then((publicKeyArmored) => {
       if (publicKeyArmored && publicKeyArmored.indexOf('-----END PGP PUBLIC KEY BLOCK-----') > -1) {
         return publicKeyArmored.trim();
