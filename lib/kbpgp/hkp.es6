@@ -1,3 +1,5 @@
+// HKP Public Key Fetcher
+
 export default class HKP {
   constructor(keyServerBaseUrl) {
     this.lookup = this.lookup.bind(this);
@@ -31,6 +33,7 @@ export default class HKP {
     });
   }
 
+  // For testing without Electron providing fetch API
   _makeFetch() {
     let request = require('request');
 
