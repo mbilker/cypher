@@ -5,6 +5,7 @@
 // KeyManager in memory, it is still nice to have around.
 
 import fs from 'fs';
+import path from 'path';
 
 class HKPCacher {
   constructor() {
