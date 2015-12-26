@@ -53,8 +53,8 @@ class ComposerLoader extends React.Component {
                     buttonComponent={button}>
       <form className="pgp form">
         <label>Keybase Username:</label>
-        <input className="field mb1 block" type="text" placeholder="(e.g. max)" onChange={this.onChange} />
-        <button className="btn btn-primary block" onClick={this.onSubmit}>Encrypt</button>
+        <input className="pgp field mb1 block" type="text" placeholder="(e.g. max)" onChange={this.onChange} />
+        <button className="pgp btn btn-primary block" onClick={this.onSubmit}>Encrypt</button>
       </form>
     </Popover>
   }
