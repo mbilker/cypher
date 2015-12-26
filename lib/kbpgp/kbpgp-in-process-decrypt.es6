@@ -40,7 +40,7 @@ class InProcessDecrypter {
   decryptKey(secretKey) {
     let passphrase = NylasEnv.config.get("email-pgp.passphrase-b64") || '';
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       if (secretKey.is_pgp_locked()) {
         let startTime = process.hrtime();
         secretKey.unlock_pgp({
