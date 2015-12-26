@@ -170,7 +170,7 @@ class EmailPGPStore extends NylasStore {
   }
 
   _retrievePGPAttachment(message) {
-    console.log("Attachments: %d", message.files.length);
+    console.log("[EmailPGPStore] Attachments: %d", message.files.length);
 
     // Check for GPGTools-like message, even though we aren't MIME parsed yet,
     // this still applies because the `octet-stream` attachments take
