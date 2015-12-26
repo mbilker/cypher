@@ -119,7 +119,7 @@ class EmailPGPStore extends NylasStore {
   // triggers a page update
   mainDecrypt(message) {
     if (this._state[message.id]) {
-      console.log(`Already decrypting ${message.id}`);
+      console.log(`[EmailPGPStore] Already decrypting ${message.id}`);
       return Promise.reject(`Already decrypting ${message.id}`);
     }
 
@@ -134,7 +134,7 @@ class EmailPGPStore extends NylasStore {
     let startDecrypt = process.hrtime();
     return this._getAttachmentAndKey(message).spread(decrypter).then((text) => {
       let endDecrypt = process.hrtime(startDecrypt);
-      console.log(`%cTotal message decrypt time: ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
+      console.log(`[EmailPGPStore] %cMessage decrypted in ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
       return text;
     }).then(this._extractHTML).then((match) => {
       this._cachedMessages[message.id] = match;
@@ -196,20 +196,20 @@ class EmailPGPStore extends NylasStore {
 
     if (dataPart) {
       let path = FileDownloadStore.pathForFile(dataPart);
-      console.log(`Using file[${dataIndex}] = %O`, dataPart);
+      console.log(`[EmailPGPStore] Using file[${dataIndex}] = %O`, dataPart);
 
       // async fs.exists was throwing because the first argument was true,
       // found fs.access as a suitable replacement
       return fs.accessAsync(path, fs.F_OK | fs.R_OK).then(() => {
         return fs.readFileAsync(path, 'utf8').then((text) => {
-          console.log("Read attachment from disk");
+          console.log("[EmailPGPStore] Read attachment from disk");
           if (!text) {
             throw new FlowError("No text in attachment", true);
           }
           return text;
         });
       }).catch((err) => {
-        console.log('Attachment file inaccessable, creating pending promise');
+        console.log('[EmailPGPStore] Attachment file inaccessable, creating pending promise');
         return EmailPGPFileDownloadStoreWatcher.promiseForPendingFile(dataPart.id);
       });
     } else {
@@ -263,7 +263,7 @@ class EmailPGPStore extends NylasStore {
       }
       parser.onend = () => {
         let end = process.hrtime(start);
-        console.log(`%cParsing MIME finished: ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
+        console.log(`[EmailPGPStore] %cParsed MIME in ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
       }
 
       parser.write(text);
@@ -275,7 +275,7 @@ class EmailPGPStore extends NylasStore {
         let matches = /\n--[^\n\r]*\r?\nContent-Type: text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)\n\r?\n--/gim.exec(text);
         let end = process.hrtime(start);
         if (matches) {
-          console.log(`%cRegex found HTML in decrypted: ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
+          console.log(`[EmailPGPStore] %cRegex found HTML in ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
           matched = matches[1];
         }
       }
@@ -284,7 +284,7 @@ class EmailPGPStore extends NylasStore {
         resolve(matched);
       } else {
         // REALLY FALLBACK TO RAW
-        console.error('FALLBACK TO RAW DECRYPTED');
+        console.error('[EmailPGPStore] FALLBACK TO RAW DECRYPTED');
         let formatted = `<html><head></head><body><b>FALLBACK TO RAW:</b><br>${text}</body></html>`;
         resolve(formatted);
         //reject(new FlowError("no HTML found in decrypted"));
@@ -325,7 +325,7 @@ class EmailPGPStore extends NylasStore {
         });
       }
     }).catch((err) => {
-      console.log('[PGP] %s', err);
+      console.log('[PGP - EmailPGPStore] %s', err);
     });
   }
 }
