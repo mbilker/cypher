@@ -1,4 +1,4 @@
-import kbpgp from '../../kbpgp';
+import kbpgp from 'kbpgp';
 
 import KeyStore from '../kbpgp/key-store';
 
