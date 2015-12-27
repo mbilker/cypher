@@ -6,6 +6,7 @@
 
 import {Utils, MessageBodyProcessor, React} from 'nylas-exports';
 
+import EmailPGPActions from '../email-pgp-actions';
 import EmailPGPStore from '../email-pgp-store';
 import FlowError from '../flow-error';
 
@@ -24,6 +25,7 @@ class MessageLoaderHeader extends React.Component {
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this);
     this.render = this.render.bind(this);
+    this.retryDecryption = this.retryDecryption.bind(this);
     this._onPGPStoreChange = this._onPGPStoreChange.bind(this);
 
     this.state = EmailPGPStore.getState(this.props.message.id) || {};
@@ -79,7 +81,10 @@ class MessageLoaderHeader extends React.Component {
                ((this.state.lastError instanceof FlowError && this.state.lastError.display) ||
                 !(this.state.lastError instanceof FlowError))) {
       className += ' pgp-message-header-error';
-      errorMessage = <span><b>Error: </b>{this.state.lastError.message}</span>;
+      errorMessage = <div>
+        <span><b>Error: </b>{this.state.lastError.message}</span>
+        <a className="pull-right option" onClick={this.retryDecryption}>Retry Decryption</a>
+      </div>
     } else {
       display = false;
     }
@@ -94,10 +99,15 @@ class MessageLoaderHeader extends React.Component {
     }
   }
 
+  retryDecryption() {
+    EmailPGPActions.retryMessage(this.props.message);
+  }
+
   _onPGPStoreChange(messageId, state) {
     if (messageId === this.props.message.id) {
       console.log('received event', state);
-      this.replaceState(state);
+      this.state = state;
+      this.forceUpdate();
 
       // Fixed in nylas/N1@39a142ddcb80c7e1fce22dfe1e0e628272154523
       //if (state.decryptedMessage) {

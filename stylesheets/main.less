@@ -10,10 +10,17 @@
   color: fade(mix(@text-color-subtle, #FFCC11, 80%), 70%);
   margin: @padding-base-vertical 0;
   padding: @padding-base-vertical @padding-base-horizontal;
+
+  .option {
+    color: fade(mix(@text-color-subtle, #FFCC11, 80%), 70%);
+  }
+  .option:hover {
+    color: mix(@text-color-subtle, #FFCC11, 80%);
+  }
 }
 .pgp-message-header-error {
   background-color: mix(@background-primary, #A03232, 80%);
-  border: 1px solid darken(mix(@background-primary, #A03232, 50%), 10%);
+  border: 1px solid darken(mix(@background-primary, #A03232, 50%), 25%);
   color: mix(@text-color-subtle, @text-color-alert, 80%);
 }
 .pgp-message-header-success {

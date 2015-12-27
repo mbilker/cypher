@@ -16,7 +16,6 @@ import FlowError from './flow-error.es6';
 
 // THANK YOU GPGTOOLS! The `MimePart+GPGMail.m` is such a good guide to PGP
 // mail decryption
-
 class EmailPGPStore extends NylasStore {
   constructor() {
     super();
@@ -31,6 +30,7 @@ class EmailPGPStore extends NylasStore {
     // Binding `this` to each method that uses `this`
     this._encryptMessage = this._encryptMessage.bind(this);
     this._decryptMessage = this._decryptMessage.bind(this);
+    this._retryMessage = this._retryMessage.bind(this);
     this.mainDecrypt = this.mainDecrypt.bind(this);
     this._setState = this._setState.bind(this);
     this._retrievePGPAttachment = this._retrievePGPAttachment.bind(this);
@@ -39,6 +39,7 @@ class EmailPGPStore extends NylasStore {
 
     this.listenTo(EmailPGPActions.encryptMessage, this._encryptMessage);
     this.listenTo(EmailPGPActions.decryptMessage, this._decryptMessage);
+    this.listenTo(EmailPGPActions.retryMessage, this._retryMessage);
 
     global.$pgpEmailPGPStore = this;
   }
@@ -102,6 +103,17 @@ class EmailPGPStore extends NylasStore {
   _decryptMessage(message) {
     console.log('[PGP] Told to decrypt', message);
     this._decryptAndResetCache(message);
+  }
+
+  _retryMessage(message) {
+    if (this._state[message.id] && this._state[message.id].decrypting) {
+      console.log('[PGP] Told to retry decrypt, but in the middle of decryption');
+      return false;
+    } else {
+      console.log('[PGP] Told to retry decrypt', message);
+      delete this._state[message.id];
+      this._decryptAndResetCache(message);
+    }
   }
 
   // Utils
