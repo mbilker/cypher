@@ -48,5 +48,9 @@
     "postcss-selector-prefix": "^2.0.0",
     "request": "^2.67.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "windowTypes": {
+    "default": true,
+    "composer": true
+  }
 }
