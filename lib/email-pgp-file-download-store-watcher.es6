@@ -1,6 +1,8 @@
 import fs from 'fs';
 import {FileDownloadStore} from 'nylas-exports';
 
+import FlowError from './flow-error';
+
 class EmailPGPFileDownloadStoreWatcher {
   constructor() {
     // Object of promises of attachments needed for decryption
