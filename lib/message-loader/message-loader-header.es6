@@ -35,28 +35,6 @@ class MessageLoaderHeader extends React.Component {
     this._storeUnlisten = EmailPGPStore.listen(this._onPGPStoreChange);
 
     window.loaderHeader = this;
-
-    // Fixed in nylas/N1@39a142ddcb80c7e1fce22dfe1e0e628272154523
-    //if (EmailPGPStore.shouldDecryptMessage(this.props.message)) {
-    //  let haveCachedMessageBody = EmailPGPStore.haveCachedBody(this.props.message);
-    //  let isntDecrypting = !this.state.decrypting;
-    //  let isntDoneDecrypting = !this.state.done;
-    //  if (!haveCachedMessageBody && isntDecrypting && isntDoneDecrypting) {
-    //    Actions.decryptMessage(this.props.message);
-    //  }
-    //}
-    //
-    //let cachedBody = EmailPGPStore.getCachedBody(this.props.message);
-    //if (cachedBody) {
-    //  this.props.message.body = cachedBody;
-    //
-    //  let processed = MessageBodyProcessor.process(this.props.message);
-    //  MessageBodyProcessor._subscriptions.forEach(({message, callback}) => {
-    //    if (message.id === this.props.message.id) {
-    //      callback(processed);
-    //    }
-    //  });
-    //}
   }
 
   componentWillUnmount() {
