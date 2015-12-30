@@ -8,7 +8,6 @@ class MessageLoaderExtension extends MessageViewExtension {
   // properly and the main screen is stuck with the message
   // viewer
   static formatMessageBody(message) {
-    console.log(`[PGP] MessageLoaderExtension formatting ${message.id}`);
 
     // Check for a cached message body for a decrypted message
     // If we have one we should return the cached message so the
@@ -23,6 +22,7 @@ class MessageLoaderExtension extends MessageViewExtension {
     // decryption, then signal the `EmailPGPStore` to decrypt the message and
     // pass on the cloned message
     if (EmailPGPStore.shouldDecryptMessage(message)) {
+      console.log(`[PGP] MessageLoaderExtension formatting ${message.id}`);
       Actions.decryptMessage(message);
     }
   }
