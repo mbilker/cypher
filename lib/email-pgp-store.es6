@@ -10,9 +10,12 @@ import EmailPGPFileDownloadStoreWatcher from './email-pgp-file-download-store-wa
 import EmailPGPActions from './email-pgp-actions';
 
 //import InProcessDecrypter from './decryption/in-process-decrypter';
-import InProcessDecrypter from './decryption/kbpgp-in-process-decrypt';
-import WorkerProcessDecrypter from './decryption/worker-process-decrypter';
+//import InProcessDecrypter from './decryption/kbpgp-in-process-decrypt';
+//import WorkerProcessDecrypter from './decryption/worker-process-decrypter';
+import TestingWorkerDecrypter from './worker-frontend';
 import FlowError from './flow-error.es6';
+
+let decrypter = new TestingWorkerDecrypter();
 
 // THANK YOU GPGTOOLS! The `MimePart+GPGMail.m` is such a good guide to PGP
 // mail decryption
@@ -246,14 +249,15 @@ class EmailPGPStore extends NylasStore {
   }
 
   _selectDecrypter() {
-    const chosen = "WORKER_PROCESS";
-    var decrypter = InProcessDecrypter; // IN_PROCESS
+    //const chosen = "WORKER_PROCESS";
+    //var decrypter = InProcessDecrypter; // IN_PROCESS
 
     //if (chosen === "WORKER_PROCESS") {
     //  decrypter = WorkerProcessDecrypter;
     //}
 
-    return new decrypter().decrypt;
+    //return new decrypter().decrypt;
+    return decrypter;
   }
 
   // Uses regex to extract HTML component from a multipart message. Does not
