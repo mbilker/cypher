@@ -57,7 +57,7 @@ class HKPCacher {
 
       return result;
     }, (err) => {
-      error('[HKPCacher] Error checking for cached pubkey, assuming false %O', err);
+      error('[HKPCacher] Error checking for cached pubkey, assuming false %s', err.stack);
 
       return false;
     });

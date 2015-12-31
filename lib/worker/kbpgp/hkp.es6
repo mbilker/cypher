@@ -29,7 +29,6 @@ export default class HKP {
 
       return result;
     }).then((publicKeyArmored) => {
-      log(publicKeyArmored.toString());
       if (publicKeyArmored && publicKeyArmored.indexOf('-----END PGP PUBLIC KEY BLOCK-----') > -1) {
         return publicKeyArmored.trim();
       }
