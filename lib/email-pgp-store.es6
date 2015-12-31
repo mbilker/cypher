@@ -10,7 +10,7 @@ import EmailPGPFileDownloadStoreWatcher from './email-pgp-file-download-store-wa
 import EmailPGPActions from './email-pgp-actions';
 
 //import InProcessDecrypter from './decryption/in-process-decrypter';
-import InProcessDecrypter from './kbpgp/kbpgp-in-process-decrypt';
+import InProcessDecrypter from './decryption/kbpgp-in-process-decrypt';
 import WorkerProcessDecrypter from './decryption/worker-process-decrypter';
 import FlowError from './flow-error.es6';
 
