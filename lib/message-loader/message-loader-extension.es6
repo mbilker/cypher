@@ -8,7 +8,6 @@ class MessageLoaderExtension extends MessageViewExtension {
   // properly and the main screen is stuck with the message
   // viewer
   static formatMessageBody(message) {
-
     // Check for a cached message body for a decrypted message
     // If we have one we should return the cached message so the
     // proper message body is displayed
