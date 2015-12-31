@@ -7,6 +7,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import {log, error} from '../logger';
+
 class HKPCacher {
   constructor() {
     this._memCache = {};
@@ -23,7 +25,16 @@ class HKPCacher {
   cacheResult(keyId, result) {
     let filePath = this._getFilePath(keyId);
     this._memCache[keyId] = result;
-    return fs.writeFileAsync(filePath, result);
+
+    return new Promise((resolve, reject) => {
+      fs.writeFile(filePath, result, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 
   isCached(keyId) {
@@ -33,12 +44,20 @@ class HKPCacher {
     }
 
     let filePath = this._getFilePath(keyId);
-    return fs.readFileAsync(filePath, 'utf8').then((result) => {
+    return new Promise((resolve, reject) => {
+      fs.readFile(filePath, 'utf8', (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    }).then((result) => {
       this._memCache[keyId] = result;
 
       return result;
     }, (err) => {
-      console.error('[HKPCacher] Error checking for cached pubkey, assuming false %O', err);
+      error('[HKPCacher] Error checking for cached pubkey, assuming false %O', err);
 
       return false;
     });
@@ -51,12 +70,12 @@ class HKPCacher {
   _ensureCacheDirectoryExists() {
     fs.access(this._cacheDirectory, fs.F_OK, (err) => {
       if (err) {
-        console.log('[PGP - HKPCacher] Pubkey cache directory missing, creating');
+        log('[PGP - HKPCacher] Pubkey cache directory missing, creating');
         fs.mkdir(this._cacheDirectory, (err) => {
           if (err) {
-            console.error('[PGP - HKPCacher] Pubkey cache directory creation unsuccessful', err);
+            error('[PGP - HKPCacher] Pubkey cache directory creation unsuccessful', err);
           } else {
-            console.log('[PGP - HKPCacher] Pubkey cache directory creation successful');
+            log('[PGP - HKPCacher] Pubkey cache directory creation successful');
           }
         });
       }

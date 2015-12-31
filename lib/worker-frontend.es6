@@ -1,26 +1,42 @@
 import child_process from 'child_process';
+import nylasExports from 'nylas-exports';
 
 import smalltalk from 'smalltalk';
+import uuid from 'uuid';
 
 import proto from './worker/worker-protocol';
 import FlowError from './flow-error';
 
 export default class WorkerFrontend {
   constructor() {
-    this.workerEntryScriptPath = path.join(__dirname, 'worker', 'worker-entry.js');
+    this._workerEntryScriptPath = path.join(__dirname, 'worker', 'worker-entry.js');
+    this._pendingPromises = {};
 
-    this.forkProcess = this.forkProcess.bind(this);
     this.decrypt = this.decrypt.bind(this);
+    this._forkProcess = this._forkProcess.bind(this);
     this._requestPassphrase = this._requestPassphrase.bind(this);
+
+    this._forkProcess();
 
     global.$pgpWorkerFrontend = this;
   }
 
-  forkProcess() {
+  decrypt(armored, secretKey) {
+    //throw new FlowError('Not implemented', true);
+
+    let id = uuid();
+
+    return new Promise((resolve, reject) => {
+      this._pendingPromises[id] = {resolve, reject};
+
+      this._child.send({ method: proto.DECRYPT, id, armored, secretKey });
+    });
+  }
+
+  _forkProcess() {
     // We need to find out the path of the compile-cache module so we can
     // pass it on to the worker process, use the hijacked require to ensure it
     // is in the module cache
-    let nylasExports = require('nylas-exports');
     let compileCache = nylasExports.require('PGP-CompileCache', 'compile-cache');
     let compileCachePath = compileCache.getCacheDirectory();
 
@@ -35,7 +51,7 @@ export default class WorkerFrontend {
     console.log(modulePath);
     console.log(compileCachePath);
 
-    this._child = child_process.fork(this.workerEntryScriptPath, {
+    this._child = child_process.fork(this._workerEntryScriptPath, {
       env: Object.assign({}, process.env, {
         PGP_COMPILE_CACHE_MODULE_PATH: modulePath,
         PGP_COMPILE_CACHE_PATH: compileCachePath,
@@ -53,19 +69,22 @@ export default class WorkerFrontend {
         console.log('[PGP - WorkerVerbose] %s', message.message);
       } else if (message.method === proto.REQUEST_PASSPHRASE) {
         this._requestPassphrase(message.id, message.message);
+      } else if (message.method === proto.DECRYPTION_RESULT) {
+        if (this._pendingPromises[message.id]) {
+          this._pendingPromises[message.id].resolve(message.result);
+          delete this._pendingPromises[message.id];
+        }
+      } else if (message.method === proto.PROMISE_REJECT && this._pendingPromises[message.id]) {
+        this._pendingPromises[message.id].reject(new FlowError(message.result, true));
+        delete this._pendingPromises[message.id];
       } else {
-        console.log('[PGP - WorkerFrontend] Unknown Message Received From Worker: %s', message);
+        console.log('[PGP - WorkerFrontend] Unknown Message Received From Worker: %O', message);
       }
     });
   }
 
   smalltalkDisplay() {
     return smalltalk;
-  }
-
-  decrypt() {
-    this.forkProcess();
-    throw new FlowError('Not implemented', true);
   }
 
   _requestPassphrase(id, msg) {

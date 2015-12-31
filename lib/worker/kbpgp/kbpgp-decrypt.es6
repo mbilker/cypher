@@ -1,17 +1,21 @@
 import kbpgp from 'kbpgp';
 
+import {log} from '../logger';
 import KeyStore from './key-store';
 
 class KbpgpDecryptRoutine {
   constructor(controller) {
     this._controller = controller;
 
-    this.checkCache = this.checkCache.bind(this);
-    this.decryptKey = this.decryptKey.bind(this);
-    this.decryptRoutine = this.decryptRoutine.bind(this);
+    this._importKey = this._importKey.bind(this);
+    this._checkCache = this._checkCache.bind(this);
+    this._decryptKey = this._decryptKey.bind(this);
+    this.run = this.run.bind(this);
   }
 
-  importKey(armored) {
+  _importKey(armored) {
+    //log(armored);
+
     return new Promise((resolve, reject) => {
       kbpgp.KeyManager.import_from_armored_pgp({
         armored
@@ -25,33 +29,32 @@ class KbpgpDecryptRoutine {
     });
   }
 
-  checkCache(secretKey) {
+  _checkCache(secretKey) {
     let cachedKey = KeyStore.lookupKeyManager(secretKey.get_pgp_key_id());
     if (cachedKey) {
-      console.log('[InProcessDecrypter] Found cached key %O', cachedKey);
+      log('[InProcessDecrypter] Found cached key for %s', secretKey.get_pgp_key_id().toString('hex'));
       return Promise.resolve(cachedKey);
     } else {
-      return this.decryptKey(secretKey);
+      return this._decryptKey(secretKey);
     }
   }
 
-  decryptKey(secretKey) {
+  _decryptKey(secretKey) {
     return new Promise((resolve, reject) => {
       if (!secretKey.is_pgp_locked()) {
         return resolve(secretKey);
       }
 
       this._controller.requestPassphrase().then((passphrase) => {
+        log('[KbpgpDecryptRoutine] Passphrase: %s', passphrase);
         let startTime = process.hrtime();
-        secretKey.unlock_pgp({
-          passphrase: new Buffer(passphrase, 'base64').toString()
-        }, (err) => {
+        secretKey.unlock_pgp({ passphrase }, (err) => {
           if (err) {
             return reject(err);
           }
 
           let elapsed = process.hrtime(startTime);
-          //console.log(`[InProcessDecrypter] %cUnlocked secret key in ${elapsed[0] * 1e3 + elapsed[1] / 1e6}ms`, "color:red");
+          log(`[KbpgpDecryptRoutine] Unlocked secret key in ${elapsed[0] * 1e3 + elapsed[1] / 1e6}ms`);
 
           resolve(secretKey);
         });
@@ -61,21 +64,21 @@ class KbpgpDecryptRoutine {
     });
   }
 
-  decryptRoutine() {
+  run(armored, secretKey) {
     let startTime = process.hrtime();
 
-    return new Promise((resolve, reject) => {
-      kbpgp.unbox({
-        keyfetch: KeyStore,
-        armored: encryptedMessage
-      }, (err, literals) => {
-        if (err) {
-          reject(err, literals);
-        } else {
-          let elapsed = process.hrtime(startTime);
+    return this._importKey(secretKey).then(this._checkCache).then(() => {
+      return new Promise((resolve, reject) => {
+        log('[KbpgpDecryptRoutine] inside the unbox closure');
+        kbpgp.unbox({ keyfetch: KeyStore, armored }, (err, literals) => {
+          if (err) {
+            reject(err, literals);
+          } else {
+            let elapsed = process.hrtime(startTime);
 
-          resolve({ literals, elapsed });
-        }
+            resolve({ literals, elapsed });
+          }
+        });
       });
     });
   }
@@ -88,9 +91,22 @@ class KbpgpDecryptController {
     this.requestPassphrase = this.requestPassphrase.bind(this);
   }
 
+  decrypt({armored, secretKey}) {
+    //if (armored.type === '')
+    if (armored && armored.type === 'Buffer') {
+      armored = new Buffer(armored.data);
+    }
+
+    if (secretKey && secretKey.type === 'Buffer') {
+      secretKey = new Buffer(secretKey.data);
+    }
+
+    return new KbpgpDecryptRoutine(this).run(armored, secretKey);
+  }
+
   requestPassphrase() {
     return this._eventProcessor.requestPassphrase();
   }
 }
 
-export default new KbpgpDecryptController();
+export default KbpgpDecryptController;

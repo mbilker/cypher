@@ -15,7 +15,7 @@ import EmailPGPActions from './email-pgp-actions';
 import TestingWorkerDecrypter from './worker-frontend';
 import FlowError from './flow-error.es6';
 
-let decrypter = new TestingWorkerDecrypter();
+let decrypter = new TestingWorkerDecrypter().decrypt;
 
 // THANK YOU GPGTOOLS! The `MimePart+GPGMail.m` is such a good guide to PGP
 // mail decryption
