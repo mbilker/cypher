@@ -146,14 +146,15 @@ class EmailPGPStore extends NylasStore {
     let startDecrypt = process.hrtime();
     return this._getAttachmentAndKey(message).spread(decrypter).then((text) => {
       let endDecrypt = process.hrtime(startDecrypt);
-      console.log(`[EmailPGPStore] %cMessage decrypted in ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
+      console.log(`[EmailPGPStore] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
       return text;
     }).then(this._extractHTML).then((match) => {
       this._cachedMessages[message.id] = match;
 
       this._setState(message.id, {
         decrypting: false,
-        decryptedMessage: match
+        decryptedMessage: match,
+        statusMessage: null
       });
 
       return match;

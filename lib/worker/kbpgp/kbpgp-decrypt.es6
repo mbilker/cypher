@@ -60,7 +60,8 @@ class KbpgpDecryptRoutine {
           }
 
           let elapsed = process.hrtime(startTime);
-          let msg = `Secret key Unlocked secret key in ${elapsed[0] * 1e3 + elapsed[1] / 1e6}ms`;
+          let msg = `Secret key unlocked secret key in ${elapsed[0] * 1e3 + elapsed[1] / 1e6}ms`;
+
           this._notify(msg);
           log('[KbpgpDecryptRoutine] %s', msg);
 
@@ -78,12 +79,17 @@ class KbpgpDecryptRoutine {
     return this._importKey(secretKey).then(this._checkCache).then(() => {
       return new Promise((resolve, reject) => {
         log('[KbpgpDecryptRoutine] inside the unbox closure');
+        this._notify(null);
+
+        let startDecrypt = process.hrtime();
         kbpgp.unbox({ keyfetch: KeyStore, armored }, (err, literals) => {
           if (err) {
             reject(err, literals);
           } else {
+            let decryptTime = process.hrtime(startDecrypt);
             let elapsed = process.hrtime(startTime);
 
+            this._notify(`Message decrypted in ${decryptTime[0] * 1e3 + decryptTime[1] / 1e6}ms`);
             resolve({ literals, elapsed });
           }
         });

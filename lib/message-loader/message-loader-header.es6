@@ -53,13 +53,16 @@ class MessageLoaderHeader extends React.Component {
     var decryptingMessage, errorMessage;
     var className = "pgp-message-header";
 
-    if (this.state.decrypting) {
-      decryptingMessage = <span>Decrypting message</span>;
+    if (this.state.decrypting && !this.state.statusMessage) {
+      displayMessage = <span>Decrypting message</span>;
+    } else if (this.state.decrypting && this.state.statusMessage) {
+      className += ' pgp-message-header-info';
+      displayMessage = <span>{this.state.statusMessage}</span>;
     } else if (this.state.lastError &&
                ((this.state.lastError instanceof FlowError && this.state.lastError.display) ||
                 !(this.state.lastError instanceof FlowError))) {
       className += ' pgp-message-header-error';
-      errorMessage = <div>
+      displayMessage = <div>
         <span><b>Error: </b>{this.state.lastError.message}</span>
         <a className="pull-right option" onClick={this.retryDecryption}>Retry Decryption</a>
       </div>
@@ -68,10 +71,7 @@ class MessageLoaderHeader extends React.Component {
     }
 
     if (display) {
-      return <div className={className}>
-        {decryptingMessage}
-        {errorMessage}
-      </div>
+      return <div className={className}>{displayMessage}</div>;
     } else {
       return <div />;
     }
