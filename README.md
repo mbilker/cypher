@@ -37,5 +37,5 @@ or safe at all.
   - [ ] Clearsign Signature and Encrypt
   - Fix the error bar to use new CSS classes
 - [ ] Better detection of PGP encrypted emails
-- [ ] Text input for passphrase
+- [x] Text input for passphrase
 - [ ] Spec tests for all features
