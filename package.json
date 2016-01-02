@@ -33,6 +33,7 @@
     "basscss-btn-outline": "^1.0.0",
     "basscss-btn-primary": "^1.0.0",
     "basscss-defaults": "^2.1.1",
+    "basscss-grid": "^1.0.4",
     "basscss-positions": "^1.0.4",
     "basscss-utility-layout": "^2.0.3",
     "basscss-utility-typography": "^2.0.0",

@@ -4,6 +4,7 @@
 @import 'basscss-utility-layout';
 @import 'basscss-white-space';
 @import 'basscss-positions';
+@import 'basscss-grid';
 @import 'basscss-borders';
 
 @import 'basscss-defaults';
