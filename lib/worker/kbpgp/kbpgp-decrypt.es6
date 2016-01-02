@@ -51,7 +51,7 @@ class KbpgpDecryptRoutine {
       this._notify('Waiting for passphrase...');
 
       this._controller.requestPassphrase(askString).then((passphrase) => {
-        this._notify('Passphrase entered');
+        this._notify('Unlocking secret key...');
 
         let startTime = process.hrtime();
         secretKey.unlock_pgp({ passphrase }, (err) => {

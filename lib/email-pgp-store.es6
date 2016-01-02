@@ -144,7 +144,7 @@ class EmailPGPStore extends NylasStore {
     let notify = (msg) => this._setState(message.id, { statusMessage: msg });
     let decrypter = this._selectDecrypter().bind(null, notify);
     let startDecrypt = process.hrtime();
-    return this._getAttachmentAndKey(message).spread(decrypter).then((text) => {
+    return this._getAttachmentAndKey(message, notify).spread(decrypter).then((text) => {
       let endDecrypt = process.hrtime(startDecrypt);
       console.log(`[EmailPGPStore] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
       return text;
@@ -182,7 +182,7 @@ class EmailPGPStore extends NylasStore {
     return fs.readFileAsync(keyLocation);
   }
 
-  _retrievePGPAttachment(message) {
+  _retrievePGPAttachment(message, notify) {
     console.log("[EmailPGPStore] Attachments: %d", message.files.length);
 
     // Check for GPGTools-like message, even though we aren't MIME parsed yet,
@@ -222,6 +222,7 @@ class EmailPGPStore extends NylasStore {
           return text;
         });
       }).catch((err) => {
+        notify('Waiting for encrypted message attachment to download...');
         console.log('[EmailPGPStore] Attachment file inaccessable, creating pending promise');
         return EmailPGPFileDownloadStoreWatcher.promiseForPendingFile(dataPart.id);
       });
