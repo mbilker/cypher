@@ -17,12 +17,12 @@ class EventProcessor {
     process.on('message', this._onFrontendMessage);
   }
 
-  requestPassphrase() {
+  requestPassphrase(message) {
     let id = uuid();
 
     return new Promise((resolve, reject) => {
       this._pendingPromises[id] = {resolve, reject};
-      process.send({ method: proto.REQUEST_PASSPHRASE, id });
+      process.send({ method: proto.REQUEST_PASSPHRASE, id, message });
     });
   }
 
@@ -43,11 +43,14 @@ class EventProcessor {
 
   _onFrontendMessage(message) {
     if (message.method === proto.DECRYPT) {
+      // DECRYPT
       this._handleDecryptMessage(message);
     } else if (message.method === proto.PROMISE_RESOLVE && this._pendingPromises[message.id]) {
+      // PROMISE_RESOLVE
       this._pendingPromises[message.id].resolve(message.result);
       delete this._pendingPromises[message.id];
     } else if (message.method === proto.PROMISE_REJECT && this._pendingPromises[message.id]) {
+      // PROMISE_REJECT
       this._pendingPromises[message.id].reject(message.result);
       delete this._pendingPromises[message.id];
     }
