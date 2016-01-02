@@ -9,9 +9,7 @@ Small package for decrypting PGP-encrypted email.
 -   Encryption using Keybase tracked users to allow for easy selection for users
 
 Also, *currently* you need to stick your encrypted secret key at `$HOME/gpgkey`.
-I am working on configuration options. The passphrase is also tricky. Currently
-its stored in the NylasEnv configuration as `email-pgp.passphrase-b64` encoded in
-base64.
+I am working on configuration options.
 
 **No** spec tests are available for this package at the moment. I have not fully
 designed them yet.
