@@ -49,12 +49,12 @@ class ComposerLoader extends React.Component {
     </button>
 
     return <Popover ref="popover"
-                    className="pgp-menu-picker pull-right"
+                    className="pgp pgp-menu-picker pull-right"
                     buttonComponent={button}>
-      <form className="pgp form">
+      <form className="form col-12 m2">
         <label>Keybase Username:</label>
-        <input className="pgp field mb1 block" type="text" placeholder="(e.g. max)" onChange={this.onChange} />
-        <button className="pgp btn btn-primary block" onClick={this.onSubmit}>Encrypt</button>
+        <input className="field mb2 block" type="text" placeholder="(e.g. max)" onChange={this.onChange} />
+        <button className="btn mb1 block" onClick={this.onSubmit}>Encrypt</button>
       </form>
     </Popover>
   }
