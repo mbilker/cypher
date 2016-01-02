@@ -7,7 +7,7 @@ import uuid from 'uuid';
 import proto from './worker/worker-protocol';
 import FlowError from './flow-error';
 
-export default class WorkerFrontend {
+class WorkerFrontend {
   constructor() {
     this._workerEntryScriptPath = path.join(__dirname, 'worker', 'worker-entry.js');
     this._pendingPromises = {};
@@ -21,13 +21,11 @@ export default class WorkerFrontend {
     global.$pgpWorkerFrontend = this;
   }
 
-  decrypt(armored, secretKey) {
-    //throw new FlowError('Not implemented', true);
-
+  decrypt(notify, armored, secretKey) {
     let id = uuid();
 
     return new Promise((resolve, reject) => {
-      this._pendingPromises[id] = {resolve, reject};
+      this._pendingPromises[id] = {resolve, reject, notify};
 
       this._child.send({ method: proto.DECRYPT, id, armored, secretKey });
     });
@@ -61,22 +59,30 @@ export default class WorkerFrontend {
 
     this._child.on('message', (message) => {
       if (message.method === proto.ERROR_OCCURRED) {
+        // ERROR_OCCURRED
         let error = new FlowError(message.errorMessage || 'unknown error, check error.childStackTrace', true);
         error.childStackTrace = message.errorStackTrace;
         console.error('[PGP - WorkerFrontend] Error from worker:', error);
         console.error(error.childStackTrace);
       } else if (message.method === proto.VERBOSE_OUT) {
+        // VERBOSE_OUT
         console.log('[PGP - WorkerVerbose] %s', message.message);
       } else if (message.method === proto.REQUEST_PASSPHRASE) {
+        // REQUEST_PASSPHRASE
         this._requestPassphrase(message.id, message.message);
       } else if (message.method === proto.DECRYPTION_RESULT) {
+        // DECRYPTION_RESULT
         if (this._pendingPromises[message.id]) {
           this._pendingPromises[message.id].resolve(message.result);
           delete this._pendingPromises[message.id];
         }
       } else if (message.method === proto.PROMISE_REJECT && this._pendingPromises[message.id]) {
+        // PROMISE_REJECT
         this._pendingPromises[message.id].reject(new FlowError(message.result, true));
         delete this._pendingPromises[message.id];
+      } else if (message.method === proto.PROMISE_NOTIFY && this._pendingPromises[message.id]) {
+        // PROMISE_NOTIFY
+        this._pendingPromises[message.id].notify(message.result);
       } else {
         console.log('[PGP - WorkerFrontend] Unknown Message Received From Worker: %O', message);
       }
@@ -91,3 +97,5 @@ export default class WorkerFrontend {
     });
   }
 }
+
+export default new WorkerFrontend();
