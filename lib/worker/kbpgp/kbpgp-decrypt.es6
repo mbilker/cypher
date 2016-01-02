@@ -4,8 +4,9 @@ import {log} from '../logger';
 import KeyStore from './key-store';
 
 class KbpgpDecryptRoutine {
-  constructor(controller) {
+  constructor(controller, notify) {
     this._controller = controller;
+    this._notify = notify;
 
     this._importKey = this._importKey.bind(this);
     this._checkCache = this._checkCache.bind(this);
@@ -47,8 +48,11 @@ class KbpgpDecryptRoutine {
 
       let askString = `PGP Key with fingerprint <tt>${secretKey.get_pgp_key_id().toString('hex')}</tt> needs to be decrypted`;
 
+      this._notify('Waiting for passphrase...');
+
       this._controller.requestPassphrase(askString).then((passphrase) => {
-        log('[KbpgpDecryptRoutine] Passphrase: %s', passphrase);
+        this._notify('Passphrase entered');
+
         let startTime = process.hrtime();
         secretKey.unlock_pgp({ passphrase }, (err) => {
           if (err) {
@@ -56,7 +60,9 @@ class KbpgpDecryptRoutine {
           }
 
           let elapsed = process.hrtime(startTime);
-          log(`[KbpgpDecryptRoutine] Unlocked secret key in ${elapsed[0] * 1e3 + elapsed[1] / 1e6}ms`);
+          let msg = `Secret key Unlocked secret key in ${elapsed[0] * 1e3 + elapsed[1] / 1e6}ms`;
+          this._notify(msg);
+          log('[KbpgpDecryptRoutine] %s', msg);
 
           resolve(secretKey);
         });
@@ -95,7 +101,7 @@ class KbpgpDecryptController {
     this.requestPassphrase = this.requestPassphrase.bind(this);
   }
 
-  decrypt({armored, secretKey}) {
+  decrypt({armored, secretKey}, notify) {
     if (armored && armored.type === 'Buffer') {
       armored = new Buffer(armored.data);
     }
@@ -104,7 +110,7 @@ class KbpgpDecryptController {
       secretKey = new Buffer(secretKey.data);
     }
 
-    return new KbpgpDecryptRoutine(this).run(armored, secretKey);
+    return new KbpgpDecryptRoutine(this, notify).run(armored, secretKey);
   }
 
   requestPassphrase(askString) {

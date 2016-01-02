@@ -32,8 +32,11 @@ class EventProcessor {
 
   _handleDecryptMessage(message) {
     let {id} = message;
+    let notify = (result) => {
+      process.send({ method: proto.PROMISE_NOTIFY, id, result });
+    }
 
-    this._kbpgpDecryptController.decrypt(message).then(({literals, elapsed}) => {
+    this._kbpgpDecryptController.decrypt(message, notify).then(({literals, elapsed}) => {
       process.send({ method: proto.DECRYPTION_RESULT, id, result: literals[0].toString(), elapsed });
     }, (err) => {
       //this._sendError(err);

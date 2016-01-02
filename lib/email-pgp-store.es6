@@ -9,13 +9,9 @@ import MimeParser from 'mimeparser';
 import EmailPGPFileDownloadStoreWatcher from './email-pgp-file-download-store-watcher';
 import EmailPGPActions from './email-pgp-actions';
 
-//import InProcessDecrypter from './decryption/in-process-decrypter';
-//import InProcessDecrypter from './decryption/kbpgp-in-process-decrypt';
-//import WorkerProcessDecrypter from './decryption/worker-process-decrypter';
-import TestingWorkerDecrypter from './worker-frontend';
+import InProcessDecrypter from './decryption/in-process-decrypter';
+import WorkerFrontend from './worker-frontend';
 import FlowError from './flow-error.es6';
-
-let decrypter = new TestingWorkerDecrypter().decrypt;
 
 // THANK YOU GPGTOOLS! The `MimePart+GPGMail.m` is such a good guide to PGP
 // mail decryption
@@ -145,7 +141,8 @@ class EmailPGPStore extends NylasStore {
     });
 
     // More decryption engines will be implemented
-    let decrypter = this._selectDecrypter();
+    let notify = (msg) => this._setState(message.id, { statusMessage: msg });
+    let decrypter = this._selectDecrypter().bind(null, notify);
     let startDecrypt = process.hrtime();
     return this._getAttachmentAndKey(message).spread(decrypter).then((text) => {
       let endDecrypt = process.hrtime(startDecrypt);
@@ -249,15 +246,14 @@ class EmailPGPStore extends NylasStore {
   }
 
   _selectDecrypter() {
-    //const chosen = "WORKER_PROCESS";
-    //var decrypter = InProcessDecrypter; // IN_PROCESS
+    const chosen = "WORKER_PROCESS";
+    decrypter = WorkerFrontend; // WORKER_PROCESS
 
-    //if (chosen === "WORKER_PROCESS") {
-    //  decrypter = WorkerProcessDecrypter;
-    //}
+    if (chosen === "IN_PROCESS") {
+      ecrypter = new InProcessDecrypter(); // IN_PROCESS
+    }
 
-    //return new decrypter().decrypt;
-    return decrypter;
+    return decrypter.decrypt;
   }
 
   // Uses regex to extract HTML component from a multipart message. Does not
