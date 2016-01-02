@@ -45,7 +45,9 @@ class KbpgpDecryptRoutine {
         return resolve(secretKey);
       }
 
-      this._controller.requestPassphrase().then((passphrase) => {
+      let askString = `PGP Key with fingerprint <tt>${secretKey.get_pgp_key_id().toString('hex')}</tt> needs to be decrypted`;
+
+      this._controller.requestPassphrase(askString).then((passphrase) => {
         log('[KbpgpDecryptRoutine] Passphrase: %s', passphrase);
         let startTime = process.hrtime();
         secretKey.unlock_pgp({ passphrase }, (err) => {
@@ -84,6 +86,8 @@ class KbpgpDecryptRoutine {
   }
 }
 
+// Singleton to manage each decryption session, converts stringified Buffers
+// back to Buffers for kbpgp
 class KbpgpDecryptController {
   constructor(eventProcessor) {
     this._eventProcessor = eventProcessor;
@@ -92,7 +96,6 @@ class KbpgpDecryptController {
   }
 
   decrypt({armored, secretKey}) {
-    //if (armored.type === '')
     if (armored && armored.type === 'Buffer') {
       armored = new Buffer(armored.data);
     }
@@ -104,8 +107,8 @@ class KbpgpDecryptController {
     return new KbpgpDecryptRoutine(this).run(armored, secretKey);
   }
 
-  requestPassphrase() {
-    return this._eventProcessor.requestPassphrase();
+  requestPassphrase(askString) {
+    return this._eventProcessor.requestPassphrase(askString);
   }
 }
 

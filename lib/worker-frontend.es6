@@ -83,10 +83,6 @@ export default class WorkerFrontend {
     });
   }
 
-  smalltalkDisplay() {
-    return smalltalk;
-  }
-
   _requestPassphrase(id, msg) {
     smalltalk.passphrase('PGP Passphrase', msg || '').then((passphrase) => {
       this._child.send({ method: proto.PROMISE_RESOLVE, id, result: passphrase });
