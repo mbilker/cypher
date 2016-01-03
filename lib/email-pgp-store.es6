@@ -232,9 +232,9 @@ class EmailPGPStore extends NylasStore {
   }
 
   // Retrieves the attachment and encrypted secret key for code divergence later
-  _getAttachmentAndKey(message) {
+  _getAttachmentAndKey(message, notify) {
     return Promise.all([
-      this._retrievePGPAttachment(message),
+      this._retrievePGPAttachment(message, notify),
       this._getKey()
     ]).spread((text, pgpkey) => {
       if (!text) {
