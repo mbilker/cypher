@@ -122,10 +122,6 @@ class ComposerLoader extends React.Component {
     return `This message is encrypted for <span style="${SPAN_STYLES}">${username}</span> with key fingerprint <span style="${SPAN_STYLES}">${fingerprint}</span>.`;
   }
 
-  _formatBody(pgpMessage) {
-    return `<pre style="white-space:pre;">${pgpMessage}</pre>`;
-  }
-
   _importPublicKey(publicKey) {
     //return new Promise((resolve) => {
     //  resolve(openpgp.key.readArmored(publicKey));
