@@ -123,10 +123,6 @@ class ComposerLoader extends React.Component {
   }
 
   _importPublicKey(publicKey) {
-    //return new Promise((resolve) => {
-    //  resolve(openpgp.key.readArmored(publicKey));
-    //});
-
     let import_from_armored_pgp = Promise.promisify(kbpgp.KeyManager.import_from_armored_pgp);
 
     return import_from_armored_pgp({
