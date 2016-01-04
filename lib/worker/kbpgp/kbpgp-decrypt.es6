@@ -46,10 +46,9 @@ class KbpgpDecryptRoutine {
         return resolve(secretKey);
       }
 
-      let askString = `PGP Key with fingerprint <tt>${secretKey.get_pgp_key_id().toString('hex')}</tt> needs to be decrypted`;
-
       this._notify('Waiting for passphrase...');
 
+      let askString = `PGP Key with fingerprint <tt>${secretKey.get_pgp_key_id().toString('hex')}</tt> needs to be decrypted`;
       this._controller.requestPassphrase(askString).then((passphrase) => {
         this._notify('Unlocking secret key...');
 
