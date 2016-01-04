@@ -13,10 +13,9 @@ class WorkerFrontend {
     this._pendingPromises = {};
 
     this.decrypt = this.decrypt.bind(this);
+    this.initialize = this.initialize.bind(this);
     this._forkProcess = this._forkProcess.bind(this);
     this._requestPassphrase = this._requestPassphrase.bind(this);
-
-    this._forkProcess();
 
     global.$pgpWorkerFrontend = this;
   }
@@ -29,6 +28,10 @@ class WorkerFrontend {
 
       this._child.send({ method: proto.DECRYPT, id, armored, secretKey });
     });
+  }
+
+  initialize() {
+    this._forkProcess();
   }
 
   _forkProcess() {

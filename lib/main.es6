@@ -4,6 +4,7 @@ import PreferencesComponent from './settings/preferences-component';
 import MessageLoaderExtension from './message-loader/message-loader-extension';
 import ComposerLoader from './composer/composer-loader';
 import MessageLoaderHeader from './message-loader/message-loader-header';
+import WorkerFrontend from './worker-frontend';
 
 exports.config = {
   keybase: {
@@ -29,24 +30,43 @@ exports.config = {
   }
 }
 
-var _state;
+var _state = {};
 var _tab;
+var _loadSettings = {};
 
 // Activate is called when the package is loaded. If your package previously
 // saved state using `serialize` it is provided.
 //
 export function activate(state) {
-  _state = state;
-  _tab = new PreferencesUIStore.TabItem({
-    tabId: "PGP",
-    displayName: "PGP Mail",
-    component: PreferencesComponent
-  });
+  // Skip "?loadSettings=".
+  let rawLoadSettings = decodeURIComponent(location.search.substr(14));
+  try {
+    _loadSettings = JSON.parse(rawLoadSettings);
+  } catch (error) {
+    console.error("Failed to parse load settings: " + rawLoadSettings);
+    throw error;
+  }
 
-  PreferencesUIStore.registerPreferencesTab(_tab);
-  ComponentRegistry.register(ComposerLoader, { role: 'Composer:ActionButton' });
-  ComponentRegistry.register(MessageLoaderHeader, { role: 'message:BodyHeader' });
-  ExtensionRegistry.MessageView.register(MessageLoaderExtension);
+  let windowType = _loadSettings.windowType;
+
+  if (windowType === 'default') {
+    _state = state;
+    _tab = new PreferencesUIStore.TabItem({
+      tabId: "PGP",
+      displayName: "PGP Mail",
+      component: PreferencesComponent
+    });
+
+    WorkerFrontend.initialize();
+
+    PreferencesUIStore.registerPreferencesTab(_tab);
+    ComponentRegistry.register(MessageLoaderHeader, { role: 'message:BodyHeader' });
+    ExtensionRegistry.MessageView.register(MessageLoaderExtension);
+  }
+
+  if (windowType === 'default' || windowType === 'composer') {
+    ComponentRegistry.register(ComposerLoader, { role: 'Composer:ActionButton' });
+  }
 }
 
 // Serialize is called when your package is about to be unmounted.
@@ -60,9 +80,15 @@ export function serialize() {
 // watching any files, holding external resources, providing commands or
 // subscribing to events, release them here.
 export function deactivate() {
-  PreferencesUIStore.unregisterPreferencesTab(_tab.tabId);
+  let windowType = _loadSettings.windowType;
 
-  ExtensionRegistry.MessageView.unregister(MessageLoaderExtension);
-  ComponentRegistry.unregister(ComposerLoader)
-  ComponentRegistry.unregister(MessageLoaderHeader)
+  if (windowType === 'default') {
+    PreferencesUIStore.unregisterPreferencesTab(_tab.tabId);
+    ExtensionRegistry.MessageView.unregister(MessageLoaderExtension);
+    ComponentRegistry.unregister(MessageLoaderHeader);
+  }
+
+  if (windowType === 'default' || windowType === 'composer') {
+    ComponentRegistry.unregister(ComposerLoader);
+  }
 }
