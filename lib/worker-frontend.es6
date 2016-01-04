@@ -46,9 +46,6 @@ class WorkerFrontend {
       }
     });
 
-    console.log(modulePath);
-    console.log(compileCachePath);
-
     this._child = child_process.fork(this._workerEntryScriptPath, {
       env: Object.assign({}, process.env, {
         PGP_COMPILE_CACHE_MODULE_PATH: modulePath,
