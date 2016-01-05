@@ -8,10 +8,10 @@ import path from 'path';
 import {Actions, DraftStore, QuotedHTMLTransformer, React, Utils} from 'nylas-exports';
 import {Menu, GeneratedForm, Popover, RetinaImg} from 'nylas-component-kit';
 
-//import openpgp from 'openpgp';
 import kbpgp from 'kbpgp';
 
 import {KeybaseStore} from '../keybase';
+import MIMEWriter from './mime-writer';
 
 const SPAN_STYLES = "font-family:monospace,monospace;white-space:pre;";
 
@@ -94,6 +94,7 @@ class ComposerLoader extends React.Component {
         return this._encryptMessage(text, publicKey).then((pgpMessage) => {
           let temporaryDir = path.join(this.temporaryAttachmentLocation, this.props.draftClientId);
           let attachmentPath = path.join(temporaryDir, 'encrypted.asc');
+
           return fs.mkdirAsync(temporaryDir).then(() => {
             return fs.writeFileAsync(attachmentPath, pgpMessage);
           }).then(() => {
@@ -132,13 +133,18 @@ class ComposerLoader extends React.Component {
     });
   }
 
-  _encryptMessage(msg, publicKey) {
+  _encryptMessage(text, encrypt_for) {
     let box = Promise.promisify(kbpgp.box);
 
-    return box({
-      msg: msg,
-      encrypt_for: publicKey
-    }).then(([ pgpMessage, pgpMessageBuffer ]) => {
+    let writer = new MIMEWriter();
+
+    writer.writePart(text, {
+      type: 'text/html; charset="UTF-8"'
+    });
+
+    let msg = writer.end();
+
+    return box({ msg, encrypt_for }).then(([ pgpMessage, pgpMessageBuffer ]) => {
       return pgpMessage;
     });
   }
