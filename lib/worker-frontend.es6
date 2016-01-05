@@ -30,6 +30,8 @@ class WorkerFrontend {
     });
   }
 
+  // Called by `main.es6` when the `windowType` matches either `default` or
+  // `composer`
   initialize() {
     this._forkProcess();
   }
