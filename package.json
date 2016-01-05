@@ -25,6 +25,7 @@
     "babel-core": "^6.3.26",
     "babel-plugin-transform-class-properties": "^6.3.13",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.3.16",
+    "babel-plugin-transform-function-bind": "^6.3.13",
     "babel-preset-es2015": "^6.3.13",
     "babel-preset-react": "^6.3.13",
     "basscss-base-forms": "^2.0.0",
