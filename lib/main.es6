@@ -38,15 +38,7 @@ var _loadSettings = {};
 // saved state using `serialize` it is provided.
 //
 export function activate(state) {
-  // Skip "?loadSettings=".
-  let rawLoadSettings = decodeURIComponent(location.search.substr(14));
-  try {
-    _loadSettings = JSON.parse(rawLoadSettings);
-  } catch (error) {
-    console.error("Failed to parse load settings: " + rawLoadSettings);
-    throw error;
-  }
-
+  _loadSettings = NylasEnv.getLoadSettings();
   let windowType = _loadSettings.windowType;
 
   if (windowType === 'default') {
