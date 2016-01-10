@@ -11,6 +11,7 @@
   },
   "description": "Enter a description of your package!",
   "dependencies": {
+    "debug": "^2.2.0",
     "kbpgp": "git+https://github.com/mbilker/kbpgp.git",
     "libkeybase": "^1.2.22",
     "mimelib": "^0.2.19",

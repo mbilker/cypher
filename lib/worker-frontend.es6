@@ -1,11 +1,16 @@
 import child_process from 'child_process';
+import readline from 'readline';
 import nylasExports from 'nylas-exports';
 
+import debugSettings from './debug-settings';
+import debugInitialize from 'debug/browser';
 import smalltalk from 'smalltalk';
 import uuid from 'uuid';
 
 import proto from './worker/worker-protocol';
 import FlowError from './flow-error';
+
+const debug = debugInitialize('WorkerFrontend');
 
 class WorkerFrontend {
   constructor() {
@@ -53,10 +58,28 @@ class WorkerFrontend {
 
     this._child = child_process.fork(this._workerEntryScriptPath, {
       env: Object.assign({}, process.env, {
+        DEBUG: '*',
         PGP_COMPILE_CACHE_MODULE_PATH: modulePath,
         PGP_COMPILE_CACHE_PATH: compileCachePath,
         PGP_CONFIG_DIR_PATH: NylasEnv.getConfigDirPath()
-      })
+      }),
+      silent: true
+    });
+
+    const rlOut = readline.createInterface({
+      input: this._child.stdout,
+      terminal: false
+    });
+    const rlErr = readline.createInterface({
+      input: this._child.stderr,
+      terminal: false
+    });
+
+    rlOut.on('line', (data) => {
+      debug('[child.stdout] %s', data);
+    });
+    rlErr.on('line', (data) => {
+      debug('[child.stderr] %s', data);
     });
 
     this._child.on('message', (message) => {
@@ -68,7 +91,7 @@ class WorkerFrontend {
         console.error(error.childStackTrace);
       } else if (message.method === proto.VERBOSE_OUT) {
         // VERBOSE_OUT
-        console.log('[PGP - WorkerVerbose] %s', message.message);
+        debug('[Verbose] %s', message.message);
       } else if (message.method === proto.REQUEST_PASSPHRASE) {
         // REQUEST_PASSPHRASE
         this._requestPassphrase(message.id, message.message);
@@ -86,7 +109,7 @@ class WorkerFrontend {
         // PROMISE_NOTIFY
         this._pendingPromises[message.id].notify(message.result);
       } else {
-        console.log('[PGP - WorkerFrontend] Unknown Message Received From Worker: %O', message);
+        debug('Unknown Message Received From Worker: %O', message);
       }
     });
   }
@@ -94,8 +117,10 @@ class WorkerFrontend {
   _requestPassphrase(id, msg) {
     smalltalk.passphrase('PGP Passphrase', msg || '').then((passphrase) => {
       this._child.send({ method: proto.PROMISE_RESOLVE, id, result: passphrase });
+      debug('Passphrase entered');
     }, () => {
       this._child.send({ method: proto.PROMISE_REJECT, id });
+      debug('Passphrase cancelled');
     });
   }
 }
