@@ -1,5 +1,6 @@
 import uuid from 'uuid';
 
+import {log} from './logger';
 import proto from './worker-protocol';
 import KbpgpDecryptController from './kbpgp/kbpgp-decrypt';
 
@@ -38,7 +39,7 @@ class EventProcessor {
 
     this._kbpgpDecryptController.decrypt(message, notify).then(({literals, elapsed}) => {
       process.send({ method: proto.DECRYPTION_RESULT, id, result: literals[0].toString(), elapsed });
-    }, (err) => {
+    }).catch((err) => {
       //this._sendError(err);
       process.send({ method: proto.PROMISE_REJECT, id, result: err.message });
     });
@@ -56,6 +57,9 @@ class EventProcessor {
       // PROMISE_REJECT
       this._pendingPromises[message.id].reject(message.result);
       delete this._pendingPromises[message.id];
+    } else if (message.method === proto.LIST_PENDING_PROMISES) {
+      // LIST_PENDING_PROMISES
+      log(JSON.stringify(this._pendingPromises));
     }
   }
 }

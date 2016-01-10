@@ -15,8 +15,6 @@ class KbpgpDecryptRoutine {
   }
 
   _importKey(armored) {
-    //log(armored);
-
     return new Promise((resolve, reject) => {
       kbpgp.KeyManager.import_from_armored_pgp({
         armored
@@ -36,22 +34,24 @@ class KbpgpDecryptRoutine {
       log('[InProcessDecrypter] Found cached key for %s', secretKey.get_pgp_key_id().toString('hex'));
       return Promise.resolve(cachedKey);
     } else {
-      return this._decryptKey(secretKey);
+      return this._decryptKey(secretKey).then((secretKey) => {
+        KeyStore.addKeyManager(secretKey);
+      });
     }
   }
 
   _decryptKey(secretKey) {
-    return new Promise((resolve, reject) => {
-      if (!secretKey.is_pgp_locked()) {
-        return resolve(secretKey);
-      }
+    if (!secretKey.is_pgp_locked()) {
+      return Promise.resolve(secretKey);
+    }
 
-      this._notify('Waiting for passphrase...');
+    this._notify('Waiting for passphrase...');
 
-      let askString = `PGP Key with fingerprint <tt>${secretKey.get_pgp_key_id().toString('hex')}</tt> needs to be decrypted`;
-      this._controller.requestPassphrase(askString).then((passphrase) => {
-        this._notify('Unlocking secret key...');
+    let askString = `PGP Key with fingerprint <tt>${secretKey.get_pgp_key_id().toString('hex')}</tt> needs to be decrypted`;
+    return this._controller.requestPassphrase(askString).then((passphrase) => {
+      this._notify('Unlocking secret key...');
 
+      return new Promise((resolve, reject) => {
         let startTime = process.hrtime();
         secretKey.unlock_pgp({ passphrase }, (err) => {
           if (err) {
@@ -67,8 +67,11 @@ class KbpgpDecryptRoutine {
           resolve(secretKey);
         });
       });
-    }).then((secretKey) => {
-      KeyStore.addKeyManager(secretKey);
+    }, () => {
+      // Since the first argument is undefined, the rejected promise does not
+      // propagate to the `catch` receiver in `EventProcessor`. Create an Error
+      // here to ensure the error is delivered to `EventProcessor`
+      throw new Error('Passphrase dialog cancelled');
     });
   }
 
