@@ -60,6 +60,7 @@ class EventProcessor {
     } else if (message.method === proto.LIST_PENDING_PROMISES) {
       // LIST_PENDING_PROMISES
       log(JSON.stringify(this._pendingPromises));
+      log(JSON.stringify(this._kbpgpDecryptController._waitingForPassphrase));
     }
   }
 }

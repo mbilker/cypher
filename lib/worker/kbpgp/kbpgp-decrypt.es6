@@ -29,13 +29,22 @@ class KbpgpDecryptRoutine {
   }
 
   _checkCache(secretKey) {
-    let cachedKey = KeyStore.lookupKeyManager(secretKey.get_pgp_key_id());
+    let keyId = secretKey.get_pgp_key_id();
+    let keyIdHex = keyId.toString('hex');
+    let cachedKey = KeyStore.lookupKeyManager(keyId);
+    let isLocked = this._controller.isWaitingForPassphrase(keyIdHex);
     if (cachedKey) {
       log('[InProcessDecrypter] Found cached key for %s', secretKey.get_pgp_key_id().toString('hex'));
       return Promise.resolve(cachedKey);
+    } else if (isLocked) {
+      return isLocked.promise;
     } else {
-      return this._decryptKey(secretKey).then((secretKey) => {
+      return this._decryptKey(secretKey).then(secretKey => {
         KeyStore.addKeyManager(secretKey);
+        return this._controller.completedPassphrasePromise(keyIdHex);
+      }, err => {
+        this._controller.completedPassphrasePromise(keyIdHex, {err});
+        throw err;
       });
     }
   }
@@ -47,11 +56,12 @@ class KbpgpDecryptRoutine {
 
     this._notify('Waiting for passphrase...');
 
-    let askString = `PGP Key with fingerprint <tt>${secretKey.get_pgp_key_id().toString('hex')}</tt> needs to be decrypted`;
-    return this._controller.requestPassphrase(askString).then((passphrase) => {
-      this._notify('Unlocking secret key...');
-
+    let keyId = secretKey.get_pgp_key_id().toString('hex');
+    let askString = `PGP Key with fingerprint <tt>${keyId}</tt> needs to be decrypted`;
+    return this._controller.requestPassphrase(keyId, askString).then(passphrase => {
       return new Promise((resolve, reject) => {
+        this._notify('Unlocking secret key...');
+
         let startTime = process.hrtime();
         secretKey.unlock_pgp({ passphrase }, (err) => {
           if (err) {
@@ -106,6 +116,10 @@ class KbpgpDecryptController {
   constructor(eventProcessor) {
     this._eventProcessor = eventProcessor;
 
+    this._waitingForPassphrase = {};
+
+    this.decrypt = this.decrypt.bind(this);
+    this.isWaitingForPassphrase = this.isWaitingForPassphrase.bind(this);
     this.requestPassphrase = this.requestPassphrase.bind(this);
   }
 
@@ -121,7 +135,39 @@ class KbpgpDecryptController {
     return new KbpgpDecryptRoutine(this, notify).run(armored, secretKey);
   }
 
-  requestPassphrase(askString) {
+  isWaitingForPassphrase(keyId) {
+    return this._waitingForPassphrase[keyId];
+  }
+
+  completedPassphrasePromise(keyId, err) {
+    if (!this._waitingForPassphrase[keyId]) {
+      throw new Error('No pending promise for that keyId');
+    }
+
+    if (err) {
+      this._waitingForPassphrase[keyId].reject(err);
+      return err;
+    }
+
+    this._waitingForPassphrase[keyId].resolve();
+  }
+
+  requestPassphrase(keyId, askString) {
+    if (this._waitingForPassphrase[keyId]) {
+      return this._waitingForPassphrase[keyId].promise;
+    }
+
+    this._waitingForPassphrase[keyId] = {};
+    this._waitingForPassphrase[keyId].promise = new Promise((resolve, reject) => {
+      this._waitingForPassphrase[keyId].resolve = resolve;
+      this._waitingForPassphrase[keyId].reject = reject;
+    }).then(() => {
+      delete this._waitingForPassphrase[keyId];
+    }, err => {
+      delete this._waitingForPassphrase[keyId];
+      throw err;
+    });
+
     return this._eventProcessor.requestPassphrase(askString);
   }
 }
