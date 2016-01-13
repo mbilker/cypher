@@ -1,7 +1,7 @@
 {Contact, Message, React} = require 'nylas-exports'
 ReactTestUtils = React.addons.TestUtils
 
-MessageLoader = require '../lib/message-loader'
+MessageLoader = require '../lib/message-loader/message-loader-header'
 
 me = new Contact
   name: TEST_ACCOUNT_NAME

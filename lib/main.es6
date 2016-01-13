@@ -79,7 +79,7 @@ class PGPMain {
   // watching any files, holding external resources, providing commands or
   // subscribing to events, release them here.
   deactivate() {
-    let windowType = _loadSettings.windowType;
+    let windowType = this._loadSettings.windowType;
 
     if (windowType === 'default') {
       PreferencesUIStore.unregisterPreferencesTab(_tab.tabId);

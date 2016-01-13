@@ -1,4 +1,4 @@
-import {ComponentRegistry} from 'nylas-exports';
+import {ComponentRegistry, ExtensionRegistry, PreferencesUIStore} from 'nylas-exports';
 import {activate, deactivate} from '../lib/main';
 
 import MessageLoaderExtension from '../lib/message-loader/message-loader-extension';
@@ -20,6 +20,6 @@ describe("deactivate", () => {
   it("should unregister the composer button and sidebar", () => {
     spyOn(ComponentRegistry, 'unregister');
     deactivate();
-    expect(ComponentRegistry.unregister).toHaveBeenCalledWith(MessageLoader);
+    expect(ComponentRegistry.unregister).toHaveBeenCalledWith(MessageLoaderHeader);
   });
 });
