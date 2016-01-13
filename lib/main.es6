@@ -2,9 +2,9 @@ import {ComponentRegistry, ExtensionRegistry, PreferencesUIStore} from 'nylas-ex
 
 import PreferencesComponent from './settings/preferences-component';
 import MessageLoaderExtension from './message-loader/message-loader-extension';
-import ComposerLoader from './composer/composer-loader';
 import MessageLoaderHeader from './message-loader/message-loader-header';
 import WorkerFrontend from './worker-frontend';
+import ComposerLoader from './composer/composer-loader';
 
 class PGPMain {
   config = {
@@ -33,7 +33,6 @@ class PGPMain {
 
   _state = {};
   _tab = null;
-  _loadSettings = {};
 
   constructor() {
     this.activate = this.activate.bind(this);
@@ -45,12 +44,12 @@ class PGPMain {
   // saved state using `serialize` it is provided.
   //
   activate(state) {
-    this._loadSettings = NylasEnv.getLoadSettings();
-    let windowType = this._loadSettings.windowType;
+    let _loadSettings = NylasEnv.getLoadSettings();
+    let windowType = _loadSettings.windowType;
 
     if (windowType === 'default') {
-      _state = state;
-      _tab = new PreferencesUIStore.TabItem({
+      this._state = state;
+      this._tab = new PreferencesUIStore.TabItem({
         tabId: "PGP",
         displayName: "PGP Mail",
         component: PreferencesComponent
@@ -58,7 +57,7 @@ class PGPMain {
 
       WorkerFrontend.initialize();
 
-      PreferencesUIStore.registerPreferencesTab(_tab);
+      PreferencesUIStore.registerPreferencesTab(this._tab);
       ComponentRegistry.register(MessageLoaderHeader, {role: 'message:BodyHeader'});
       ExtensionRegistry.MessageView.register(MessageLoaderExtension);
     }
@@ -79,10 +78,11 @@ class PGPMain {
   // watching any files, holding external resources, providing commands or
   // subscribing to events, release them here.
   deactivate() {
-    let windowType = this._loadSettings.windowType;
+    let _loadSettings = NylasEnv.getLoadSettings();
+    let windowType = _loadSettings.windowType;
 
     if (windowType === 'default') {
-      PreferencesUIStore.unregisterPreferencesTab(_tab.tabId);
+      PreferencesUIStore.unregisterPreferencesTab(this._tab.tabId);
       ExtensionRegistry.MessageView.unregister(MessageLoaderExtension);
       ComponentRegistry.unregister(MessageLoaderHeader);
     }
