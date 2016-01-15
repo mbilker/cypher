@@ -1,11 +1,11 @@
 
 # Email PGP - Matt Bilker <me@mbilker.us>
 
-**PROOF OF CONCEPT and HIGHLY VOLATILE**
+**HIGHLY VOLATILE**
 
 Small package for decrypting PGP-encrypted email.
 
--   Works with Facebook PGP mail (only kind I receive)
+-   Works with Facebook PGP, OS X GPGTools, and command line GnuPG
 -   Encryption using Keybase tracked users to allow for easy selection for users
 
 Also, *currently* you need to stick your encrypted secret key at `$HOME/gpgkey`.
@@ -24,16 +24,14 @@ or safe at all.
   - [ ] Allow for method of encryption to be set in settings (e.g. smart card through GPG)
 - Decryption
   - [ ] TTL for decryption key passphrase
-- Integrate with Keybase.io
+- Keybase.io
   - [x] Login
   - [x] Encryption
   - [ ] Decryption
   - [x] Download "tracked" users list
-    - Thanks to libkeybase-js, this is much easier. Can verify the list as well.
 - Preferences
   - [ ] Option to encrypt whole email with quoted text or without it
   - [ ] Clearsign Signature and Encrypt
-  - Fix the error bar to use new CSS classes
 - [ ] Better detection of PGP encrypted emails
 - [x] Text input for passphrase
 - [ ] Spec tests for all features
