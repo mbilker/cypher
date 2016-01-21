@@ -1,4 +1,6 @@
 import kbpgp from 'kbpgp';
+import os from 'os';
+import child_process from 'child_process';
 
 import {log} from '../logger';
 import KeyStore from './key-store';
@@ -85,10 +87,16 @@ class KbpgpDecryptRoutine {
     });
   }
 
-  run(armored, secretKey) {
+  run(armored, identifier) {
     let startTime = process.hrtime();
 
-    return this._importKey(secretKey).then(this._checkCache).then(() => {
+    if ((os.platform() === 'linux' || os.platform() === 'darwin') && !process.env.PATH.includes('/usr/local/bin')) {
+      process.env.PATH += ":/usr/local/bin";
+    }
+
+    var key = child_process.execSync(`gpg --export-secret-keys -a ${identifier}`);
+
+    return this._importKey(key).then(this._checkCache).then(() => {
       return new Promise((resolve, reject) => {
         log('[KbpgpDecryptRoutine] inside the unbox closure');
         this._notify(null);
@@ -123,16 +131,18 @@ class KbpgpDecryptController {
     this.requestPassphrase = this.requestPassphrase.bind(this);
   }
 
-  decrypt({armored, secretKey}, notify) {
+  // TODO: figure out a way to prompt the user to pick which PGP key to use to
+  // decrypt or add a config page to allow them to pick per-email account.
+  decrypt({armored, identifier}, notify) {
     if (armored && armored.type === 'Buffer') {
       armored = new Buffer(armored.data);
     }
 
-    if (secretKey && secretKey.type === 'Buffer') {
-      secretKey = new Buffer(secretKey.data);
+    if (identifier && identifier.type === 'Buffer') {
+      secretKey = new Buffer(identifier.data);
     }
 
-    return new KbpgpDecryptRoutine(this, notify).run(armored, secretKey);
+    return new KbpgpDecryptRoutine(this, notify).run(armored, identifier);
   }
 
   isWaitingForPassphrase(keyId) {
