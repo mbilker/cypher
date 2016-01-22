@@ -121,7 +121,7 @@ class KeyStore {
     return this._kms[hexkid(key_id)];
   }
 
-  static getKeysGPG() {
+  getKeysGPG() {
     if ((os.platform() === 'linux' || os.platform() === 'darwin') && !process.env.PATH.includes('/usr/local/bin')) {
       process.env.PATH += ":/usr/local/bin";
     }

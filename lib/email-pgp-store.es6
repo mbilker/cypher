@@ -12,6 +12,9 @@ import EmailPGPActions from './email-pgp-actions';
 import InProcessDecrypter from './decryption/in-process-decrypter';
 import WorkerFrontend from './worker-frontend';
 import FlowError from './flow-error.es6';
+import KeyStore from './worker/kbpgp/key-store';
+
+import smalltalk from 'smalltalk';
 
 // THANK YOU GPGTOOLS! The `MimePart+GPGMail.m` is such a good guide to PGP
 // mail decryption
@@ -144,10 +147,10 @@ class EmailPGPStore extends NylasStore {
     let notify = (msg) => this._setState(message.id, { statusMessage: msg });
     let decrypter = this._selectDecrypter().bind(null, notify);
     let startDecrypt = process.hrtime();
-    return this._getAttachmentAndKey(message, notify).spread(decrypter).then((result) => {
+    return this._getAttachmentAndKey(message, notify).spread(decrypter).then((text) => {
       let endDecrypt = process.hrtime(startDecrypt);
       console.log(`[EmailPGPStore] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
-      return result.text;
+      return text;
     }).then(this._extractHTML).then((match) => {
       this._cachedMessages[message.id] = match;
 
@@ -233,9 +236,17 @@ class EmailPGPStore extends NylasStore {
 
   // Retrieves the attachment and encrypted secret key for code divergence later
   _getAttachmentAndKey(message, notify) {
+    keys = {}
+    gpg = KeyStore.getKeysGPG()
+
+    for (let key of gpg) {
+      if (!key) return;
+      keys[key.key] = `[${key.type}] ${key.fpr}`;
+    }
+
     return Promise.all([
       this._retrievePGPAttachment(message, notify),
-      "" // TODO: prompt the user to select their key
+      smalltalk.dropdown('PGP Key', 'Which PGP key should be used for decryption of this message?', keys)
     ]).spread((text, pgpkey) => {
       if (!text) {
         throw new FlowError("No text in attachment", true);
