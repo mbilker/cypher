@@ -7,9 +7,8 @@ var Actions = [
   'retryMessage'
 ];
 
-Actions.forEach((key) => {
-  Actions[key] = Reflux.createAction(name);
-  Actions[key].sync = true;
+Actions.forEach(key => {
+  Actions[key] = Reflux.createAction(key);
 });
 
 export default Actions;
