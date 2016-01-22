@@ -14,13 +14,13 @@
     "debug": "^2.2.0",
     "kbpgp": "git+https://github.com/mbilker/kbpgp.git",
     "libkeybase": "^1.2.22",
+    "lodash": "^4.0.0",
     "mimelib": "^0.2.19",
     "mimeparser": "^0.3.8",
     "node-keybase": "0.0.5",
     "openpgp": "^1.3.0",
     "request": "^2.67.0",
     "smalltalk": "git+https://github.com/mbilker/smalltalk.git",
-    "underscore": "^1.8.3",
     "uuid": "^2.0.1"
   },
   "devDependencies": {

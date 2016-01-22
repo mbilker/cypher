@@ -3,10 +3,13 @@
  FocusedContactsStore,
  MessageStore} = require 'nylas-exports'
 {RetinaImg} = require 'nylas-component-kit'
-Keybase = new (require './keybase/keybase-integration')
-_ = require('underscore')
+
+_ = require('lodash')
+kbpgp = require('kbpgp')
+{PKESK} = require('kbpgp/lib/openpgp/packet/sess')
+
 EmailPGPStore = require('./email-pgp-store');
-EventProcessor = require('./worker/event-processor')
+Keybase = new (require './keybase/keybase-integration')
 proto = require('./worker/worker-protocol')
 WorkerFrontend = require('./worker-frontend')
 
@@ -44,26 +47,38 @@ class KeybaseSidebar extends React.Component
     msg = @getMessage()
 
     if EmailPGPStore.shouldDecryptMessage msg
-      self = this
-
       notify = (msg) ->
         console.log(msg)
 
-      decrypter = WorkerFrontend.decrypt.bind null, notify
+      EmailPGPStore._retrievePGPAttachment(msg, notify).then (text) =>
+        return console.log "No text in attachment" if not text
 
-      (EmailPGPStore._getAttachmentAndKey msg, notify).spread(decrypter).then (result) ->
-        if result.signedBy?
-          (Keybase.userLookup { key_fingerprint: [result.signedBy], fields: ['basics', 'proofs_summary', 'cryptocurrency_addresses'] }).then (res) ->
-            self.setState {
+        [err, msg] = kbpgp.armor.decode text
+        return console.log err if err
+
+        [err2, parsed] = kbpgp.parser.parse msg.body
+        console.log parsed
+
+        encrypted = parsed.reduce((prevValue, newValue) =>
+          if newValue instanceof PKESK
+            prevValue.push newValue
+          prevValue
+        , []).map (x) =>
+          x.key_id?.toString 'hex'
+
+        console.log encrypted
+
+        if false
+          Keybase.userLookup(key_fingerprint: [result.signedBy], fields: ['basics', 'proofs_summary', 'cryptocurrency_addresses']).then (res) =>
+            @setState
               data: res.them[0].proofs_summary,
               name: res.them[0].basics.username,
               profile: res.them[0].profile,
               cryptoaddress: res.them[0].cryptocurrency_addresses,
               fpr: result.signedBy
-            }
 
   componentWillUnmount: =>
-    @unsubscribe()
+    @unsubscribe?()
 
   render: =>
     msg = @getMessage()

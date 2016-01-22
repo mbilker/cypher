@@ -236,11 +236,11 @@ class EmailPGPStore extends NylasStore {
 
   // Retrieves the attachment and encrypted secret key for code divergence later
   _getAttachmentAndKey(message, notify) {
-    keys = {}
-    gpg = KeyStore.getKeysGPG()
+    const keys = {};
+    const gpg = KeyStore.getKeysGPG();
 
     for (let key of gpg) {
-      if (!key) return;
+      if (!key) continue;
       keys[key.key] = `[${key.type}] ${key.fpr}`;
     }
 

@@ -139,7 +139,7 @@ class KeyStore {
       }
 
       if (line.startsWith('sec') || line.startsWith('ssb')) {
-        let parsed = /^(sec|ssb) +([0-9]*[a-zA-Z])\/([a-zA-Z0-9]*) ((2[0-9]{3})-(1[0-2]|0[1-9])-(0[1-9]|[12]\d|3[01]))(?: \[expires\: )?((2[0-9]{3})-(1[0-2]|[1-9])-(0[1-9]|[12]\d|3[01]))?/.exec(line).slice(1);
+        let parsed = parsed = /^(sec|ssb) +(?:\w+)?([0-9]*)(?:[a-zA-Z]?)\/([a-zA-Z0-9]*) ((2[0-9]{3})-(1[0-2]|0[1-9])-(0[1-9]|[12]\d|3[01]))(?: \[expires\: )?((2[0-9]{3})-(1[0-2]|0[1-9])-(0[1-9]|[12]\d|3[01]))?/.exec(line).slice(1);
 
         currentKey = {
           type: parsed[0] == 'sec' ? 'master' : 'subkey',
