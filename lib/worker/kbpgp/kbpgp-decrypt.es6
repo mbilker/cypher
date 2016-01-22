@@ -89,32 +89,40 @@ class KbpgpDecryptRoutine {
 
   run(armored, identifier) {
     let startTime = process.hrtime();
+    let method = 'GPG_DECRYPT';
 
-    if ((os.platform() === 'linux' || os.platform() === 'darwin') && !process.env.PATH.includes('/usr/local/bin')) {
-      process.env.PATH += ":/usr/local/bin";
-    }
+    if (method === 'GPG_DECRYPT') {
+      if ((os.platform() === 'linux' || os.platform() === 'darwin') && !process.env.PATH.includes('/usr/local/bin')) {
+        process.env.PATH += ":/usr/local/bin";
+      }
 
-    var key = child_process.execSync(`gpg --export-secret-keys -a ${identifier}`);
+      //var key = child_process.execSync(`gpg --export-secret-keys -a ${identifier}`);
+      const decrypted = child_process.spawnSync('gpg', ['--decrypt'], { input: armored });
+      const literals = [decrypted];
+      const elapsed = process.hrtime(startTime);
 
-    return this._importKey(key).then(this._checkCache).then(() => {
-      return new Promise((resolve, reject) => {
-        log('[KbpgpDecryptRoutine] inside the unbox closure');
-        this._notify(null);
+      return Promise.resolve({literals, elapsed});
+    } else {
+      return this._importKey(key).then(this._checkCache).then(() => {
+        return new Promise((resolve, reject) => {
+          log('[KbpgpDecryptRoutine] inside the unbox closure');
+          this._notify(null);
 
-        let startDecrypt = process.hrtime();
-        kbpgp.unbox({ keyfetch: KeyStore, armored }, (err, literals) => {
-          if (err) {
-            reject(err, literals);
-          } else {
-            let decryptTime = process.hrtime(startDecrypt);
-            let elapsed = process.hrtime(startTime);
+          let startDecrypt = process.hrtime();
+          kbpgp.unbox({ keyfetch: KeyStore, armored }, (err, literals) => {
+            if (err) {
+              reject(err, literals);
+            } else {
+              let decryptTime = process.hrtime(startDecrypt);
+              let elapsed = process.hrtime(startTime);
 
-            this._notify(`Message decrypted in ${decryptTime[0] * 1e3 + decryptTime[1] / 1e6}ms`);
-            resolve({ literals, elapsed });
-          }
+              this._notify(`Message decrypted in ${decryptTime[0] * 1e3 + decryptTime[1] / 1e6}ms`);
+              resolve({ literals, elapsed });
+            }
+          });
         });
       });
-    });
+    }
   }
 }
 
