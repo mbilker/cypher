@@ -5,6 +5,7 @@ import MessageLoaderExtension from './message-loader/message-loader-extension';
 import MessageLoaderHeader from './message-loader/message-loader-header';
 import WorkerFrontend from './worker-frontend';
 import ComposerLoader from './composer/composer-loader';
+import KeybaseSidebar from './keybase-sidebar';
 
 class PGPMain {
   config = {
@@ -59,6 +60,7 @@ class PGPMain {
 
       PreferencesUIStore.registerPreferencesTab(this._tab);
       ComponentRegistry.register(MessageLoaderHeader, {role: 'message:BodyHeader'});
+      ComponentRegistry.register(KeybaseSidebar, {role: 'MessageListSidebar:ContactCard'});
       ExtensionRegistry.MessageView.register(MessageLoaderExtension);
     }
 

@@ -133,16 +133,16 @@ class KbpgpDecryptController {
 
   // TODO: figure out a way to prompt the user to pick which PGP key to use to
   // decrypt or add a config page to allow them to pick per-email account.
-  decrypt({armored, identifier}, notify) {
+  decrypt({armored, secretKey}, notify) {
     if (armored && armored.type === 'Buffer') {
       armored = new Buffer(armored.data);
     }
 
-    if (identifier && identifier.type === 'Buffer') {
-      secretKey = new Buffer(identifier.data);
+    if (secretKey && secretKey.type === 'Buffer') {
+      secretKey = new Buffer(secretKey.data);
     }
 
-    return new KbpgpDecryptRoutine(this, notify).run(armored, identifier);
+    return new KbpgpDecryptRoutine(this, notify).run(armored, secretKey);
   }
 
   isWaitingForPassphrase(keyId) {

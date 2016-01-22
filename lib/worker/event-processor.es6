@@ -38,7 +38,10 @@ class EventProcessor {
     }
 
     this._kbpgpDecryptController.decrypt(message, notify).then(({literals, elapsed}) => {
-      process.send({ method: proto.DECRYPTION_RESULT, id, result: literals[0].toString(), elapsed });
+      let ref;
+      let ref1;
+      let signedBy = (((ref = (((ref1 = literals[0].get_data_signer()) != null) ? ref1.get_key_manager() : undefined)) != null) ? ref.get_pgp_fingerprint() : undefined).toString('hex');
+      process.send({ method: proto.DECRYPTION_RESULT, id, result: { text: literals[0].toString(), signedBy: signedBy }, elapsed });
     }).catch((err) => {
       //this._sendError(err);
       process.send({ method: proto.PROMISE_REJECT, id, result: err.message });

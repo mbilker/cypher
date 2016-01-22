@@ -144,10 +144,10 @@ class EmailPGPStore extends NylasStore {
     let notify = (msg) => this._setState(message.id, { statusMessage: msg });
     let decrypter = this._selectDecrypter().bind(null, notify);
     let startDecrypt = process.hrtime();
-    return this._getAttachmentAndKey(message, notify).spread(decrypter).then((text) => {
+    return this._getAttachmentAndKey(message, notify).spread(decrypter).then((result) => {
       let endDecrypt = process.hrtime(startDecrypt);
       console.log(`[EmailPGPStore] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
-      return text;
+      return result.text;
     }).then(this._extractHTML).then((match) => {
       this._cachedMessages[message.id] = match;
 
@@ -235,7 +235,7 @@ class EmailPGPStore extends NylasStore {
   _getAttachmentAndKey(message, notify) {
     return Promise.all([
       this._retrievePGPAttachment(message, notify),
-      this._getKey()
+      "" // TODO: prompt the user to select their key
     ]).spread((text, pgpkey) => {
       if (!text) {
         throw new FlowError("No text in attachment", true);
