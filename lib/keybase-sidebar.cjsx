@@ -3,7 +3,7 @@
  FocusedContactsStore,
  MessageStore} = require 'nylas-exports'
 {RetinaImg} = require 'nylas-component-kit'
-https = require('https')
+Keybase = new (require './keybase/keybase-integration')
 _ = require('underscore')
 EmailPGPStore = require('./email-pgp-store');
 EventProcessor = require('./worker/event-processor')
@@ -53,21 +53,14 @@ class KeybaseSidebar extends React.Component
 
       (EmailPGPStore._getAttachmentAndKey msg, notify).spread(decrypter).then (result) ->
         if result.signedBy?
-          https.get "https://keybase.io/_/api/1.0/user/lookup.json?key_fingerprint=#{result.signedBy}", (res) ->
-            body = ''
-
-            res.on 'data', (chunk) -> body += chunk
-
-            res.on 'end', () ->
-              resp = JSON.parse(body)
-
-              self.setState {
-                data: resp.them[0].proofs_summary,
-                name: resp.them[0].basics.username,
-                profile: resp.them[0].profile,
-                cryptoaddress: resp.them[0].cryptocurrency_addresses,
-                fpr: result.signedBy
-              }
+          (Keybase.userLookup { key_fingerprint: [result.signedBy], fields: ['basics', 'proofs_summary', 'cryptocurrency_addresses'] }).then (res) ->
+            self.setState {
+              data: res.them[0].proofs_summary,
+              name: res.them[0].basics.username,
+              profile: res.them[0].profile,
+              cryptoaddress: res.them[0].cryptocurrency_addresses,
+              fpr: result.signedBy
+            }
 
   componentWillUnmount: =>
     @unsubscribe()
