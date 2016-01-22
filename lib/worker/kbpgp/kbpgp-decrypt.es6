@@ -98,7 +98,9 @@ class KbpgpDecryptRoutine {
 
       //var key = child_process.execSync(`gpg --export-secret-keys -a ${identifier}`);
       const decrypted = child_process.spawnSync('gpg', ['--decrypt'], { input: armored });
-      const literals = [decrypted];
+      log(decrypted.stdout);
+      log(decrypted.stderr.toString());
+      const literals = [decrypted.stdout];
       const elapsed = process.hrtime(startTime);
 
       return Promise.resolve({literals, elapsed});
@@ -109,7 +111,7 @@ class KbpgpDecryptRoutine {
           this._notify(null);
 
           let startDecrypt = process.hrtime();
-          kbpgp.unbox({ keyfetch: KeyStore, armored }, (err, literals) => {
+          kbpgp.unbox({keyfetch: KeyStore, armored}, (err, literals) => {
             if (err) {
               reject(err, literals);
             } else {
@@ -117,7 +119,18 @@ class KbpgpDecryptRoutine {
               let elapsed = process.hrtime(startTime);
 
               this._notify(`Message decrypted in ${decryptTime[0] * 1e3 + decryptTime[1] / 1e6}ms`);
-              resolve({ literals, elapsed });
+
+              const ds = literals[0].get_data_signer();
+              let km = signedBy = null;
+              if (ds) {
+                km = ds.get_key_manager();
+              }
+              if (km) {
+                signedBy = km.get_pgp_fingerprint().toString('hex');
+                console.log(`Signed by PGP fingerprint: ${signedBy}`);
+              }
+
+              resolve({literals, signedBy, elapsed});
             }
           });
         });
