@@ -144,13 +144,20 @@ class EmailPGPStore extends NylasStore {
     });
 
     // More decryption engines will be implemented
-    let notify = (msg) => this._setState(message.id, { statusMessage: msg });
-    let decrypter = this._selectDecrypter().bind(null, notify);
-    let startDecrypt = process.hrtime();
-    return this._getAttachmentAndKey(message, notify).spread(decrypter).then((text) => {
-      let endDecrypt = process.hrtime(startDecrypt);
+    const notify = (msg) => this._setState(message.id, { statusMessage: msg });
+    const decrypter = this._selectDecrypter().bind(null, notify);
+    const startDecrypt = process.hrtime();
+
+    return this._getAttachmentAndKey(message, notify).spread(decrypter).then((result) => {
+      const endDecrypt = process.hrtime(startDecrypt);
       console.log(`[EmailPGPStore] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
-      return text;
+
+      this._setState(message.id, {
+        rawMessage: result.text,
+        signedBy: result.signedBy
+      });
+
+      return result;
     }).then(this._extractHTML).then((match) => {
       this._cachedMessages[message.id] = match;
 
@@ -271,7 +278,7 @@ class EmailPGPStore extends NylasStore {
 
   // Uses regex to extract HTML component from a multipart message. Does not
   // contribute a significant amount of time to the decryption process.
-  _extractHTML(text) {
+  _extractHTML(result) {
     return new Promise((resolve, reject) => {
       let parser = new MimeParser();
 
@@ -291,7 +298,7 @@ class EmailPGPStore extends NylasStore {
         console.log(`[EmailPGPStore] %cParsed MIME in ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
       }
 
-      parser.write(text);
+      parser.write(result.text);
       parser.end();
 
       // Fallback to regular expressions method
