@@ -37,15 +37,11 @@ class EventProcessor {
       process.send({ method: proto.PROMISE_NOTIFY, id, result });
     }
 
-    this._kbpgpDecryptController.decrypt(message, notify).then(({literals, elapsed}) => {
-      var signedBy;
-      if (literals[0].get_data_signer) {
-        let ref;
-        let ref1;
-        signedBy = (((ref = (((ref1 = literals[0].get_data_signer()) != null) ? ref1.get_key_manager() : '')) != null) ? ref.get_pgp_fingerprint() : '').toString('hex');
-      } else {
-        signedBy = '';
-      }
+    this._kbpgpDecryptController.decrypt(message, notify).then(({
+      literals = [],
+      signedBy = '',
+      elapsed
+    }) => {
       process.send({ method: proto.DECRYPTION_RESULT, id, result: { text: literals[0].toString(), signedBy: signedBy }, elapsed });
     }).catch((err) => {
       this._sendError(err);
