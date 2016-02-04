@@ -9,11 +9,14 @@ import {Actions, DraftStore, QuotedHTMLTransformer, React, Utils} from 'nylas-ex
 import {Menu, GeneratedForm, Popover, RetinaImg} from 'nylas-component-kit';
 
 import kbpgp from 'kbpgp';
+import rimraf from 'rimraf';
 
 import {KeybaseStore} from '../keybase';
 import MIMEWriter from './mime-writer';
 
+const NO_OP = () => {};
 const SPAN_STYLES = "font-family:monospace,monospace;white-space:pre;";
+const rimrafPromise = Promise.promisify(rimraf);
 
 class ComposerLoader extends React.Component {
   static displayName = 'ComposerLoader'
@@ -95,12 +98,16 @@ class ComposerLoader extends React.Component {
           let temporaryDir = path.join(this.temporaryAttachmentLocation, this.props.draftClientId);
           let attachmentPath = path.join(temporaryDir, 'encrypted.asc');
 
-          return fs.mkdirAsync(temporaryDir).then(() => {
+          return fs.accessAsync(temporaryDir, fs.F_OK).then(() => {
+            return rimrafPromise(temporaryDir);
+          }, NO_OP).then(() => {
+            return fs.mkdirAsync(temporaryDir);
+          }).then(() => {
             return fs.writeFileAsync(attachmentPath, pgpMessage);
           }).then(() => {
-            Actions.attachFilePath({
-              path: attachmentPath,
-              messageClientId: this.props.draftClientId
+            Actions.addAttachment({
+              messageClientId: this.props.draftClientId,
+              filePath: attachmentPath
             });
           });
         }).then(() => {
