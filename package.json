@@ -20,6 +20,7 @@
     "node-keybase": "0.0.5",
     "openpgp": "^1.3.0",
     "request": "^2.67.0",
+    "rimraf": "^2.5.1",
     "smalltalk": "git+https://github.com/mbilker/smalltalk.git",
     "uuid": "^2.0.1"
   },
