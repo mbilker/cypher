@@ -42,40 +42,9 @@ class KeybaseSidebar extends React.Component
     return MessageStore.items()[0]
 
   componentDidMount: =>
-    @unsubscribe = FocusedContactsStore.listen(@_onChange)
-
-    msg = @getMessage()
-
-    if EmailPGPStore.shouldDecryptMessage msg
-      notify = (msg) ->
-        console.log(msg)
-
-      EmailPGPStore._retrievePGPAttachment(msg, notify).then (text) =>
-        return console.log "No text in attachment" if not text
-
-        [err, msg] = kbpgp.armor.decode text
-        return console.log err if err
-
-        [err2, parsed] = kbpgp.parser.parse msg.body
-        console.log parsed
-
-        encrypted = parsed.reduce((prevValue, newValue) =>
-          if newValue instanceof PKESK
-            prevValue.push newValue
-          prevValue
-        , []).map (x) =>
-          x.key_id?.toString 'hex'
-
-        console.log encrypted
-
-        if false
-          Keybase.userLookup(key_fingerprint: [result.signedBy], fields: ['basics', 'proofs_summary', 'cryptocurrency_addresses']).then (res) =>
-            @setState
-              data: res.them[0].proofs_summary,
-              name: res.them[0].basics.username,
-              profile: res.them[0].profile,
-              cryptoaddress: res.them[0].cryptocurrency_addresses,
-              fpr: result.signedBy
+    @unsubscribe = []
+    @unsubscribe.push FocusedContactsStore.listen @_onChange
+    @unsubscribe.push EmailPGPStore.listen @_onPGPStoreChange
 
   componentWillUnmount: =>
     @unsubscribe?()
@@ -168,6 +137,30 @@ class KeybaseSidebar extends React.Component
 
   _onChange: =>
     @setState(@_getStateFromStores())
+
+  _onPGPStoreChange: (id, state) =>
+    console.log '%s, %O', id, state
+
+    if false
+        promises = encrypted.map (x) =>
+          Keybase.userLookup(
+            key_fingerprint: [x]
+            fields: ['basics', 'proofs_summary', 'cryptocurrency_addresses']
+          ).then (res) =>
+            console.log res
+            res?.them?[0]
+        console.log promises
+
+        Promise.all(promises).then (results) =>
+          console.log results
+          results.forEach (res) =>
+            ###
+            @setState
+              data: res.proofs_summary
+              name: res.basics.username
+              profile: res.profile
+              cryptoaddress: res.cryptocurrency_addresses
+            ###
 
   _getStateFromStores: =>
     contact: FocusedContactsStore.focusedContact()
