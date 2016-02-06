@@ -1,0 +1,88 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{// HKP Remote Cacher}
+\PYG{c+c1}{//}
+\PYG{c+c1}{// Caches the sucessful result from any HKP request in memory and on disk. While}
+\PYG{c+c1}{// the in\PYGZhy{}memory cache may not be entirely useful as KeyStore stores the decoded}
+\PYG{c+c1}{// KeyManager in memory, it is still nice to have around.}
+
+\PYG{k+kr}{import} \PYG{n+nx}{fs} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}fs\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{path} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}path\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{p}{\PYGZob{}}\PYG{n+nx}{log}\PYG{p}{,} \PYG{n+nx}{error}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}../logger\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{class} \PYG{n+nx}{HKPCacher} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{constructor}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}memCache} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}cacheDirectory} \PYG{o}{=} \PYG{n+nx}{path}\PYG{p}{.}\PYG{n+nx}{join}\PYG{p}{(}\PYG{n+nx}{NylasEnv}\PYG{p}{.}\PYG{n+nx}{getConfigDirPath}\PYG{p}{(),} \PYG{l+s+s1}{\PYGZsq{}email\PYGZhy{}pgp\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}pubkey\PYGZhy{}cache\PYGZsq{}}\PYG{p}{);}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{cacheResult} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{cacheResult}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{isCached} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{isCached}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}getFilePath} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}getFilePath}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}ensureCacheDirectoryExists} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}ensureCacheDirectoryExists}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}ensureCacheDirectoryExists}\PYG{p}{();}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{cacheResult}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{,} \PYG{n+nx}{result}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{n+nx}{filePath} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}getFilePath}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}memCache}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{]} \PYG{o}{=} \PYG{n+nx}{result}\PYG{p}{;}
+
+    \PYG{k}{return} \PYG{k}{new} \PYG{n+nb}{Promise}\PYG{p}{((}\PYG{n+nx}{resolve}\PYG{p}{,} \PYG{n+nx}{reject}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{writeFile}\PYG{p}{(}\PYG{n+nx}{filePath}\PYG{p}{,} \PYG{n+nx}{result}\PYG{p}{,} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{reject}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{resolve}\PYG{p}{();}
+        \PYG{p}{\PYGZcb{}}
+      \PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{isCached}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{n+nx}{memcached} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}memCache}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{];}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{memcached}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{n+nb}{Promise}\PYG{p}{.}\PYG{n+nx}{resolve}\PYG{p}{(}\PYG{n+nx}{memcached}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k+kd}{let} \PYG{n+nx}{filePath} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}getFilePath}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{);}
+    \PYG{k}{return} \PYG{k}{new} \PYG{n+nb}{Promise}\PYG{p}{((}\PYG{n+nx}{resolve}\PYG{p}{,} \PYG{n+nx}{reject}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{readFile}\PYG{p}{(}\PYG{n+nx}{filePath}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}utf8\PYGZsq{}}\PYG{p}{,} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{result}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{reject}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{resolve}\PYG{p}{(}\PYG{n+nx}{result}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+      \PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{}).}\PYG{n+nx}{then}\PYG{p}{((}\PYG{n+nx}{result}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}memCache}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{]} \PYG{o}{=} \PYG{n+nx}{result}\PYG{p}{;}
+
+      \PYG{k}{return} \PYG{n+nx}{result}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{},} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{error}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[HKPCacher] Error checking for cached pubkey, assuming false \PYGZpc{}s\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{err}\PYG{p}{.}\PYG{n+nx}{stack}\PYG{p}{);}
+
+      \PYG{k}{return} \PYG{k+kc}{false}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}getFilePath}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{n+nx}{path}\PYG{p}{.}\PYG{n+nx}{join}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}cacheDirectory}\PYG{p}{,} \PYG{l+s+sb}{`pubkey\PYGZus{}}\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{keyId}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{.asc`}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}ensureCacheDirectoryExists}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{access}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}cacheDirectory}\PYG{p}{,} \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{F\PYGZus{}OK}\PYG{p}{,} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[PGP \PYGZhy{} HKPCacher] Pubkey cache directory missing, creating\PYGZsq{}}\PYG{p}{);}
+        \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{mkdir}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}cacheDirectory}\PYG{p}{,} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+          \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n+nx}{error}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[PGP \PYGZhy{} HKPCacher] Pubkey cache directory creation unsuccessful\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{err}\PYG{p}{);}
+          \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[PGP \PYGZhy{} HKPCacher] Pubkey cache directory creation successful\PYGZsq{}}\PYG{p}{);}
+          \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{});}
+      \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kr}{export} \PYG{k}{default} \PYG{k}{new} \PYG{n+nx}{HKPCacher}\PYG{p}{();}
+\end{Verbatim}

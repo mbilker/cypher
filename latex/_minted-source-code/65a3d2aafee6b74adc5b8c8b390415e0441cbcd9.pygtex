@@ -1,0 +1,171 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{p}{\PYGZob{}}\PYG{n+nx}{Utils}\PYG{p}{,}
+ \PYG{n+nx}{React}\PYG{p}{,}
+ \PYG{n+nx}{FocusedContactsStore}\PYG{p}{,}
+ \PYG{n+nx}{MessageStore}\PYG{p}{\PYGZcb{}} \PYG{o}{=} \PYG{n+nx}{require} \PYG{l+s}{\PYGZsq{}nylas\PYGZhy{}exports\PYGZsq{}}
+\PYG{p}{\PYGZob{}}\PYG{n+nx}{RetinaImg}\PYG{p}{\PYGZcb{}} \PYG{o}{=} \PYG{n+nx}{require} \PYG{l+s}{\PYGZsq{}nylas\PYGZhy{}component\PYGZhy{}kit\PYGZsq{}}
+
+\PYG{n+nv}{\PYGZus{} = }\PYG{n+nx}{require}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}lodash\PYGZsq{}}\PYG{p}{)}
+\PYG{n+nv}{kbpgp = }\PYG{n+nx}{require}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}kbpgp\PYGZsq{}}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}\PYG{n+nx}{PKESK}\PYG{p}{\PYGZcb{}} \PYG{o}{=} \PYG{n+nx}{require}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}kbpgp/lib/openpgp/packet/sess\PYGZsq{}}\PYG{p}{)}
+
+\PYG{n+nv}{EmailPGPStore = }\PYG{n+nx}{require}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}./email\PYGZhy{}pgp\PYGZhy{}store\PYGZsq{}}\PYG{p}{);}
+\PYG{n+nv}{Keybase = }\PYG{k}{new} \PYG{p}{(}\PYG{n+nx}{require} \PYG{l+s}{\PYGZsq{}./keybase/keybase\PYGZhy{}integration\PYGZsq{}}\PYG{p}{)}
+\PYG{n+nv}{proto = }\PYG{n+nx}{require}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}./worker/worker\PYGZhy{}protocol\PYGZsq{}}\PYG{p}{)}
+\PYG{n+nv}{WorkerFrontend = }\PYG{n+nx}{require}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}./worker\PYGZhy{}frontend\PYGZsq{}}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} TODO: Recode this in es6.}
+\PYG{k}{class} \PYG{n+nx}{KeybaseSidebar} \PYG{k}{extends} \PYG{n+nx}{React}\PYG{p}{.}\PYG{n+nx}{Component}
+  \PYG{n+nv+vi}{@displayName: }\PYG{l+s}{\PYGZsq{}KeybaseSidebar\PYGZsq{}}
+
+  \PYG{c+c1}{\PYGZsh{} Providing container styles tells the app how to constrain}
+  \PYG{c+c1}{\PYGZsh{} the column your component is being rendered in. The min and}
+  \PYG{c+c1}{\PYGZsh{} max size of the column are chosen automatically based on}
+  \PYG{c+c1}{\PYGZsh{} these values.}
+  \PYG{n+nv+vi}{@containerStyles:}
+    \PYG{n+nv}{order: }\PYG{l+m+mi}{1}
+    \PYG{n+nv}{flexShrink: }\PYG{l+m+mi}{0}
+
+  \PYG{c+c1}{\PYGZsh{} This sidebar component listens to the FocusedContactStore,}
+  \PYG{c+c1}{\PYGZsh{} which gives us access to the Contact object of the currently}
+  \PYG{c+c1}{\PYGZsh{} selected person in the conversation. If you wanted to take}
+  \PYG{c+c1}{\PYGZsh{} the contact and fetch your own data, you\PYGZsq{}d want to create}
+  \PYG{c+c1}{\PYGZsh{} your own store, so the flow of data would be:}
+  \PYG{c+c1}{\PYGZsh{}}
+  \PYG{c+c1}{\PYGZsh{} FocusedContactStore =\PYGZgt{} Your Store =\PYGZgt{} Your Component}
+  \PYG{c+c1}{\PYGZsh{}}
+  \PYG{n+nv}{constructor: }\PYG{n+nf}{(@props) \PYGZhy{}\PYGZgt{}}
+    \PYG{n+nv+vi}{@state = }\PYG{n+nx}{@\PYGZus{}getStateFromStores}\PYG{p}{()}
+    \PYG{n+nv+vi}{@state.data = }\PYG{k+kc}{null}
+
+  \PYG{n+nv}{getMessage: }\PYG{n+nf}{=\PYGZgt{}}
+    \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log} \PYG{n+nx}{MessageStore}\PYG{p}{.}\PYG{n+nx}{items}\PYG{p}{()}
+    \PYG{k}{return} \PYG{n+nx}{MessageStore}\PYG{p}{.}\PYG{n+nx}{items}\PYG{p}{()[}\PYG{l+m+mi}{0}\PYG{p}{]}
+
+  \PYG{n+nv}{componentDidMount: }\PYG{n+nf}{=\PYGZgt{}}
+    \PYG{n+nv+vi}{@unsubscribe = }\PYG{p}{[]}
+    \PYG{n+nx}{@unsubscribe}\PYG{p}{.}\PYG{n+nx}{push} \PYG{n+nx}{FocusedContactsStore}\PYG{p}{.}\PYG{n+nx}{listen} \PYG{n+nx}{@\PYGZus{}onChange}
+    \PYG{n+nx}{@unsubscribe}\PYG{p}{.}\PYG{n+nx}{push} \PYG{n+nx}{EmailPGPStore}\PYG{p}{.}\PYG{n+nx}{listen} \PYG{n+nx}{@\PYGZus{}onPGPStoreChange}
+
+  \PYG{n+nv}{componentWillUnmount: }\PYG{n+nf}{=\PYGZgt{}}
+    \PYG{n+nx}{@unsubscribe}\PYG{o}{?}\PYG{p}{()}
+
+  \PYG{n+nv}{render: }\PYG{n+nf}{=\PYGZgt{}}
+    \PYG{n+nv}{msg = }\PYG{n+nx}{@getMessage}\PYG{p}{()}
+
+    \PYG{k}{if} \PYG{o}{not} \PYG{n+nx}{EmailPGPStore}\PYG{p}{.}\PYG{n+nx}{shouldDecryptMessage} \PYG{n+nx}{msg}
+      \PYG{k}{return} \PYG{o}{\PYGZlt{}}\PYG{n+nx}{span}\PYG{o}{\PYGZgt{}\PYGZlt{}/}\PYG{n+nx}{span}\PYG{o}{\PYGZgt{}}
+
+    \PYG{k}{if} \PYG{n+nx}{@state}\PYG{p}{.}\PYG{n+nx}{contact}
+      \PYG{n+nv}{content = }\PYG{n+nx}{@\PYGZus{}renderContent}\PYG{p}{()}
+    \PYG{k}{else}
+      \PYG{n+nv}{content = }\PYG{n+nx}{@\PYGZus{}renderPlaceholder}\PYG{p}{()}
+
+
+    \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}contact\PYGZhy{}card\PYGZhy{}fullcontact\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+      \PYG{p}{\PYGZob{}}\PYG{n+nx}{content}\PYG{p}{\PYGZcb{}}
+    \PYG{o}{\PYGZlt{}/}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}}
+
+  \PYG{n+nv}{\PYGZus{}proofs: }\PYG{n+nf}{=\PYGZgt{}}
+    \PYG{n+nx}{\PYGZus{}}\PYG{p}{.}\PYG{n+nx}{map} \PYG{n+nx}{@state}\PYG{p}{.}\PYG{n+nx}{data}\PYG{p}{.}\PYG{n+nx}{by\PYGZus{}presentation\PYGZus{}group}\PYG{p}{,} \PYG{n+nf}{(proofs, site) \PYGZhy{}\PYGZgt{}}
+      \PYG{n+nv}{icon = }\PYG{k}{switch}
+        \PYG{k}{when} \PYG{n+nx}{site} \PYG{o}{is} \PYG{l+s}{\PYGZsq{}twitter\PYGZsq{}} \PYG{k}{then} \PYG{l+s}{\PYGZsq{}twitter\PYGZsq{}}
+        \PYG{k}{when} \PYG{n+nx}{site} \PYG{o}{is} \PYG{l+s}{\PYGZsq{}github\PYGZsq{}} \PYG{k}{then} \PYG{l+s}{\PYGZsq{}github\PYGZsq{}}
+        \PYG{k}{when} \PYG{n+nx}{site} \PYG{o}{is} \PYG{l+s}{\PYGZsq{}reddit\PYGZsq{}} \PYG{k}{then} \PYG{l+s}{\PYGZsq{}reddit\PYGZsq{}}
+        \PYG{k}{when} \PYG{n+nx}{site} \PYG{o}{is} \PYG{l+s}{\PYGZsq{}hackernews\PYGZsq{}} \PYG{k}{then} \PYG{l+s}{\PYGZsq{}hackernews\PYGZsq{}}
+        \PYG{k}{else} \PYG{l+s}{\PYGZsq{}globe\PYGZsq{}}
+
+      \PYG{k}{for} \PYG{n+nx}{proof} \PYG{k}{in} \PYG{n+nx}{proofs}
+        \PYG{k}{if} \PYG{n+nx}{proofs}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{o}{?}\PYG{p}{.}\PYG{n+nx}{presentation\PYGZus{}tag} \PYG{o}{is} \PYG{l+s}{\PYGZsq{}dns\PYGZsq{}} \PYG{o}{and} \PYG{n+nx}{proof}\PYG{p}{.}\PYG{n+nx}{presentation\PYGZus{}tag} \PYG{o}{is} \PYG{l+s}{\PYGZsq{}dns\PYGZsq{}}
+          \PYG{k}{break}
+
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}social\PYGZhy{}profile\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{i} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}social\PYGZhy{}icon fa fa\PYGZhy{}}\PYG{l+s+si}{\PYGZsh{}\PYGZob{}}\PYG{n+nx}{icon}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s}{\PYGZdq{}} \PYG{n+nx}{style}\PYG{o}{=}\PYG{p}{\PYGZob{}} \PYG{n+nv}{marginTop: }\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{n+nv}{minWidth: }\PYG{l+s}{\PYGZsq{}1em\PYGZsq{}} \PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZgt{}\PYGZlt{}/}\PYG{n+nx}{i}\PYG{o}{\PYGZgt{}}
+
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}social\PYGZhy{}link\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+            \PYG{o}{\PYGZlt{}}\PYG{n+nx}{a} \PYG{n+nx}{href}\PYG{o}{=}\PYG{n+nx}{proof}\PYG{p}{.}\PYG{n+nx}{proof\PYGZus{}url}\PYG{o}{\PYGZgt{}}\PYG{p}{\PYGZob{}}\PYG{n+nx}{proof}\PYG{p}{.}\PYG{n+nx}{nametag}\PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZlt{}/}\PYG{n+nx}{a}\PYG{o}{\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}/}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}/}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}}
+
+  \PYG{n+nv}{\PYGZus{}cryptocoins: }\PYG{n+nf}{=\PYGZgt{}}
+    \PYG{n+nx}{\PYGZus{}}\PYG{p}{.}\PYG{n+nx}{map} \PYG{n+nx}{@state}\PYG{p}{.}\PYG{n+nx}{cryptoaddress}\PYG{p}{,} \PYG{n+nf}{(data, type) \PYGZhy{}\PYGZgt{}}
+      \PYG{n+nv}{icon = }\PYG{k}{switch}
+        \PYG{k}{when} \PYG{n+nx}{type} \PYG{o}{is} \PYG{l+s}{\PYGZsq{}bitcoin\PYGZsq{}} \PYG{k}{then} \PYG{l+s}{\PYGZsq{}btc\PYGZsq{}}
+        \PYG{k}{else} \PYG{l+s}{\PYGZsq{}question\PYGZhy{}circle\PYGZsq{}}
+
+      \PYG{k}{for} \PYG{n+nx}{address} \PYG{k}{in} \PYG{n+nx}{data}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}social\PYGZhy{}profile\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{i} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}social\PYGZhy{}icon fa fa\PYGZhy{}}\PYG{l+s+si}{\PYGZsh{}\PYGZob{}}\PYG{n+nx}{icon}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s}{\PYGZdq{}} \PYG{n+nx}{style}\PYG{o}{=}\PYG{p}{\PYGZob{}} \PYG{n+nv}{marginTop: }\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{n+nv}{minWidth: }\PYG{l+s}{\PYGZsq{}1em\PYGZsq{}} \PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZgt{}\PYGZlt{}/}\PYG{n+nx}{i}\PYG{o}{\PYGZgt{}}
+
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}social\PYGZhy{}link\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+            \PYG{p}{\PYGZob{}}\PYG{n+nx}{address}\PYG{p}{.}\PYG{n+nx}{address}\PYG{p}{\PYGZcb{}}
+          \PYG{o}{\PYGZlt{}/}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}/}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}}
+
+  \PYG{n+nv}{\PYGZus{}renderContent: }\PYG{n+nf}{=\PYGZgt{}}
+    \PYG{c+c1}{\PYGZsh{} Want to include images or other static assets in your components?}
+    \PYG{c+c1}{\PYGZsh{} Reference them using the nylas:// URL scheme:}
+    \PYG{c+c1}{\PYGZsh{}}
+    \PYG{c+c1}{\PYGZsh{} \PYGZlt{}RetinaImg}
+    \PYG{c+c1}{\PYGZsh{}    url=\PYGZdq{}nylas://\PYGZlt{}\PYGZlt{}package.name\PYGZgt{}\PYGZgt{}/assets/checkmark\PYGZus{}template@2x.png\PYGZdq{}}
+    \PYG{c+c1}{\PYGZsh{}    mode=\PYGZob{}RetinaImg.Mode.ContentIsMask\PYGZcb{}/\PYGZgt{}}
+    \PYG{c+c1}{\PYGZsh{}}
+    \PYG{k}{if} \PYG{o}{not} \PYG{n+nx}{@state}\PYG{p}{.}\PYG{n+nx}{data}
+      \PYG{k}{return} \PYG{n+nx}{@\PYGZus{}renderPlaceholder}\PYG{p}{()}
+
+    \PYG{n+nv}{proofs = }\PYG{n+nx}{@\PYGZus{}proofs}\PYG{p}{()}
+    \PYG{n+nv}{coins = }\PYG{n+nx}{@\PYGZus{}cryptocoins}\PYG{p}{()}
+
+    \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log} \PYG{n+nx}{coins}
+
+    \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}header\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+      \PYG{o}{\PYGZlt{}}\PYG{n+nx}{a} \PYG{n+nx}{href}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}https://keybase.io/}\PYG{l+s+si}{\PYGZsh{}\PYGZob{}}\PYG{n+nx}{@state}\PYG{p}{.}\PYG{n+nx}{name}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s}{\PYGZdq{}} \PYG{n+nx}{style}\PYG{o}{=}\PYG{p}{\PYGZob{}}\PYG{n+nv}{textDecoration: }\PYG{l+s}{\PYGZsq{}none\PYGZsq{}}\PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZgt{}\PYGZlt{}}\PYG{n+nx}{h1} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}name\PYGZdq{}}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Keybase}\PYG{o}{\PYGZlt{}/}\PYG{n+nx}{h1}\PYG{o}{\PYGZgt{}\PYGZlt{}/}\PYG{n+nx}{a}\PYG{o}{\PYGZgt{}}
+
+      \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}social\PYGZhy{}profiles\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+        \PYG{p}{\PYGZob{}}\PYG{n+nx}{proofs}\PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZob{}}\PYG{n+nx}{coins}\PYG{p}{\PYGZcb{}}
+      \PYG{o}{\PYGZlt{}/}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}}
+    \PYG{o}{\PYGZlt{}/}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}}
+
+  \PYG{n+nv}{\PYGZus{}renderPlaceholder: }\PYG{n+nf}{=\PYGZgt{}}
+    \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}header\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+      \PYG{o}{\PYGZlt{}}\PYG{n+nx}{h1} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}name\PYGZdq{}}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Keybase}\PYG{o}{\PYGZlt{}/}\PYG{n+nx}{h1}\PYG{o}{\PYGZgt{}}
+
+      \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}social\PYGZhy{}profiles\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s}{\PYGZdq{}social\PYGZhy{}profile\PYGZdq{}}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Loading}\PYG{p}{...}\PYG{o}{\PYGZlt{}/}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}}
+      \PYG{o}{\PYGZlt{}/}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}}
+    \PYG{o}{\PYGZlt{}/}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}}
+
+  \PYG{n+nv}{\PYGZus{}onChange: }\PYG{n+nf}{=\PYGZgt{}}
+    \PYG{n+nx}{@setState}\PYG{p}{(}\PYG{n+nx}{@\PYGZus{}getStateFromStores}\PYG{p}{())}
+
+  \PYG{n+nv}{\PYGZus{}onPGPStoreChange: }\PYG{n+nf}{(id, state) =\PYGZgt{}}
+    \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log} \PYG{l+s}{\PYGZsq{}\PYGZpc{}s, \PYGZpc{}O\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{id}\PYG{p}{,} \PYG{n+nx}{state}
+
+    \PYG{k}{if} \PYG{k+kc}{false}
+        \PYG{n+nv}{promises = }\PYG{n+nx}{encrypted}\PYG{p}{.}\PYG{n+nx}{map} \PYG{n+nf}{(x) =\PYGZgt{}}
+          \PYG{n+nx}{Keybase}\PYG{p}{.}\PYG{n+nx}{userLookup}\PYG{p}{(}
+            \PYG{n+nv}{key\PYGZus{}fingerprint: }\PYG{p}{[}\PYG{n+nx}{x}\PYG{p}{]}
+            \PYG{n+nv}{fields: }\PYG{p}{[}\PYG{l+s}{\PYGZsq{}basics\PYGZsq{}}\PYG{p}{,} \PYG{l+s}{\PYGZsq{}proofs\PYGZus{}summary\PYGZsq{}}\PYG{p}{,} \PYG{l+s}{\PYGZsq{}cryptocurrency\PYGZus{}addresses\PYGZsq{}}\PYG{p}{]}
+          \PYG{p}{).}\PYG{n+nx}{then} \PYG{n+nf}{(res) =\PYGZgt{}}
+            \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log} \PYG{n+nx}{res}
+            \PYG{n+nx}{res}\PYG{o}{?}\PYG{p}{.}\PYG{n+nx}{them}\PYG{o}{?}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+        \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log} \PYG{n+nx}{promises}
+
+        \PYG{n+nx}{Promise}\PYG{p}{.}\PYG{n+nx}{all}\PYG{p}{(}\PYG{n+nx}{promises}\PYG{p}{).}\PYG{n+nx}{then} \PYG{n+nf}{(results) =\PYGZgt{}}
+          \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log} \PYG{n+nx}{results}
+          \PYG{n+nx}{results}\PYG{p}{.}\PYG{n+nx}{forEach} \PYG{n+nf}{(res) =\PYGZgt{}}
+            \PYG{c+cm}{\PYGZsh{}\PYGZsh{}\PYGZsh{}}
+\PYG{c+cm}{            @setState}
+\PYG{c+cm}{              data: res.proofs\PYGZus{}summary}
+\PYG{c+cm}{              name: res.basics.username}
+\PYG{c+cm}{              profile: res.profile}
+\PYG{c+cm}{              cryptoaddress: res.cryptocurrency\PYGZus{}addresses}
+\PYG{c+cm}{            \PYGZsh{}\PYGZsh{}\PYGZsh{}}
+
+  \PYG{n+nv}{\PYGZus{}getStateFromStores: }\PYG{n+nf}{=\PYGZgt{}}
+    \PYG{n+nv}{contact: }\PYG{n+nx}{FocusedContactsStore}\PYG{p}{.}\PYG{n+nx}{focusedContact}\PYG{p}{()}
+
+
+\PYG{n+nv}{module.exports = }\PYG{n+nx}{KeybaseSidebar}
+\end{Verbatim}

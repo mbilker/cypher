@@ -1,0 +1,100 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kr}{import} \PYG{p}{\PYGZob{}}\PYG{n+nx}{ComponentRegistry}\PYG{p}{,} \PYG{n+nx}{ExtensionRegistry}\PYG{p}{,} \PYG{n+nx}{PreferencesUIStore}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}nylas\PYGZhy{}exports\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{n+nx}{PreferencesComponent} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./settings/preferences\PYGZhy{}component\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{MessageLoaderExtension} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./message\PYGZhy{}loader/message\PYGZhy{}loader\PYGZhy{}extension\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{MessageLoaderHeader} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./message\PYGZhy{}loader/message\PYGZhy{}loader\PYGZhy{}header\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{WorkerFrontend} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./worker\PYGZhy{}frontend\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{ComposerLoader} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./composer/composer\PYGZhy{}loader\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{KeybaseSidebar} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./keybase\PYGZhy{}sidebar\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{class} \PYG{n+nx}{PGPMain} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{config} \PYG{o}{=} \PYG{p}{\PYGZob{}}
+    \PYG{n+nx}{keybase}\PYG{o}{:} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{type}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}object\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{properties}\PYG{o}{:} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{username}\PYG{o}{:} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{type}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}string\PYGZsq{}}\PYG{p}{,}
+          \PYG{k}{default}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}
+        \PYG{p}{\PYGZcb{},}
+        \PYG{n+nx}{uid}\PYG{o}{:} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{type}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}string\PYGZsq{}}\PYG{p}{,}
+          \PYG{k}{default}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}
+        \PYG{p}{\PYGZcb{},}
+        \PYG{n+nx}{csrf\PYGZus{}token}\PYG{o}{:} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{type}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}string\PYGZsq{}}\PYG{p}{,}
+          \PYG{k}{default}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}
+        \PYG{p}{\PYGZcb{},}
+        \PYG{n+nx}{session\PYGZus{}token}\PYG{o}{:} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{type}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}string\PYGZsq{}}\PYG{p}{,}
+          \PYG{k}{default}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}
+        \PYG{p}{\PYGZcb{}}
+      \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{};}
+
+  \PYG{n+nx}{\PYGZus{}state} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+  \PYG{n+nx}{\PYGZus{}tab} \PYG{o}{=} \PYG{k+kc}{null}\PYG{p}{;}
+
+  \PYG{n+nx}{constructor}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{activate} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{activate}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{serialize} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{serialize}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{deactivate} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{deactivate}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// Activate is called when the package is loaded. If your package previously}
+  \PYG{c+c1}{// saved state using `serialize` it is provided.}
+  \PYG{c+c1}{//}
+  \PYG{n+nx}{activate}\PYG{p}{(}\PYG{n+nx}{state}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{n+nx}{\PYGZus{}loadSettings} \PYG{o}{=} \PYG{n+nx}{NylasEnv}\PYG{p}{.}\PYG{n+nx}{getLoadSettings}\PYG{p}{();}
+    \PYG{k+kd}{let} \PYG{n+nx}{windowType} \PYG{o}{=} \PYG{n+nx}{\PYGZus{}loadSettings}\PYG{p}{.}\PYG{n+nx}{windowType}\PYG{p}{;}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{windowType} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}default\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state} \PYG{o}{=} \PYG{n+nx}{state}\PYG{p}{;}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}tab} \PYG{o}{=} \PYG{k}{new} \PYG{n+nx}{PreferencesUIStore}\PYG{p}{.}\PYG{n+nx}{TabItem}\PYG{p}{(\PYGZob{}}
+        \PYG{n+nx}{tabId}\PYG{o}{:} \PYG{l+s+s2}{\PYGZdq{}PGP\PYGZdq{}}\PYG{p}{,}
+        \PYG{n+nx}{displayName}\PYG{o}{:} \PYG{l+s+s2}{\PYGZdq{}PGP Mail\PYGZdq{}}\PYG{p}{,}
+        \PYG{n+nx}{component}\PYG{o}{:} \PYG{n+nx}{PreferencesComponent}
+      \PYG{p}{\PYGZcb{});}
+
+      \PYG{n+nx}{WorkerFrontend}\PYG{p}{.}\PYG{n+nx}{initialize}\PYG{p}{();}
+
+      \PYG{n+nx}{PreferencesUIStore}\PYG{p}{.}\PYG{n+nx}{registerPreferencesTab}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}tab}\PYG{p}{);}
+      \PYG{n+nx}{ComponentRegistry}\PYG{p}{.}\PYG{n+nx}{register}\PYG{p}{(}\PYG{n+nx}{MessageLoaderHeader}\PYG{p}{,} \PYG{p}{\PYGZob{}}\PYG{n+nx}{role}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}message:BodyHeader\PYGZsq{}}\PYG{p}{\PYGZcb{});}
+      \PYG{n+nx}{ComponentRegistry}\PYG{p}{.}\PYG{n+nx}{register}\PYG{p}{(}\PYG{n+nx}{KeybaseSidebar}\PYG{p}{,} \PYG{p}{\PYGZob{}}\PYG{n+nx}{role}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}MessageListSidebar:ContactCard\PYGZsq{}}\PYG{p}{\PYGZcb{});}
+      \PYG{n+nx}{ExtensionRegistry}\PYG{p}{.}\PYG{n+nx}{MessageView}\PYG{p}{.}\PYG{n+nx}{register}\PYG{p}{(}\PYG{n+nx}{MessageLoaderExtension}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{windowType} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}default\PYGZsq{}} \PYG{o}{||} \PYG{n+nx}{windowType} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}composer\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{ComponentRegistry}\PYG{p}{.}\PYG{n+nx}{register}\PYG{p}{(}\PYG{n+nx}{ComposerLoader}\PYG{p}{,} \PYG{p}{\PYGZob{}}\PYG{n+nx}{role}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}Composer:ActionButton\PYGZsq{}}\PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// Serialize is called when your package is about to be unmounted.}
+  \PYG{c+c1}{// You can return a state object that will be passed back to your package}
+  \PYG{c+c1}{// when it is re\PYGZhy{}activated.}
+  \PYG{n+nx}{serialize}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// This **optional** method is called when the window is shutting down,}
+  \PYG{c+c1}{// or when your package is being updated or disabled. If your package is}
+  \PYG{c+c1}{// watching any files, holding external resources, providing commands or}
+  \PYG{c+c1}{// subscribing to events, release them here.}
+  \PYG{n+nx}{deactivate}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{n+nx}{\PYGZus{}loadSettings} \PYG{o}{=} \PYG{n+nx}{NylasEnv}\PYG{p}{.}\PYG{n+nx}{getLoadSettings}\PYG{p}{();}
+    \PYG{k+kd}{let} \PYG{n+nx}{windowType} \PYG{o}{=} \PYG{n+nx}{\PYGZus{}loadSettings}\PYG{p}{.}\PYG{n+nx}{windowType}\PYG{p}{;}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{windowType} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}default\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{PreferencesUIStore}\PYG{p}{.}\PYG{n+nx}{unregisterPreferencesTab}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}tab}\PYG{p}{.}\PYG{n+nx}{tabId}\PYG{p}{);}
+      \PYG{n+nx}{ExtensionRegistry}\PYG{p}{.}\PYG{n+nx}{MessageView}\PYG{p}{.}\PYG{n+nx}{unregister}\PYG{p}{(}\PYG{n+nx}{MessageLoaderExtension}\PYG{p}{);}
+      \PYG{n+nx}{ComponentRegistry}\PYG{p}{.}\PYG{n+nx}{unregister}\PYG{p}{(}\PYG{n+nx}{MessageLoaderHeader}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{windowType} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}default\PYGZsq{}} \PYG{o}{||} \PYG{n+nx}{windowType} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}composer\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{ComponentRegistry}\PYG{p}{.}\PYG{n+nx}{unregister}\PYG{p}{(}\PYG{n+nx}{ComposerLoader}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kr}{export} \PYG{k}{default} \PYG{k}{new} \PYG{n+nx}{PGPMain}\PYG{p}{();}
+\end{Verbatim}

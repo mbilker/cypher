@@ -1,0 +1,223 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kr}{import} \PYG{p}{\PYGZob{}}\PYG{n+nx}{React}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}nylas\PYGZhy{}exports\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{p}{\PYGZob{}}\PYG{n+nx}{Flexbox}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}nylas\PYGZhy{}component\PYGZhy{}kit\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{p}{\PYGZob{}}\PYG{n+nx}{KeybaseActions}\PYG{p}{,} \PYG{n+nx}{KeybaseStore}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}../keybase\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{class} \PYG{n+nx}{PreferencesComponent} \PYG{k+kr}{extends} \PYG{n+nx}{React}\PYG{p}{.}\PYG{n+nx}{Component} \PYG{p}{\PYGZob{}}
+  \PYG{k+kr}{static} \PYG{n+nx}{displayName} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}PreferencesComponent\PYGZsq{}}\PYG{p}{;}
+
+  \PYG{n+nx}{constructor}\PYG{p}{(}\PYG{n+nx}{props}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kr}{super}\PYG{p}{(}\PYG{n+nx}{props}\PYG{p}{);}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{render} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{render}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}renderError} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}renderError}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}renderUserLoginInfo} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}renderUserLoginInfo}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}renderSigChain} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}renderSigChain}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{onChangeUsername} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{onChangeUsername}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{onChangePassphrase} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{onChangePassphrase}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{loadPreviousLogin} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{loadPreviousLogin}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{loginToKeybase} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{loginToKeybase}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{fetchAndVerifySigChain} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{fetchAndVerifySigChain}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{onKeybaseStore} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{onKeybaseStore}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+
+    \PYG{c+c1}{//this.keybase = new KeybaseIntegration();}
+    \PYG{c+c1}{//this.keybase.loadPreviousLogin();}
+
+    \PYG{n+nx}{global}\PYG{p}{.}\PYG{n+nx}{\PYGZdl{}pgpPref} \PYG{o}{=} \PYG{k}{this}\PYG{p}{;}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{defaultState} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state} \PYG{o}{=} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{error}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{username}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{passphrase}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{uid}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{csrf\PYGZus{}token}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{session\PYGZus{}token}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{userInfo}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}
+    \PYG{p}{\PYGZcb{};}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{loadPreviousLogin}\PYG{p}{();}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{componentDidMount}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{unsubscribe} \PYG{o}{=} \PYG{n+nx}{KeybaseStore}\PYG{p}{.}\PYG{n+nx}{listen}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{onKeybaseStore}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{componentDidUnmount}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{unsubscribe}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{unsubscribe}\PYG{p}{();}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{unsubscribe} \PYG{o}{=} \PYG{k+kc}{null}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{render}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}pgp container\PYGZhy{}pgp\PYGZhy{}mail\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+      \PYG{o}{\PYGZlt{}}\PYG{n+nx}{section}\PYG{o}{\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{h2}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Keybase} \PYG{n+nx}{Login}\PYG{o}{\PYGZlt{}}\PYG{err}{/h2\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}\PYGZlt{}}\PYG{n+nx}{i}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Sorry}\PYG{p}{,} \PYG{n+nx}{tab} \PYG{n+nx}{to} \PYG{n+nx}{next} \PYG{n+nx}{field} \PYG{n+nx}{does} \PYG{n+nx}{not} \PYG{n+nx}{work}\PYG{o}{\PYGZlt{}}\PYG{err}{/i\PYGZgt{}\PYGZlt{}/div\PYGZgt{}}
+        \PYG{p}{\PYGZob{}}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}renderError}\PYG{p}{()\PYGZcb{}}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{Flexbox} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}keybase\PYGZhy{}username item\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}setting\PYGZhy{}name\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+            \PYG{o}{\PYGZlt{}}\PYG{n+nx}{label} \PYG{n+nx}{htmlFor}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}account.username\PYGZdq{}}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Username}\PYG{o}{/}\PYG{n+nx}{Email}\PYG{o}{:\PYGZlt{}}\PYG{err}{/label\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{err}{/div\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}setting\PYGZhy{}value\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+            \PYG{o}{\PYGZlt{}}\PYG{n+nx}{input} \PYG{n+nx}{id}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}account.username\PYGZdq{}} \PYG{n+nx}{type}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}text\PYGZdq{}} \PYG{n+nx}{placeholder}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}(e.g. max)\PYGZdq{}} \PYG{n+nx}{value}\PYG{o}{=}\PYG{p}{\PYGZob{}}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{username}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{onChange}\PYG{o}{=}\PYG{p}{\PYGZob{}}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{onChangeUsername}\PYG{p}{\PYGZcb{}} \PYG{o}{/\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{err}{/div\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{err}{/Flexbox\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{Flexbox} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}keybase\PYGZhy{}password item\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}setting\PYGZhy{}name\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+            \PYG{o}{\PYGZlt{}}\PYG{n+nx}{label} \PYG{n+nx}{htmlFor}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}account.passphrase\PYGZdq{}}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Passphrase}\PYG{o}{:\PYGZlt{}}\PYG{err}{/label\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{err}{/div\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}setting\PYGZhy{}value\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+            \PYG{o}{\PYGZlt{}}\PYG{n+nx}{input} \PYG{n+nx}{id}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}account.passphrase\PYGZdq{}} \PYG{n+nx}{type}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}password\PYGZdq{}} \PYG{n+nx}{value}\PYG{o}{=}\PYG{p}{\PYGZob{}}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{passphrase}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{onChange}\PYG{o}{=}\PYG{p}{\PYGZob{}}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{onChangePassphrase}\PYG{p}{\PYGZcb{}} \PYG{o}{/\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{err}{/div\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{err}{/Flexbox\PYGZgt{}}
+        \PYG{p}{\PYGZob{}}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}renderUserLoginInfo}\PYG{p}{()\PYGZcb{}}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{button} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}btn\PYGZdq{}} \PYG{n+nx}{onClick}\PYG{o}{=}\PYG{p}{\PYGZob{}}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{loginToKeybase}\PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Login}\PYG{o}{\PYGZlt{}}\PYG{err}{/button\PYGZgt{}}
+      \PYG{o}{\PYGZlt{}}\PYG{err}{/section\PYGZgt{}}
+      \PYG{o}{\PYGZlt{}}\PYG{n+nx}{section}\PYG{o}{\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{h2}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{SigChain} \PYG{n+nx}{Status}\PYG{o}{\PYGZlt{}}\PYG{err}{/h2\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{Flexbox} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}keybase\PYGZhy{}sigchain item\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+          \PYG{p}{\PYGZob{}}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}renderSigChain}\PYG{p}{()\PYGZcb{}}
+        \PYG{o}{\PYGZlt{}}\PYG{err}{/Flexbox\PYGZgt{}}
+      \PYG{o}{\PYGZlt{}}\PYG{err}{/section\PYGZgt{}}
+    \PYG{o}{\PYGZlt{}}\PYG{err}{/div\PYGZgt{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}renderError}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{error} \PYG{o}{!==} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}statusBox errorBox\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+        \PYG{n+nb}{Error}\PYG{o}{:} \PYG{p}{\PYGZob{}}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{error}\PYG{p}{\PYGZcb{}}
+      \PYG{o}{\PYGZlt{}}\PYG{err}{/div\PYGZgt{}}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}renderUserLoginInfo}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{p}{\PYGZob{}} \PYG{n+nx}{uid}\PYG{p}{,} \PYG{n+nx}{session\PYGZus{}token} \PYG{p}{\PYGZcb{}} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{;}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{uid} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n+nx}{session\PYGZus{}token}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k+kd}{let} \PYG{n+nx}{body} \PYG{o}{=} \PYG{l+s+sb}{`uid: }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{uid}\PYG{l+s+si}{\PYGZcb{}}\PYG{err}{\PYGZbs{}}\PYG{l+s+sb}{nsession\PYGZus{}token: }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{session\PYGZus{}token}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{`}\PYG{p}{;}
+
+      \PYG{c+c1}{// Using substitution causes \PYGZlt{}span\PYGZgt{}s to be used, causes incorrect line}
+      \PYG{c+c1}{// breaks}
+      \PYG{k}{return} \PYG{o}{\PYGZlt{}}\PYG{n+nx}{pre}\PYG{o}{\PYGZgt{}}\PYG{p}{\PYGZob{}}\PYG{n+nx}{body}\PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZlt{}}\PYG{err}{/pre\PYGZgt{}}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}renderSigChain}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{n+nx}{sigchain} \PYG{o}{=} \PYG{n+nx}{KeybaseStore}\PYG{p}{.}\PYG{n+nx}{getPrimarySigChain}\PYG{p}{();}
+    \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n+nx}{sigchain}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{l+s+s2}{\PYGZdq{}Not loaded yet.\PYGZdq{}}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k+kd}{let} \PYG{n+nx}{keytype} \PYG{o}{=} \PYG{p}{(}\PYG{n+nx}{kid}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{kid}\PYG{p}{.}\PYG{n+nx}{startsWith}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}0101\PYGZsq{}}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+s+s1}{\PYGZsq{}PGP\PYGZsq{}}\PYG{p}{;}
+      \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{kid}\PYG{p}{.}\PYG{n+nx}{startsWith}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}0120\PYGZsq{}}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+s+s1}{\PYGZsq{}NaCL\PYGZsq{}}\PYG{p}{;}
+      \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{l+s+s1}{\PYGZsq{}Unknown\PYGZsq{}}\PYG{p}{;}
+      \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{o}{\PYGZlt{}}\PYG{n+nx}{table}\PYG{o}{\PYGZgt{}}
+      \PYG{o}{\PYGZlt{}}\PYG{n+nx}{thead}\PYG{o}{\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{tr}\PYG{o}{\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{td}\PYG{o}{\PYGZgt{}}\PYG{err}{\PYGZsh{}}\PYG{o}{\PYGZlt{}}\PYG{err}{/td\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{td}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Type}\PYG{o}{\PYGZlt{}}\PYG{err}{/td\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{td}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Sig} \PYG{n+nx}{Key} \PYG{n+nx}{Type}\PYG{o}{\PYGZlt{}}\PYG{err}{/td\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{td}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Fingerprint} \PYG{n+nx}{or} \PYG{n+nx}{kid}\PYG{o}{\PYGZlt{}}\PYG{err}{/td\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{err}{/tr\PYGZgt{}}
+      \PYG{o}{\PYGZlt{}}\PYG{err}{/thead\PYGZgt{}}
+      \PYG{o}{\PYGZlt{}}\PYG{n+nx}{tbody}\PYG{o}{\PYGZgt{}}
+      \PYG{p}{\PYGZob{}}\PYG{n+nx}{sigchain}\PYG{p}{.}\PYG{n+nx}{get\PYGZus{}links}\PYG{p}{().}\PYG{n+nx}{map}\PYG{p}{((}\PYG{n+nx}{link}\PYG{p}{,} \PYG{n+nx}{i}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{o}{\PYGZlt{}}\PYG{n+nx}{tr} \PYG{n+nx}{key}\PYG{o}{=}\PYG{p}{\PYGZob{}}\PYG{n+nx}{i}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}bg\PYGZhy{}green\PYGZdq{}}\PYG{o}{\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{td}\PYG{o}{\PYGZgt{}}\PYG{p}{\PYGZob{}}\PYG{n+nx}{link}\PYG{p}{.}\PYG{n+nx}{seqno}\PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZlt{}}\PYG{err}{/td\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{td}\PYG{o}{\PYGZgt{}}\PYG{p}{\PYGZob{}}\PYG{n+nx}{link}\PYG{p}{.}\PYG{n+nx}{type}\PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZlt{}}\PYG{err}{/td\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{td}\PYG{o}{\PYGZgt{}}\PYG{p}{\PYGZob{}}\PYG{n+nx}{keytype}\PYG{p}{(}\PYG{n+nx}{link}\PYG{p}{.}\PYG{n+nx}{kid}\PYG{p}{)\PYGZcb{}}\PYG{o}{\PYGZlt{}}\PYG{err}{/td\PYGZgt{}}
+          \PYG{o}{\PYGZlt{}}\PYG{n+nx}{td}\PYG{o}{\PYGZgt{}}\PYG{p}{\PYGZob{}}\PYG{n+nx}{link}\PYG{p}{.}\PYG{n+nx}{fingerprint} \PYG{o}{||} \PYG{n+nx}{link}\PYG{p}{.}\PYG{n+nx}{kid}\PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZlt{}}\PYG{err}{/td\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{err}{/tr\PYGZgt{};}
+      \PYG{p}{\PYGZcb{})\PYGZcb{}}
+      \PYG{o}{\PYGZlt{}}\PYG{err}{/tbody\PYGZgt{}}
+    \PYG{o}{\PYGZlt{}}\PYG{err}{/table\PYGZgt{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{onChangeUsername}\PYG{p}{(}\PYG{n+nx}{e}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{//console.log(\PYGZsq{}username\PYGZsq{});}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{setState}\PYG{p}{(\PYGZob{}}
+      \PYG{n+nx}{username}\PYG{o}{:} \PYG{n+nx}{e}\PYG{p}{.}\PYG{n+nx}{target}\PYG{p}{.}\PYG{n+nx}{value}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{onChangePassphrase}\PYG{p}{(}\PYG{n+nx}{e}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{//console.log(\PYGZsq{}passphrase\PYGZsq{});}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{setState}\PYG{p}{(\PYGZob{}}
+      \PYG{n+nx}{passphrase}\PYG{o}{:} \PYG{n+nx}{e}\PYG{p}{.}\PYG{n+nx}{target}\PYG{p}{.}\PYG{n+nx}{value}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{loadPreviousLogin}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{username} \PYG{o}{=}  \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{uid} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{csrf\PYGZus{}token} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{session\PYGZus{}token} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}
+    \PYG{p}{\PYGZcb{}} \PYG{o}{=} \PYG{n+nx}{NylasEnv}\PYG{p}{.}\PYG{n+nx}{config}\PYG{p}{.}\PYG{n+nx}{get}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}email\PYGZhy{}pgp.keybase\PYGZsq{}}\PYG{p}{)} \PYG{o}{||} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+    \PYG{k}{return} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{error}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{username}\PYG{o}{:} \PYG{n+nx}{username}\PYG{p}{,}
+      \PYG{n+nx}{passphrase}\PYG{o}{:} \PYG{p}{(}\PYG{n+nx}{csrf\PYGZus{}token} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n+nx}{session\PYGZus{}token}\PYG{p}{)} \PYG{o}{?} \PYG{l+s+s1}{\PYGZsq{}****\PYGZsq{}} \PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{,}
+      \PYG{n+nx}{uid}\PYG{o}{:} \PYG{n+nx}{uid}\PYG{p}{,}
+      \PYG{n+nx}{csrf\PYGZus{}token}\PYG{o}{:} \PYG{n+nx}{csrf\PYGZus{}token}\PYG{p}{,}
+      \PYG{n+nx}{session\PYGZus{}token}\PYG{o}{:} \PYG{n+nx}{session\PYGZus{}token}\PYG{p}{,}
+      \PYG{n+nx}{userInfo}\PYG{o}{:} \PYG{k+kc}{null}
+    \PYG{p}{\PYGZcb{};}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{loginToKeybase}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[PGP] Keybase Login\PYGZsq{}}\PYG{p}{);}
+
+    \PYG{k+kd}{let} \PYG{p}{\PYGZob{}} \PYG{n+nx}{username}\PYG{p}{,} \PYG{n+nx}{passphrase} \PYG{p}{\PYGZcb{}} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{;}
+    \PYG{c+c1}{//console.log(\PYGZsq{}\PYGZpc{}s \PYGZpc{}s\PYGZsq{}, username, passphrase);}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{setState}\PYG{p}{(}\PYG{n+nb}{Object}\PYG{p}{.}\PYG{n+nx}{assign}\PYG{p}{(\PYGZob{}\PYGZcb{},} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{defaultState}\PYG{p}{,} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{username}
+    \PYG{p}{\PYGZcb{}));}
+
+    \PYG{n+nx}{KeybaseActions}\PYG{p}{.}\PYG{n+nx}{login}\PYG{p}{(}\PYG{n+nx}{username}\PYG{p}{,} \PYG{n+nx}{passphrase}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{fetchAndVerifySigChain}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{p}{\PYGZob{}} \PYG{n+nx}{username}\PYG{p}{,} \PYG{n+nx}{uid} \PYG{p}{\PYGZcb{}} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{;}
+    \PYG{n+nx}{KeybaseActions}\PYG{p}{.}\PYG{n+nx}{fetchAndVerifySigChain}\PYG{p}{(}\PYG{n+nx}{username}\PYG{p}{,} \PYG{n+nx}{uid}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{onKeybaseStore}\PYG{p}{(\PYGZob{}} \PYG{n+nx}{type}\PYG{p}{,} \PYG{n+nx}{username}\PYG{p}{,} \PYG{n+nx}{uid}\PYG{p}{,} \PYG{n+nx}{res} \PYG{p}{\PYGZcb{})} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{type} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}LOGIN\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k+kd}{let} \PYG{p}{\PYGZob{}} \PYG{n+nx}{status}\PYG{o}{:} \PYG{p}{\PYGZob{}} \PYG{n+nx}{name} \PYG{p}{\PYGZcb{}} \PYG{p}{\PYGZcb{}} \PYG{o}{=} \PYG{n+nx}{res}\PYG{p}{;}
+
+      \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{name} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}BAD\PYGZus{}LOGIN\PYGZus{}PASSWORD\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{setState}\PYG{p}{(\PYGZob{}} \PYG{n+nx}{error}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}Bad Passphrase\PYGZsq{}} \PYG{p}{\PYGZcb{});}
+      \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{name} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}BAD\PYGZus{}LOGIN\PYGZus{}USER\PYGZus{}NOT\PYGZus{}FOUND\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{setState}\PYG{p}{(\PYGZob{}} \PYG{n+nx}{error}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}Bad Username or Email\PYGZsq{}} \PYG{p}{\PYGZcb{});}
+      \PYG{p}{\PYGZcb{}}
+
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{setState}\PYG{p}{(}\PYG{n+nb}{Object}\PYG{p}{.}\PYG{n+nx}{assign}\PYG{p}{(\PYGZob{}\PYGZcb{},} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{loadPreviousLogin}\PYG{p}{(),} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{userInfo}\PYG{o}{:} \PYG{n+nx}{res}\PYG{p}{.}\PYG{n+nx}{me}
+      \PYG{p}{\PYGZcb{}));}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}listen: type=\PYGZpc{}s, username=\PYGZpc{}s, uid=\PYGZpc{}s, res=\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{type}\PYG{p}{,} \PYG{n+nx}{username}\PYG{p}{,} \PYG{n+nx}{uid}\PYG{p}{,} \PYG{n+nx}{res}\PYG{p}{);}
+      \PYG{c+cm}{/* this.setState(\PYGZob{}}
+\PYG{c+cm}{        username,}
+\PYG{c+cm}{        uid}
+\PYG{c+cm}{      \PYGZcb{}); */}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{forceUpdate}\PYG{p}{();}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kr}{export} \PYG{k}{default} \PYG{n+nx}{PreferencesComponent}\PYG{p}{;}
+\end{Verbatim}

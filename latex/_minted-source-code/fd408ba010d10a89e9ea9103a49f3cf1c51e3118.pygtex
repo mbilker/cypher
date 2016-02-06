@@ -1,0 +1,165 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kr}{import} \PYG{n+nx}{kbpgp} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}kbpgp\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{os} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}os\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{child\PYGZus{}process} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}child\PYGZus{}process\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{n+nx}{HKP} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./hkp\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kd}{let} \PYG{n+nx}{hexkid} \PYG{o}{=} \PYG{p}{(}\PYG{n+nx}{k}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{n+nx}{k}\PYG{p}{.}\PYG{n+nx}{toString}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hex\PYGZsq{}}\PYG{p}{);}
+
+\PYG{c+c1}{// Adapted from PgpKeyRing in kbpgp}
+\PYG{k+kr}{class} \PYG{n+nx}{KeyStore} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{constructor}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}keys} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}kms} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}hkp} \PYG{o}{=} \PYG{k}{new} \PYG{n+nx}{HKP}\PYG{p}{();}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{addKeyManager} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{addKeyManager}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{fetchRemotePublicKey} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{fetchRemotePublicKey}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{fetch} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{fetch}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{findBestKey} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{findBestKey}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{lookup} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{lookup}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{lookupKeyManager} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{lookupKeyManager}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+
+    \PYG{n+nx}{global}\PYG{p}{.}\PYG{n+nx}{\PYGZdl{}pgpKeyStore} \PYG{o}{=} \PYG{k}{this}\PYG{p}{;}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{addKeyManager}\PYG{p}{(}\PYG{n+nx}{km}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{n+nx}{keys} \PYG{o}{=} \PYG{n+nx}{km}\PYG{p}{.}\PYG{n+nx}{export\PYGZus{}pgp\PYGZus{}keys\PYGZus{}to\PYGZus{}keyring}\PYG{p}{();}
+    \PYG{k}{for} \PYG{p}{(}\PYG{k+kd}{var} \PYG{n+nx}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nx}{\PYGZus{}len} \PYG{o}{=} \PYG{n+nx}{keys}\PYG{p}{.}\PYG{n+nx}{length}\PYG{p}{;} \PYG{n+nx}{i} \PYG{o}{\PYGZlt{}} \PYG{n+nx}{\PYGZus{}len}\PYG{p}{;} \PYG{n+nx}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k+kd}{let} \PYG{n+nx}{k} \PYG{o}{=} \PYG{n+nx}{keys}\PYG{p}{[}\PYG{n+nx}{i}\PYG{p}{];}
+      \PYG{k+kd}{let} \PYG{n+nx}{kid} \PYG{o}{=} \PYG{n+nx}{hexkid}\PYG{p}{(}\PYG{n+nx}{k}\PYG{p}{.}\PYG{n+nx}{key\PYGZus{}material}\PYG{p}{.}\PYG{n+nx}{get\PYGZus{}key\PYGZus{}id}\PYG{p}{());}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}keys}\PYG{p}{[}\PYG{n+nx}{kid}\PYG{p}{]} \PYG{o}{=} \PYG{n+nx}{k}\PYG{p}{;}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}kms}\PYG{p}{[}\PYG{n+nx}{kid}\PYG{p}{]} \PYG{o}{=} \PYG{n+nx}{km}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{fetchRemotePublicKey}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}hkp}\PYG{p}{.}\PYG{n+nx}{lookup}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{((}\PYG{n+nx}{armored}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{k}{new} \PYG{n+nb}{Promise}\PYG{p}{((}\PYG{n+nx}{resolve}\PYG{p}{,} \PYG{n+nx}{reject}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{kbpgp}\PYG{p}{.}\PYG{n+nx}{KeyManager}\PYG{p}{.}\PYG{n+nx}{import\PYGZus{}from\PYGZus{}armored\PYGZus{}pgp}\PYG{p}{(\PYGZob{}} \PYG{n+nx}{armored} \PYG{p}{\PYGZcb{},} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{km}\PYG{p}{,} \PYG{n+nx}{warn}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+          \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n+nx}{reject}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{km}\PYG{p}{,} \PYG{n+nx}{warn}\PYG{p}{);}
+          \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n+nx}{resolve}\PYG{p}{(}\PYG{n+nx}{km}\PYG{p}{,} \PYG{n+nx}{warn}\PYG{p}{);}
+          \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{});}
+      \PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{fetch}\PYG{p}{(}\PYG{n+nx}{key\PYGZus{}ids}\PYG{p}{,} \PYG{n+nx}{ops}\PYG{p}{,} \PYG{n+nx}{cb}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{var} \PYG{n+nx}{ret\PYGZus{}i}\PYG{p}{,} \PYG{n+nx}{key\PYGZus{}material}\PYG{p}{,} \PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{obj}\PYG{p}{,} \PYG{n+nx}{km}\PYG{p}{,} \PYG{n+nx}{\PYGZus{}ref}\PYG{p}{;}
+    \PYG{k+kd}{var} \PYG{n+nx}{key\PYGZus{}material} \PYG{o}{=} \PYG{n+nx}{err} \PYG{o}{=} \PYG{n+nx}{obj} \PYG{o}{=} \PYG{n+nx}{km} \PYG{o}{=} \PYG{k+kc}{null}\PYG{p}{;}
+
+    \PYG{n+nx}{key\PYGZus{}ids} \PYG{o}{=} \PYG{p}{(()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k+kd}{var} \PYG{n+nx}{\PYGZus{}results} \PYG{o}{=} \PYG{p}{[];}
+      \PYG{k}{for} \PYG{p}{(}\PYG{k+kd}{var} \PYG{n+nx}{\PYGZus{}i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nx}{\PYGZus{}len} \PYG{o}{=} \PYG{n+nx}{key\PYGZus{}ids}\PYG{p}{.}\PYG{n+nx}{length}\PYG{p}{;} \PYG{n+nx}{\PYGZus{}i} \PYG{o}{\PYGZlt{}} \PYG{n+nx}{\PYGZus{}len}\PYG{p}{;} \PYG{n+nx}{\PYGZus{}i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{\PYGZus{}results}\PYG{p}{.}\PYG{n+nx}{push}\PYG{p}{(}\PYG{n+nx}{hexkid}\PYG{p}{(}\PYG{n+nx}{key\PYGZus{}ids}\PYG{p}{[}\PYG{n+nx}{\PYGZus{}i}\PYG{p}{]));}
+      \PYG{p}{\PYGZcb{}}
+      \PYG{k}{return} \PYG{n+nx}{\PYGZus{}results}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{})();}
+
+    \PYG{k+kd}{let} \PYG{n+nx}{check\PYGZus{}for\PYGZus{}key} \PYG{o}{=} \PYG{p}{()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{for} \PYG{p}{(}\PYG{k+kd}{var} \PYG{n+nx}{\PYGZus{}i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nx}{\PYGZus{}len} \PYG{o}{=} \PYG{n+nx}{key\PYGZus{}ids}\PYG{p}{.}\PYG{n+nx}{length}\PYG{p}{;} \PYG{n+nx}{\PYGZus{}i} \PYG{o}{\PYGZlt{}} \PYG{n+nx}{\PYGZus{}len}\PYG{p}{;} \PYG{n+nx}{\PYGZus{}i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k+kd}{let} \PYG{n+nx}{id} \PYG{o}{=} \PYG{n+nx}{key\PYGZus{}ids}\PYG{p}{[}\PYG{n+nx}{\PYGZus{}i}\PYG{p}{];}
+        \PYG{k+kd}{let} \PYG{n+nx}{k} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}keys}\PYG{p}{[}\PYG{n+nx}{id}\PYG{p}{];}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{k} \PYG{o}{!=} \PYG{k+kc}{null} \PYG{o}{?} \PYG{p}{(}\PYG{n+nx}{\PYGZus{}ref} \PYG{o}{=} \PYG{n+nx}{k}\PYG{p}{.}\PYG{n+nx}{key}\PYG{p}{)} \PYG{o}{!=} \PYG{k+kc}{null} \PYG{o}{?} \PYG{n+nx}{\PYGZus{}ref}\PYG{p}{.}\PYG{n+nx}{can\PYGZus{}perform}\PYG{p}{(}\PYG{n+nx}{ops}\PYG{p}{)} \PYG{o}{:} \PYG{k}{void} \PYG{l+m+mi}{0} \PYG{o}{:} \PYG{k}{void} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{ret\PYGZus{}i} \PYG{o}{=} \PYG{n+nx}{\PYGZus{}i}\PYG{p}{;}
+          \PYG{n+nx}{km} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}kms}\PYG{p}{[}\PYG{n+nx}{id}\PYG{p}{];}
+          \PYG{k}{break}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+      \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{n+nx}{check\PYGZus{}for\PYGZus{}key}\PYG{p}{();}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{km} \PYG{o}{==} \PYG{k+kc}{null}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k+kd}{let} \PYG{n+nx}{promises} \PYG{o}{=} \PYG{n+nx}{key\PYGZus{}ids}\PYG{p}{.}\PYG{n+nx}{map}\PYG{p}{((}\PYG{n+nx}{k}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{fetchRemotePublicKey}\PYG{p}{(}\PYG{n+nx}{k}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{((}\PYG{n+nx}{kmm}\PYG{p}{,} \PYG{n+nx}{warn}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+          \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{addKeyManager}\PYG{p}{(}\PYG{n+nx}{kmm}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{});}
+      \PYG{p}{\PYGZcb{});}
+
+      \PYG{n+nb}{Promise}\PYG{p}{.}\PYG{n+nx}{all}\PYG{p}{(}\PYG{n+nx}{promises}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{(()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{check\PYGZus{}for\PYGZus{}key}\PYG{p}{();}
+
+        \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{km} \PYG{o}{==} \PYG{k+kc}{null}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{err} \PYG{o}{=} \PYG{k}{new} \PYG{n+nb}{Error}\PYG{p}{(}\PYG{l+s+sb}{`key not found: }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{JSON}\PYG{p}{.}\PYG{n+nx}{stringify}\PYG{p}{(}\PYG{n+nx}{key\PYGZus{}ids}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{`}\PYG{p}{);}
+          \PYG{n+nx}{cb}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{km}\PYG{p}{,} \PYG{n+nx}{ret\PYGZus{}i}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{cb}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{km}\PYG{p}{,} \PYG{n+nx}{ret\PYGZus{}i}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+      \PYG{p}{\PYGZcb{}).}\PYG{k}{catch}\PYG{p}{((}\PYG{n+nx}{err}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{cb}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{km}\PYG{p}{,} \PYG{n+nx}{ret\PYGZus{}i}\PYG{p}{);}
+      \PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{cb}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{km}\PYG{p}{,} \PYG{n+nx}{ret\PYGZus{}i}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// Pick the best key to fill the flags asked for by the flags.}
+  \PYG{c+c1}{// See C.openpgp.key\PYGZus{}flags for ideas of what the flags might be.}
+  \PYG{n+nx}{findBestKey}\PYG{p}{(\PYGZob{}}\PYG{n+nx}{key\PYGZus{}id}\PYG{p}{,} \PYG{n+nx}{flags}\PYG{p}{\PYGZcb{},} \PYG{n+nx}{cb}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{n+nx}{kid} \PYG{o}{=} \PYG{n+nx}{hexkid}\PYG{p}{(}\PYG{n+nx}{key\PYGZus{}id}\PYG{p}{);}
+    \PYG{k+kd}{let} \PYG{n+nx}{km} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}kms}\PYG{p}{[}\PYG{n+nx}{kid}\PYG{p}{];}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{km} \PYG{o}{==} \PYG{k+kc}{null}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{err} \PYG{o}{=} \PYG{k}{new} \PYG{n+nb}{Error}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Could not find key for fingerprint \PYGZdq{}} \PYG{o}{+} \PYG{n+nx}{kid}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{((}\PYG{n+nx}{key} \PYG{o}{=} \PYG{n+nx}{km}\PYG{p}{.}\PYG{n+nx}{find\PYGZus{}best\PYGZus{}pgp\PYGZus{}key}\PYG{p}{(}\PYG{n+nx}{flags}\PYG{p}{))} \PYG{o}{==} \PYG{k+kc}{null}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{err} \PYG{o}{=} \PYG{k}{new} \PYG{n+nb}{Error}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}no matching key for flags: \PYGZdq{}} \PYG{o}{+} \PYG{n+nx}{flags}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{n+nx}{cb}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{key}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{lookup}\PYG{p}{(}\PYG{n+nx}{key\PYGZus{}id}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}keys}\PYG{p}{[}\PYG{n+nx}{hexkid}\PYG{p}{(}\PYG{n+nx}{key\PYGZus{}id}\PYG{p}{)];}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{lookupKeyManager}\PYG{p}{(}\PYG{n+nx}{key\PYGZus{}id}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}kms}\PYG{p}{[}\PYG{n+nx}{hexkid}\PYG{p}{(}\PYG{n+nx}{key\PYGZus{}id}\PYG{p}{)];}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{getKeysGPG}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{((}\PYG{n+nx}{os}\PYG{p}{.}\PYG{n+nx}{platform}\PYG{p}{()} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}linux\PYGZsq{}} \PYG{o}{||} \PYG{n+nx}{os}\PYG{p}{.}\PYG{n+nx}{platform}\PYG{p}{()} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}darwin\PYGZsq{}}\PYG{p}{)} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{o}{!}\PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{env}\PYG{p}{.}\PYG{n+nx}{PATH}\PYG{p}{.}\PYG{n+nx}{includes}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}/usr/local/bin\PYGZsq{}}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{env}\PYG{p}{.}\PYG{n+nx}{PATH} \PYG{o}{+=} \PYG{l+s+s2}{\PYGZdq{}:/usr/local/bin\PYGZdq{}}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k+kd}{let} \PYG{n+nx}{output} \PYG{o}{=} \PYG{n+nx}{child\PYGZus{}process}\PYG{p}{.}\PYG{n+nx}{execSync}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}gpg \PYGZhy{}\PYGZhy{}list\PYGZhy{}secret\PYGZhy{}keys \PYGZhy{}\PYGZhy{}fingerprint\PYGZsq{}}\PYG{p}{).}\PYG{n+nx}{toString}\PYG{p}{();}
+
+    \PYG{k+kd}{var} \PYG{n+nx}{keys} \PYG{o}{=} \PYG{p}{[];}
+    \PYG{k+kd}{var} \PYG{n+nx}{currentKey} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+    \PYG{k}{for} \PYG{p}{(}\PYG{k+kd}{let} \PYG{n+nx}{line} \PYG{k}{of} \PYG{n+nx}{output}\PYG{p}{.}\PYG{n+nx}{split}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}\PYGZbs{}n\PYGZsq{}}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{line} \PYG{o}{=} \PYG{n+nx}{line}\PYG{p}{.}\PYG{n+nx}{trim}\PYG{p}{();}
+
+      \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{line}\PYG{p}{.}\PYG{n+nx}{startsWith}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}sec\PYGZsh{}\PYGZsq{}}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k}{continue}\PYG{p}{;}
+      \PYG{p}{\PYGZcb{}}
+
+      \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{line}\PYG{p}{.}\PYG{n+nx}{startsWith}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}sec\PYGZsq{}}\PYG{p}{)} \PYG{o}{||} \PYG{n+nx}{line}\PYG{p}{.}\PYG{n+nx}{startsWith}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}ssb\PYGZsq{}}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{k+kd}{let} \PYG{n+nx}{parsed} \PYG{o}{=} \PYG{n+nx}{parsed} \PYG{o}{=} \PYG{l+s+sr}{/\PYGZca{}(sec|ssb) +(?:\PYGZbs{}w+)?([0\PYGZhy{}9]*)(?:[a\PYGZhy{}zA\PYGZhy{}Z]?)\PYGZbs{}/([a\PYGZhy{}zA\PYGZhy{}Z0\PYGZhy{}9]*) ((2[0\PYGZhy{}9]\PYGZob{}3\PYGZcb{})\PYGZhy{}(1[0\PYGZhy{}2]|0[1\PYGZhy{}9])\PYGZhy{}(0[1\PYGZhy{}9]|[12]\PYGZbs{}d|3[01]))(?: \PYGZbs{}[expires\PYGZbs{}: )?((2[0\PYGZhy{}9]\PYGZob{}3\PYGZcb{})\PYGZhy{}(1[0\PYGZhy{}2]|0[1\PYGZhy{}9])\PYGZhy{}(0[1\PYGZhy{}9]|[12]\PYGZbs{}d|3[01]))?/}\PYG{p}{.}\PYG{n+nx}{exec}\PYG{p}{(}\PYG{n+nx}{line}\PYG{p}{).}\PYG{n+nx}{slice}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+
+        \PYG{n+nx}{currentKey} \PYG{o}{=} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{type}\PYG{o}{:} \PYG{n+nx}{parsed}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}sec\PYGZsq{}} \PYG{o}{?} \PYG{l+s+s1}{\PYGZsq{}master\PYGZsq{}} \PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}subkey\PYGZsq{}}\PYG{p}{,}
+          \PYG{n+nx}{size}\PYG{o}{:} \PYG{n+nx}{parsed}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],}
+          \PYG{n+nx}{key}\PYG{o}{:} \PYG{n+nx}{parsed}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{],}
+          \PYG{n+nx}{created}\PYG{o}{:} \PYG{n+nx}{parsed}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{],}
+          \PYG{n+nx}{expires}\PYG{o}{:} \PYG{n+nx}{parsed}\PYG{p}{[}\PYG{l+m+mi}{7}\PYG{p}{]}
+        \PYG{p}{\PYGZcb{};}
+      \PYG{p}{\PYGZcb{}}
+
+      \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{line}\PYG{p}{.}\PYG{n+nx}{startsWith}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Key fingerprint\PYGZsq{}}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{currentKey}\PYG{p}{.}\PYG{n+nx}{fpr} \PYG{o}{=} \PYG{l+s+sr}{/\PYGZca{}[ ]*Key fingerprint = ((([0\PYGZhy{}9a\PYGZhy{}fA\PYGZhy{}F]\PYGZob{}4\PYGZcb{})[ ]*)+)\PYGZdl{}/}\PYG{p}{.}\PYG{n+nx}{exec}\PYG{p}{(}\PYG{n+nx}{line}\PYG{p}{)[}\PYG{l+m+mi}{1}\PYG{p}{];}
+        \PYG{n+nx}{keys}\PYG{p}{.}\PYG{n+nx}{push}\PYG{p}{(}\PYG{n+nx}{currentKey}\PYG{p}{);}
+      \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{n+nx}{keys}\PYG{p}{;}
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kr}{export} \PYG{k}{default} \PYG{k}{new} \PYG{n+nx}{KeyStore}\PYG{p}{();}
+\end{Verbatim}

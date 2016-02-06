@@ -1,0 +1,44 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kr}{import} \PYG{p}{\PYGZob{}}\PYG{n+nx}{ComponentRegistry}\PYG{p}{,} \PYG{n+nx}{ExtensionRegistry}\PYG{p}{,} \PYG{n+nx}{PreferencesUIStore}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}nylas\PYGZhy{}exports\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{n+nx}{PGPMain} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}../lib/main\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{MessageLoaderExtension} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}../lib/message\PYGZhy{}loader/message\PYGZhy{}loader\PYGZhy{}extension\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{MessageLoaderHeader} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}../lib/message\PYGZhy{}loader/message\PYGZhy{}loader\PYGZhy{}header\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{WorkerFrontend} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}../lib/worker\PYGZhy{}frontend\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{ComposerLoader} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}../lib/composer/composer\PYGZhy{}loader\PYGZsq{}}\PYG{p}{;}
+
+\PYG{n+nx}{describe}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}PGPMain\PYGZdq{}}\PYG{p}{,} \PYG{p}{()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{describe}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}::activate(state)\PYGZdq{}}\PYG{p}{,} \PYG{p}{()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+    \PYG{n+nx}{it}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}should register the preferences tab, message header, message loader, and composer button\PYGZdq{}}\PYG{p}{,} \PYG{p}{()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{spyOn}\PYG{p}{(}\PYG{n+nx}{PreferencesUIStore}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}registerPreferencesTab\PYGZsq{}}\PYG{p}{);}
+      \PYG{n+nx}{spyOn}\PYG{p}{(}\PYG{n+nx}{ComponentRegistry}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}register\PYGZsq{}}\PYG{p}{);}
+      \PYG{n+nx}{spyOn}\PYG{p}{(}\PYG{n+nx}{ExtensionRegistry}\PYG{p}{.}\PYG{n+nx}{MessageView}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}register\PYGZsq{}}\PYG{p}{);}
+      \PYG{n+nx}{spyOn}\PYG{p}{(}\PYG{n+nx}{WorkerFrontend}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}initialize\PYGZsq{}}\PYG{p}{);}
+
+      \PYG{n+nx}{PGPMain}\PYG{p}{.}\PYG{n+nx}{activate}\PYG{p}{();}
+
+      \PYG{n+nx}{expect}\PYG{p}{(}\PYG{n+nx}{PGPMain}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}tab}\PYG{p}{).}\PYG{n+nx}{not}\PYG{p}{.}\PYG{n+nx}{toBeNull}\PYG{p}{();}
+      \PYG{n+nx}{expect}\PYG{p}{(}\PYG{n+nx}{PreferencesUIStore}\PYG{p}{.}\PYG{n+nx}{registerPreferencesTab}\PYG{p}{).}\PYG{n+nx}{toHaveBeenCalledWith}\PYG{p}{(}\PYG{n+nx}{PGPMain}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}tab}\PYG{p}{);}
+      \PYG{n+nx}{expect}\PYG{p}{(}\PYG{n+nx}{ComponentRegistry}\PYG{p}{.}\PYG{n+nx}{register}\PYG{p}{).}\PYG{n+nx}{toHaveBeenCalledWith}\PYG{p}{(}\PYG{n+nx}{MessageLoaderHeader}\PYG{p}{,} \PYG{p}{\PYGZob{}}\PYG{n+nx}{role}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}message:BodyHeader\PYGZsq{}}\PYG{p}{\PYGZcb{});}
+      \PYG{n+nx}{expect}\PYG{p}{(}\PYG{n+nx}{ExtensionRegistry}\PYG{p}{.}\PYG{n+nx}{MessageView}\PYG{p}{.}\PYG{n+nx}{register}\PYG{p}{).}\PYG{n+nx}{toHaveBeenCalledWith}\PYG{p}{(}\PYG{n+nx}{MessageLoaderExtension}\PYG{p}{);}
+      \PYG{n+nx}{expect}\PYG{p}{(}\PYG{n+nx}{WorkerFrontend}\PYG{p}{.}\PYG{n+nx}{initialize}\PYG{p}{).}\PYG{n+nx}{toHaveBeenCalled}\PYG{p}{();}
+      \PYG{n+nx}{expect}\PYG{p}{(}\PYG{n+nx}{ComponentRegistry}\PYG{p}{.}\PYG{n+nx}{register}\PYG{p}{).}\PYG{n+nx}{toHaveBeenCalledWith}\PYG{p}{(}\PYG{n+nx}{ComposerLoader}\PYG{p}{,} \PYG{p}{\PYGZob{}}\PYG{n+nx}{role}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}Composer:ActionButton\PYGZsq{}}\PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{});}
+
+  \PYG{n+nx}{describe}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}::deactivate()\PYGZdq{}}\PYG{p}{,} \PYG{p}{()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+    \PYG{n+nx}{it}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}should unregister the preferences tab, message header, message loader, and composer button\PYGZdq{}}\PYG{p}{,} \PYG{p}{()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{spyOn}\PYG{p}{(}\PYG{n+nx}{PreferencesUIStore}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}unregisterPreferencesTab\PYGZsq{}}\PYG{p}{);}
+      \PYG{n+nx}{spyOn}\PYG{p}{(}\PYG{n+nx}{ComponentRegistry}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}unregister\PYGZsq{}}\PYG{p}{);}
+      \PYG{n+nx}{spyOn}\PYG{p}{(}\PYG{n+nx}{ExtensionRegistry}\PYG{p}{.}\PYG{n+nx}{MessageView}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}unregister\PYGZsq{}}\PYG{p}{);}
+
+      \PYG{n+nx}{PGPMain}\PYG{p}{.}\PYG{n+nx}{deactivate}\PYG{p}{();}
+
+      \PYG{n+nx}{expect}\PYG{p}{(}\PYG{n+nx}{PreferencesUIStore}\PYG{p}{.}\PYG{n+nx}{unregisterPreferencesTab}\PYG{p}{).}\PYG{n+nx}{toHaveBeenCalledWith}\PYG{p}{(}\PYG{n+nx}{PGPMain}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}tab}\PYG{p}{.}\PYG{n+nx}{tabId}\PYG{p}{);}
+      \PYG{n+nx}{expect}\PYG{p}{(}\PYG{n+nx}{ExtensionRegistry}\PYG{p}{.}\PYG{n+nx}{MessageView}\PYG{p}{.}\PYG{n+nx}{unregister}\PYG{p}{).}\PYG{n+nx}{toHaveBeenCalledWith}\PYG{p}{(}\PYG{n+nx}{MessageLoaderExtension}\PYG{p}{);}
+      \PYG{n+nx}{expect}\PYG{p}{(}\PYG{n+nx}{ComponentRegistry}\PYG{p}{.}\PYG{n+nx}{unregister}\PYG{p}{).}\PYG{n+nx}{toHaveBeenCalledWith}\PYG{p}{(}\PYG{n+nx}{MessageLoaderHeader}\PYG{p}{);}
+      \PYG{n+nx}{expect}\PYG{p}{(}\PYG{n+nx}{ComponentRegistry}\PYG{p}{.}\PYG{n+nx}{unregister}\PYG{p}{).}\PYG{n+nx}{toHaveBeenCalledWith}\PYG{p}{(}\PYG{n+nx}{ComposerLoader}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{});}
+\PYG{p}{\PYGZcb{});}
+\end{Verbatim}

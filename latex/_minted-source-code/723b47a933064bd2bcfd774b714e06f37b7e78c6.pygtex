@@ -1,0 +1,63 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{// This is the main entry\PYGZhy{}point for the worker process. The `compile\PYGZhy{}cache` is}
+\PYG{c+c1}{// used here to speed up the initialization part}
+
+\PYG{k+kd}{var} \PYG{n+nx}{proto} \PYG{o}{=} \PYG{n+nx}{require}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}./worker\PYGZhy{}protocol\PYGZsq{}}\PYG{p}{);}
+
+\PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{send}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{error}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}This is an IPC worker. Use as intended\PYGZsq{}}\PYG{p}{);}
+  \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{exit}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{p}{[}
+  \PYG{l+s+s1}{\PYGZsq{}PGP\PYGZus{}COMPILE\PYGZus{}CACHE\PYGZus{}MODULE\PYGZus{}PATH\PYGZsq{}}\PYG{p}{,}
+  \PYG{l+s+s1}{\PYGZsq{}PGP\PYGZus{}COMPILE\PYGZus{}CACHE\PYGZus{}PATH\PYGZsq{}}\PYG{p}{,}
+  \PYG{l+s+s1}{\PYGZsq{}PGP\PYGZus{}CONFIG\PYGZus{}DIR\PYGZus{}PATH\PYGZsq{}}
+\PYG{p}{].}\PYG{n+nx}{forEach}\PYG{p}{(}\PYG{n+nx}{envToCheck} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+  \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{env}\PYG{p}{[}\PYG{n+nx}{envToCheck}\PYG{p}{])} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{var} \PYG{n+nx}{err} \PYG{o}{=} \PYG{k}{new} \PYG{n+nb}{Error}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Environment variable \PYGZsq{}} \PYG{o}{+} \PYG{n+nx}{envToCheck} \PYG{o}{+} \PYG{l+s+s1}{\PYGZsq{} undefined\PYGZsq{}}\PYG{p}{);}
+    \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{error}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{.}\PYG{n+nx}{message}\PYG{p}{);}
+    \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{error}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{.}\PYG{n+nx}{stack}\PYG{p}{);}
+    \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{send}\PYG{p}{(\PYGZob{}}
+      \PYG{n+nx}{method}\PYG{o}{:} \PYG{n+nx}{proto}\PYG{p}{.}\PYG{n+nx}{ERROR\PYGZus{}OCCURRED}\PYG{p}{,}
+      \PYG{n+nx}{err}\PYG{o}{:} \PYG{n+nx}{err}\PYG{p}{,}
+      \PYG{n+nx}{errorMessage}\PYG{o}{:} \PYG{n+nx}{err}\PYG{p}{.}\PYG{n+nx}{message}
+    \PYG{p}{\PYGZcb{});}
+    \PYG{k}{return} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{exit}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{});}
+
+\PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{on}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}uncaughtException\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{err} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{error}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{);}
+  \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{send}\PYG{p}{(\PYGZob{}}
+    \PYG{n+nx}{method}\PYG{o}{:} \PYG{n+nx}{proto}\PYG{p}{.}\PYG{n+nx}{ERROR\PYGZus{}OCCURRED}\PYG{p}{,}
+    \PYG{n+nx}{err}\PYG{o}{:} \PYG{n+nx}{err}\PYG{p}{,}
+    \PYG{n+nx}{errorMessage}\PYG{o}{:} \PYG{n+nx}{err}\PYG{p}{.}\PYG{n+nx}{message}\PYG{p}{,}
+    \PYG{n+nx}{errorStackTrace}\PYG{o}{:} \PYG{n+nx}{err}\PYG{p}{.}\PYG{n+nx}{stack}
+  \PYG{p}{\PYGZcb{});}
+  \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{exit}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);}
+\PYG{p}{\PYGZcb{});}
+
+\PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{on}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}unhandledRejection\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{err} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{error}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{);}
+  \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{send}\PYG{p}{(\PYGZob{}}
+    \PYG{n+nx}{method}\PYG{o}{:} \PYG{n+nx}{proto}\PYG{p}{.}\PYG{n+nx}{ERROR\PYGZus{}OCCURRED}\PYG{p}{,}
+    \PYG{n+nx}{err}\PYG{o}{:} \PYG{n+nx}{err}\PYG{p}{,}
+    \PYG{n+nx}{errorMessage}\PYG{o}{:} \PYG{n+nx}{err}\PYG{p}{.}\PYG{n+nx}{message}\PYG{p}{,}
+    \PYG{n+nx}{errorStackTrace}\PYG{o}{:} \PYG{n+nx}{err}\PYG{p}{.}\PYG{n+nx}{stack}
+  \PYG{p}{\PYGZcb{});}
+\PYG{p}{\PYGZcb{});}
+
+\PYG{n+nx}{global}\PYG{p}{.}\PYG{n+nx}{NylasEnv} \PYG{o}{=} \PYG{n+nx}{require}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}./nylas\PYGZhy{}env\PYGZhy{}wrapper\PYGZsq{}}\PYG{p}{);}
+
+\PYG{k+kd}{var} \PYG{n+nx}{compileCacheModulePath} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{env}\PYG{p}{.}\PYG{n+nx}{PGP\PYGZus{}COMPILE\PYGZus{}CACHE\PYGZus{}MODULE\PYGZus{}PATH}\PYG{p}{;}
+\PYG{k+kd}{var} \PYG{n+nx}{compileCachePath} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{env}\PYG{p}{.}\PYG{n+nx}{PGP\PYGZus{}COMPILE\PYGZus{}CACHE\PYGZus{}PATH}\PYG{p}{;}
+
+\PYG{n+nx}{require}\PYG{p}{(}\PYG{n+nx}{compileCacheModulePath}\PYG{p}{).}\PYG{n+nx}{setCacheDirectory}\PYG{p}{(}\PYG{n+nx}{compileCachePath}\PYG{p}{);}
+\PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{send}\PYG{p}{(\PYGZob{}} \PYG{n+nx}{method}\PYG{o}{:} \PYG{n+nx}{proto}\PYG{p}{.}\PYG{n+nx}{VERBOSE\PYGZus{}OUT}\PYG{p}{,} \PYG{n+nx}{message}\PYG{o}{:} \PYG{l+s+s1}{\PYGZsq{}Required the compile cache\PYGZsq{}} \PYG{p}{\PYGZcb{});}
+
+\PYG{c+c1}{// The `compile\PYGZhy{}cache` module handles initializing Babel so ES6 will work from}
+\PYG{c+c1}{// this point on. We now hand off the processing to the `event\PYGZhy{}processor`}
+
+\PYG{n+nx}{require}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}./event\PYGZhy{}processor\PYGZsq{}}\PYG{p}{);}
+\end{Verbatim}

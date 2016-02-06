@@ -1,0 +1,208 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kr}{import} \PYG{n+nx}{kbpgp} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}kbpgp\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{os} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}os\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{child\PYGZus{}process} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}child\PYGZus{}process\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{p}{\PYGZob{}}\PYG{n+nx}{log}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}../logger\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{KeyStore} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./key\PYGZhy{}store\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{class} \PYG{n+nx}{KbpgpDecryptRoutine} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{constructor}\PYG{p}{(}\PYG{n+nx}{controller}\PYG{p}{,} \PYG{n+nx}{notify}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}controller} \PYG{o}{=} \PYG{n+nx}{controller}\PYG{p}{;}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}notify} \PYG{o}{=} \PYG{n+nx}{notify}\PYG{p}{;}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}importKey} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}importKey}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}checkCache} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}checkCache}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}decryptKey} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}decryptKey}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{run} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{run}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}importKey}\PYG{p}{(}\PYG{n+nx}{armored}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{k}{new} \PYG{n+nb}{Promise}\PYG{p}{((}\PYG{n+nx}{resolve}\PYG{p}{,} \PYG{n+nx}{reject}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{kbpgp}\PYG{p}{.}\PYG{n+nx}{KeyManager}\PYG{p}{.}\PYG{n+nx}{import\PYGZus{}from\PYGZus{}armored\PYGZus{}pgp}\PYG{p}{(\PYGZob{}}
+        \PYG{n+nx}{armored}
+      \PYG{p}{\PYGZcb{},} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{secretKey}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{reject}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{secretKey}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{resolve}\PYG{p}{(}\PYG{n+nx}{secretKey}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+      \PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}checkCache}\PYG{p}{(}\PYG{n+nx}{secretKey}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{n+nx}{keyId} \PYG{o}{=} \PYG{n+nx}{secretKey}\PYG{p}{.}\PYG{n+nx}{get\PYGZus{}pgp\PYGZus{}key\PYGZus{}id}\PYG{p}{();}
+    \PYG{k+kd}{let} \PYG{n+nx}{keyIdHex} \PYG{o}{=} \PYG{n+nx}{keyId}\PYG{p}{.}\PYG{n+nx}{toString}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hex\PYGZsq{}}\PYG{p}{);}
+    \PYG{k+kd}{let} \PYG{n+nx}{cachedKey} \PYG{o}{=} \PYG{n+nx}{KeyStore}\PYG{p}{.}\PYG{n+nx}{lookupKeyManager}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{);}
+    \PYG{k+kd}{let} \PYG{n+nx}{isLocked} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}controller}\PYG{p}{.}\PYG{n+nx}{isWaitingForPassphrase}\PYG{p}{(}\PYG{n+nx}{keyIdHex}\PYG{p}{);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{cachedKey}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[InProcessDecrypter] Found cached key for \PYGZpc{}s\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{secretKey}\PYG{p}{.}\PYG{n+nx}{get\PYGZus{}pgp\PYGZus{}key\PYGZus{}id}\PYG{p}{().}\PYG{n+nx}{toString}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hex\PYGZsq{}}\PYG{p}{));}
+      \PYG{k}{return} \PYG{n+nb}{Promise}\PYG{p}{.}\PYG{n+nx}{resolve}\PYG{p}{(}\PYG{n+nx}{cachedKey}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{isLocked}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{n+nx}{isLocked}\PYG{p}{.}\PYG{n+nx}{promise}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}decryptKey}\PYG{p}{(}\PYG{n+nx}{secretKey}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{(}\PYG{n+nx}{secretKey} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{KeyStore}\PYG{p}{.}\PYG{n+nx}{addKeyManager}\PYG{p}{(}\PYG{n+nx}{secretKey}\PYG{p}{);}
+        \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}controller}\PYG{p}{.}\PYG{n+nx}{completedPassphrasePromise}\PYG{p}{(}\PYG{n+nx}{keyIdHex}\PYG{p}{);}
+      \PYG{p}{\PYGZcb{},} \PYG{n+nx}{err} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}controller}\PYG{p}{.}\PYG{n+nx}{completedPassphrasePromise}\PYG{p}{(}\PYG{n+nx}{keyIdHex}\PYG{p}{,} \PYG{p}{\PYGZob{}}\PYG{n+nx}{err}\PYG{p}{\PYGZcb{});}
+        \PYG{k}{throw} \PYG{n+nx}{err}\PYG{p}{;}
+      \PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}decryptKey}\PYG{p}{(}\PYG{n+nx}{secretKey}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n+nx}{secretKey}\PYG{p}{.}\PYG{n+nx}{is\PYGZus{}pgp\PYGZus{}locked}\PYG{p}{())} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{n+nb}{Promise}\PYG{p}{.}\PYG{n+nx}{resolve}\PYG{p}{(}\PYG{n+nx}{secretKey}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}notify}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Waiting for passphrase...\PYGZsq{}}\PYG{p}{);}
+
+    \PYG{k+kd}{let} \PYG{n+nx}{keyId} \PYG{o}{=} \PYG{n+nx}{secretKey}\PYG{p}{.}\PYG{n+nx}{get\PYGZus{}pgp\PYGZus{}key\PYGZus{}id}\PYG{p}{().}\PYG{n+nx}{toString}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hex\PYGZsq{}}\PYG{p}{);}
+    \PYG{k+kd}{let} \PYG{n+nx}{askString} \PYG{o}{=} \PYG{l+s+sb}{`PGP Key with fingerprint \PYGZlt{}tt\PYGZgt{}}\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{keyId}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{\PYGZlt{}/tt\PYGZgt{} needs to be decrypted`}\PYG{p}{;}
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}controller}\PYG{p}{.}\PYG{n+nx}{requestPassphrase}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{,} \PYG{n+nx}{askString}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{(}\PYG{n+nx}{passphrase} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{k}{new} \PYG{n+nb}{Promise}\PYG{p}{((}\PYG{n+nx}{resolve}\PYG{p}{,} \PYG{n+nx}{reject}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}notify}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Unlocking secret key...\PYGZsq{}}\PYG{p}{);}
+
+        \PYG{k+kd}{let} \PYG{n+nx}{startTime} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{();}
+        \PYG{n+nx}{secretKey}\PYG{p}{.}\PYG{n+nx}{unlock\PYGZus{}pgp}\PYG{p}{(\PYGZob{}} \PYG{n+nx}{passphrase} \PYG{p}{\PYGZcb{},} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+          \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{n+nx}{reject}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{);}
+          \PYG{p}{\PYGZcb{}}
+
+          \PYG{k+kd}{let} \PYG{n+nx}{elapsed} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{(}\PYG{n+nx}{startTime}\PYG{p}{);}
+          \PYG{k+kd}{let} \PYG{n+nx}{msg} \PYG{o}{=} \PYG{l+s+sb}{`Secret key unlocked secret key in }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{elapsed}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{*} \PYG{l+m+mi}{1}\PYG{n+nx}{e3} \PYG{o}{+} \PYG{n+nx}{elapsed}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{/} \PYG{l+m+mi}{1}\PYG{n+nx}{e6}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{ms`}\PYG{p}{;}
+
+          \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}notify}\PYG{p}{(}\PYG{n+nx}{msg}\PYG{p}{);}
+          \PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[KbpgpDecryptRoutine] \PYGZpc{}s\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{msg}\PYG{p}{);}
+
+          \PYG{n+nx}{resolve}\PYG{p}{(}\PYG{n+nx}{secretKey}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{});}
+      \PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{},} \PYG{p}{()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{c+c1}{// Since the first argument is undefined, the rejected promise does not}
+      \PYG{c+c1}{// propagate to the `catch` receiver in `EventProcessor`. Create an Error}
+      \PYG{c+c1}{// here to ensure the error is delivered to `EventProcessor`}
+      \PYG{k}{throw} \PYG{k}{new} \PYG{n+nb}{Error}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Passphrase dialog cancelled\PYGZsq{}}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{run}\PYG{p}{(}\PYG{n+nx}{armored}\PYG{p}{,} \PYG{n+nx}{identifier}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{n+nx}{startTime} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{();}
+    \PYG{k+kd}{let} \PYG{n+nx}{method} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}GPG\PYGZus{}DECRYPT\PYGZsq{}}\PYG{p}{;}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{method} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}GPG\PYGZus{}DECRYPT\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{if} \PYG{p}{((}\PYG{n+nx}{os}\PYG{p}{.}\PYG{n+nx}{platform}\PYG{p}{()} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}linux\PYGZsq{}} \PYG{o}{||} \PYG{n+nx}{os}\PYG{p}{.}\PYG{n+nx}{platform}\PYG{p}{()} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}darwin\PYGZsq{}}\PYG{p}{)} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{o}{!}\PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{env}\PYG{p}{.}\PYG{n+nx}{PATH}\PYG{p}{.}\PYG{n+nx}{includes}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}/usr/local/bin\PYGZsq{}}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{env}\PYG{p}{.}\PYG{n+nx}{PATH} \PYG{o}{+=} \PYG{l+s+s2}{\PYGZdq{}:/usr/local/bin\PYGZdq{}}\PYG{p}{;}
+      \PYG{p}{\PYGZcb{}}
+
+      \PYG{c+c1}{//var key = child\PYGZus{}process.execSync(`gpg \PYGZhy{}\PYGZhy{}export\PYGZhy{}secret\PYGZhy{}keys \PYGZhy{}a \PYGZdl{}\PYGZob{}identifier\PYGZcb{}`);}
+      \PYG{k+kr}{const} \PYG{n+nx}{decrypted} \PYG{o}{=} \PYG{n+nx}{child\PYGZus{}process}\PYG{p}{.}\PYG{n+nx}{spawnSync}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}gpg\PYGZsq{}}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}\PYGZhy{}decrypt\PYGZsq{}}\PYG{p}{],} \PYG{p}{\PYGZob{}} \PYG{n+nx}{input}\PYG{o}{:} \PYG{n+nx}{armored} \PYG{p}{\PYGZcb{});}
+      \PYG{n+nx}{log}\PYG{p}{(}\PYG{n+nx}{decrypted}\PYG{p}{.}\PYG{n+nx}{stdout}\PYG{p}{);}
+      \PYG{n+nx}{log}\PYG{p}{(}\PYG{n+nx}{decrypted}\PYG{p}{.}\PYG{n+nx}{stderr}\PYG{p}{.}\PYG{n+nx}{toString}\PYG{p}{());}
+      \PYG{k+kr}{const} \PYG{n+nx}{literals} \PYG{o}{=} \PYG{p}{[}\PYG{n+nx}{decrypted}\PYG{p}{.}\PYG{n+nx}{stdout}\PYG{p}{];}
+      \PYG{k+kr}{const} \PYG{n+nx}{elapsed} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{(}\PYG{n+nx}{startTime}\PYG{p}{);}
+
+      \PYG{k}{return} \PYG{n+nb}{Promise}\PYG{p}{.}\PYG{n+nx}{resolve}\PYG{p}{(\PYGZob{}}\PYG{n+nx}{literals}\PYG{p}{,} \PYG{n+nx}{elapsed}\PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}importKey}\PYG{p}{(}\PYG{n+nx}{key}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}checkCache}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{(()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{k}{new} \PYG{n+nb}{Promise}\PYG{p}{((}\PYG{n+nx}{resolve}\PYG{p}{,} \PYG{n+nx}{reject}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[KbpgpDecryptRoutine] inside the unbox closure\PYGZsq{}}\PYG{p}{);}
+          \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}notify}\PYG{p}{(}\PYG{k+kc}{null}\PYG{p}{);}
+
+          \PYG{k+kd}{let} \PYG{n+nx}{startDecrypt} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{();}
+          \PYG{n+nx}{kbpgp}\PYG{p}{.}\PYG{n+nx}{unbox}\PYG{p}{(\PYGZob{}}\PYG{n+nx}{keyfetch}\PYG{o}{:} \PYG{n+nx}{KeyStore}\PYG{p}{,} \PYG{n+nx}{armored}\PYG{p}{\PYGZcb{},} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{literals}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+              \PYG{n+nx}{reject}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{,} \PYG{n+nx}{literals}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+              \PYG{k+kd}{let} \PYG{n+nx}{decryptTime} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{(}\PYG{n+nx}{startDecrypt}\PYG{p}{);}
+              \PYG{k+kd}{let} \PYG{n+nx}{elapsed} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{(}\PYG{n+nx}{startTime}\PYG{p}{);}
+
+              \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}notify}\PYG{p}{(}\PYG{l+s+sb}{`Message decrypted in }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{decryptTime}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{*} \PYG{l+m+mi}{1}\PYG{n+nx}{e3} \PYG{o}{+} \PYG{n+nx}{decryptTime}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{/} \PYG{l+m+mi}{1}\PYG{n+nx}{e6}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{ms`}\PYG{p}{);}
+
+              \PYG{k+kr}{const} \PYG{n+nx}{ds} \PYG{o}{=} \PYG{n+nx}{literals}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{].}\PYG{n+nx}{get\PYGZus{}data\PYGZus{}signer}\PYG{p}{();}
+              \PYG{k+kd}{let} \PYG{n+nx}{km} \PYG{o}{=} \PYG{n+nx}{signedBy} \PYG{o}{=} \PYG{k+kc}{null}\PYG{p}{;}
+              \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{ds}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n+nx}{km} \PYG{o}{=} \PYG{n+nx}{ds}\PYG{p}{.}\PYG{n+nx}{get\PYGZus{}key\PYGZus{}manager}\PYG{p}{();}
+              \PYG{p}{\PYGZcb{}}
+              \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{km}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n+nx}{signedBy} \PYG{o}{=} \PYG{n+nx}{km}\PYG{p}{.}\PYG{n+nx}{get\PYGZus{}pgp\PYGZus{}fingerprint}\PYG{p}{().}\PYG{n+nx}{toString}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hex\PYGZsq{}}\PYG{p}{);}
+                \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+sb}{`Signed by PGP fingerprint: }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{signedBy}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{`}\PYG{p}{);}
+              \PYG{p}{\PYGZcb{}}
+
+              \PYG{n+nx}{resolve}\PYG{p}{(\PYGZob{}}\PYG{n+nx}{literals}\PYG{p}{,} \PYG{n+nx}{signedBy}\PYG{p}{,} \PYG{n+nx}{elapsed}\PYG{p}{\PYGZcb{});}
+            \PYG{p}{\PYGZcb{}}
+          \PYG{p}{\PYGZcb{});}
+        \PYG{p}{\PYGZcb{});}
+      \PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+c1}{// Singleton to manage each decryption session, converts stringified Buffers}
+\PYG{c+c1}{// back to Buffers for kbpgp}
+\PYG{k+kr}{class} \PYG{n+nx}{KbpgpDecryptController} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{constructor}\PYG{p}{(}\PYG{n+nx}{eventProcessor}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}eventProcessor} \PYG{o}{=} \PYG{n+nx}{eventProcessor}\PYG{p}{;}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{decrypt} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{decrypt}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{isWaitingForPassphrase} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{isWaitingForPassphrase}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{requestPassphrase} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{requestPassphrase}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// TODO: figure out a way to prompt the user to pick which PGP key to use to}
+  \PYG{c+c1}{// decrypt or add a config page to allow them to pick per\PYGZhy{}email account.}
+  \PYG{n+nx}{decrypt}\PYG{p}{(\PYGZob{}}\PYG{n+nx}{armored}\PYG{p}{,} \PYG{n+nx}{secretKey}\PYG{p}{\PYGZcb{},} \PYG{n+nx}{notify}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{armored} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n+nx}{armored}\PYG{p}{.}\PYG{n+nx}{type} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}Buffer\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{armored} \PYG{o}{=} \PYG{k}{new} \PYG{n+nx}{Buffer}\PYG{p}{(}\PYG{n+nx}{armored}\PYG{p}{.}\PYG{n+nx}{data}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{secretKey} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n+nx}{secretKey}\PYG{p}{.}\PYG{n+nx}{type} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}Buffer\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{secretKey} \PYG{o}{=} \PYG{k}{new} \PYG{n+nx}{Buffer}\PYG{p}{(}\PYG{n+nx}{secretKey}\PYG{p}{.}\PYG{n+nx}{data}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{k}{new} \PYG{n+nx}{KbpgpDecryptRoutine}\PYG{p}{(}\PYG{k}{this}\PYG{p}{,} \PYG{n+nx}{notify}\PYG{p}{).}\PYG{n+nx}{run}\PYG{p}{(}\PYG{n+nx}{armored}\PYG{p}{,} \PYG{n+nx}{secretKey}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{isWaitingForPassphrase}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{];}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{completedPassphrasePromise}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{,} \PYG{n+nx}{err}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{])} \PYG{p}{\PYGZob{}}
+      \PYG{k}{throw} \PYG{k}{new} \PYG{n+nb}{Error}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}No pending promise for that keyId\PYGZsq{}}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{].}\PYG{n+nx}{reject}\PYG{p}{(}\PYG{n+nx}{err}\PYG{p}{);}
+      \PYG{k}{return} \PYG{n+nx}{err}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{].}\PYG{n+nx}{resolve}\PYG{p}{();}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{requestPassphrase}\PYG{p}{(}\PYG{n+nx}{keyId}\PYG{p}{,} \PYG{n+nx}{askString}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{])} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{].}\PYG{n+nx}{promise}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{]} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{].}\PYG{n+nx}{promise} \PYG{o}{=} \PYG{k}{new} \PYG{n+nb}{Promise}\PYG{p}{((}\PYG{n+nx}{resolve}\PYG{p}{,} \PYG{n+nx}{reject}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{].}\PYG{n+nx}{resolve} \PYG{o}{=} \PYG{n+nx}{resolve}\PYG{p}{;}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{].}\PYG{n+nx}{reject} \PYG{o}{=} \PYG{n+nx}{reject}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}).}\PYG{n+nx}{then}\PYG{p}{(()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{delete} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{];}
+    \PYG{p}{\PYGZcb{},} \PYG{n+nx}{err} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{delete} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}waitingForPassphrase}\PYG{p}{[}\PYG{n+nx}{keyId}\PYG{p}{];}
+      \PYG{k}{throw} \PYG{n+nx}{err}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{});}
+
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}eventProcessor}\PYG{p}{.}\PYG{n+nx}{requestPassphrase}\PYG{p}{(}\PYG{n+nx}{askString}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kr}{export} \PYG{k}{default} \PYG{n+nx}{KbpgpDecryptController}\PYG{p}{;}
+\end{Verbatim}

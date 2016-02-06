@@ -1,0 +1,76 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kr}{import} \PYG{n+nx}{fs} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}fs\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{p}{\PYGZob{}}\PYG{n+nx}{FileDownloadStore}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}nylas\PYGZhy{}exports\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{n+nx}{FlowError} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./flow\PYGZhy{}error\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{class} \PYG{n+nx}{EmailPGPFileDownloadStoreWatcher} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{constructor}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// Object of promises of attachments needed for decryption}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}pendingPromises} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}watchingFileIds} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{promiseForPendingFile} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{promiseForPendingFile}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{getFilePromise} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{getFilePromise}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}onDownloadStoreChange} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}onDownloadStoreChange}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}storeUnlisten} \PYG{o}{=} \PYG{n+nx}{FileDownloadStore}\PYG{p}{.}\PYG{n+nx}{listen}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}onDownloadStoreChange}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// PUBLIC}
+
+  \PYG{n+nx}{promiseForPendingFile}\PYG{p}{(}\PYG{n+nx}{fileId}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}pendingPromises}\PYG{p}{[}\PYG{n+nx}{fileId}\PYG{p}{])} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}pendingPromises}\PYG{p}{[}\PYG{n+nx}{fileId}\PYG{p}{];}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}pendingPromises}\PYG{p}{[}\PYG{n+nx}{fileId}\PYG{p}{]} \PYG{o}{=} \PYG{k}{new} \PYG{n+nb}{Promise}\PYG{p}{((}\PYG{n+nx}{resolve}\PYG{p}{,} \PYG{n+nx}{reject}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}watchingFileIds}\PYG{p}{[}\PYG{n+nx}{fileId}\PYG{p}{]} \PYG{o}{=} \PYG{p}{\PYGZob{}} \PYG{n+nx}{resolve}\PYG{p}{,} \PYG{n+nx}{reject} \PYG{p}{\PYGZcb{};}
+    \PYG{p}{\PYGZcb{}).}\PYG{n+nx}{then}\PYG{p}{((}\PYG{n+nx}{text}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{delete} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}pendingPromises}\PYG{p}{[}\PYG{n+nx}{fileId}\PYG{p}{];}
+      \PYG{k}{return} \PYG{n+nx}{text}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{getFilePromise}\PYG{p}{(}\PYG{n+nx}{fileId}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}pendingPromises}\PYG{p}{[}\PYG{n+nx}{fileId}\PYG{p}{];}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{unlisten}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}storeUnlisten}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}storeUnlisten}\PYG{p}{();}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// PRIVATE}
+
+  \PYG{n+nx}{\PYGZus{}onDownloadStoreChange}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{n+nx}{changes} \PYG{o}{=} \PYG{n+nx}{FileDownloadStore}\PYG{p}{.}\PYG{n+nx}{downloadDataForFiles}\PYG{p}{(}\PYG{n+nb}{Object}\PYG{p}{.}\PYG{n+nx}{keys}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}watchingFileIds}\PYG{p}{));}
+    \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Download Store Changes:\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{changes}\PYG{p}{);}
+    \PYG{n+nb}{Object}\PYG{p}{.}\PYG{n+nx}{keys}\PYG{p}{(}\PYG{n+nx}{changes}\PYG{p}{).}\PYG{n+nx}{forEach}\PYG{p}{((}\PYG{n+nx}{fileId}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k+kd}{let} \PYG{n+nx}{file} \PYG{o}{=} \PYG{n+nx}{changes}\PYG{p}{[}\PYG{n+nx}{fileId}\PYG{p}{];}
+
+      \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{state} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}finished\PYGZsq{}} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}watchingFileIds}\PYG{p}{[}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{fileId}\PYG{p}{])} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+sb}{`Checking }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{fileId}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{`}\PYG{p}{);}
+        \PYG{c+c1}{// TODO: Dedupe the file reading logic into separate method}
+        \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{accessAsync}\PYG{p}{(}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{targetPath}\PYG{p}{,} \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{F\PYGZus{}OK} \PYG{o}{|} \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{R\PYGZus{}OK}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{(()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+sb}{`Found downloaded attachment }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{fileId}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{`}\PYG{p}{);}
+          \PYG{k}{return} \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{readFileAsync}\PYG{p}{(}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{targetPath}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}utf8\PYGZsq{}}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{((}\PYG{n+nx}{text}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+            \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}watchingFileIds}\PYG{p}{[}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{fileId}\PYG{p}{]} \PYG{o}{||} \PYG{o}{!}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}watchingFileIds}\PYG{p}{[}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{fileId}\PYG{p}{].}\PYG{n+nx}{resolve}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+              \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{error}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}watching promise undefined\PYGZsq{}}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+              \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}watchingFileIds}\PYG{p}{[}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{fileId}\PYG{p}{].}\PYG{n+nx}{resolve}\PYG{p}{(}\PYG{n+nx}{text}\PYG{p}{);}
+              \PYG{k}{delete} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}watchingFileIds}\PYG{p}{[}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{fileId}\PYG{p}{];}
+            \PYG{p}{\PYGZcb{}}
+          \PYG{p}{\PYGZcb{});}
+        \PYG{p}{\PYGZcb{}).}\PYG{k}{catch}\PYG{p}{((}\PYG{n+nx}{err}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+          \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}watchingFileIds}\PYG{p}{[}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{fileId}\PYG{p}{].}\PYG{n+nx}{reject}\PYG{p}{(}\PYG{k}{new} \PYG{n+nx}{FlowError}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Downloaded attachment inaccessable\PYGZsq{}}\PYG{p}{,} \PYG{k+kc}{true}\PYG{p}{));}
+          \PYG{k}{delete} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}watchingFileIds}\PYG{p}{[}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{fileId}\PYG{p}{];}
+        \PYG{p}{\PYGZcb{});}
+      \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kr}{export} \PYG{k}{default} \PYG{k}{new} \PYG{n+nx}{EmailPGPFileDownloadStoreWatcher}\PYG{p}{();}
+\end{Verbatim}

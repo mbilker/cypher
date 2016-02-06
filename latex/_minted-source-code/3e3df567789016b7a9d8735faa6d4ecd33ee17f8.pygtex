@@ -1,0 +1,100 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{// PGP Message Loader}
+\PYG{c+c1}{//}
+\PYG{c+c1}{// Currently for Facebook PGP\PYGZhy{}encrypted email, this will detect that Facebook}
+\PYG{c+c1}{// puts the PGP encrypted document as the second attachment. It will read the}
+\PYG{c+c1}{// attachment from disk asynchrnously with background tasks}
+
+\PYG{k+kr}{import} \PYG{p}{\PYGZob{}}\PYG{n+nx}{Utils}\PYG{p}{,} \PYG{n+nx}{MessageBodyProcessor}\PYG{p}{,} \PYG{n+nx}{React}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}nylas\PYGZhy{}exports\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{n+nx}{EmailPGPActions} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}../email\PYGZhy{}pgp\PYGZhy{}actions\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{EmailPGPStore} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}../email\PYGZhy{}pgp\PYGZhy{}store\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{FlowError} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}../flow\PYGZhy{}error\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{class} \PYG{n+nx}{MessageLoaderHeader} \PYG{k+kr}{extends} \PYG{n+nx}{React}\PYG{p}{.}\PYG{n+nx}{Component} \PYG{p}{\PYGZob{}}
+  \PYG{k+kr}{static} \PYG{n+nx}{displayName} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}MessageLoader\PYGZsq{}}
+
+  \PYG{k+kr}{static} \PYG{n+nx}{propTypes} \PYG{o}{=} \PYG{p}{\PYGZob{}}
+    \PYG{n+nx}{message}\PYG{o}{:} \PYG{n+nx}{React}\PYG{p}{.}\PYG{n+nx}{PropTypes}\PYG{p}{.}\PYG{n+nx}{object}\PYG{p}{.}\PYG{n+nx}{isRequired}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{constructor}\PYG{p}{(}\PYG{n+nx}{props}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kr}{super}\PYG{p}{(}\PYG{n+nx}{props}\PYG{p}{);}
+
+    \PYG{c+c1}{// All the methods that depend on `this` instance}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{componentDidMount} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{componentDidMount}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{componentWillUnmount} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{componentWillUnmount}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{shouldComponentUpdate} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{shouldComponentUpdate}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{render} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{render}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{retryDecryption} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{retryDecryption}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}onPGPStoreChange} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}onPGPStoreChange}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state} \PYG{o}{=} \PYG{n+nx}{EmailPGPStore}\PYG{p}{.}\PYG{n+nx}{getState}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{props}\PYG{p}{.}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{)} \PYG{o}{||} \PYG{p}{\PYGZob{}\PYGZcb{};}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{componentDidMount}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}storeUnlisten} \PYG{o}{=} \PYG{n+nx}{EmailPGPStore}\PYG{p}{.}\PYG{n+nx}{listen}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}onPGPStoreChange}\PYG{p}{);}
+
+    \PYG{n+nb}{window}\PYG{p}{.}\PYG{n+nx}{\PYGZdl{}pgpLoaderHeader} \PYG{o}{=} \PYG{k}{this}\PYG{p}{;}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{componentWillUnmount}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}storeUnlisten}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}storeUnlisten}\PYG{p}{();}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{shouldComponentUpdate}\PYG{p}{(}\PYG{n+nx}{nextProps}\PYG{p}{,} \PYG{n+nx}{nextState}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{o}{!}\PYG{n+nx}{Utils}\PYG{p}{.}\PYG{n+nx}{isEqualReact}\PYG{p}{(}\PYG{n+nx}{nextProps}\PYG{p}{,} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{props}\PYG{p}{)} \PYG{o}{||}
+           \PYG{o}{!}\PYG{n+nx}{Utils}\PYG{p}{.}\PYG{n+nx}{isEqualReact}\PYG{p}{(}\PYG{n+nx}{nextState}\PYG{p}{,} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{render}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{var} \PYG{n+nx}{display} \PYG{o}{=} \PYG{k+kc}{true}\PYG{p}{;}
+    \PYG{k+kd}{var} \PYG{n+nx}{decryptingMessage}\PYG{p}{,} \PYG{n+nx}{errorMessage}\PYG{p}{;}
+    \PYG{k+kd}{var} \PYG{n+nx}{className} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}pgp\PYGZhy{}message\PYGZhy{}header\PYGZdq{}}\PYG{p}{;}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{decrypting} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{o}{!}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{statusMessage}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{displayMessage} \PYG{o}{=} \PYG{o}{\PYGZlt{}}\PYG{n+nx}{span}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Decrypting} \PYG{n+nx}{message}\PYG{o}{\PYGZlt{}}\PYG{err}{/span\PYGZgt{};}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{decrypting} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{statusMessage}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{className} \PYG{o}{+=} \PYG{l+s+s1}{\PYGZsq{} pgp\PYGZhy{}message\PYGZhy{}header\PYGZhy{}info\PYGZsq{}}\PYG{p}{;}
+      \PYG{n+nx}{displayMessage} \PYG{o}{=} \PYG{o}{\PYGZlt{}}\PYG{n+nx}{span}\PYG{o}{\PYGZgt{}}\PYG{p}{\PYGZob{}}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{statusMessage}\PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZlt{}}\PYG{err}{/span\PYGZgt{};}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{lastError} \PYG{o}{\PYGZam{}\PYGZam{}}
+               \PYG{p}{((}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{lastError} \PYG{k}{instanceof} \PYG{n+nx}{FlowError} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{lastError}\PYG{p}{.}\PYG{n+nx}{display}\PYG{p}{)} \PYG{o}{||}
+                \PYG{o}{!}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state}\PYG{p}{.}\PYG{n+nx}{lastError} \PYG{k}{instanceof} \PYG{n+nx}{FlowError}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{className} \PYG{o}{+=} \PYG{l+s+s1}{\PYGZsq{} pgp\PYGZhy{}message\PYGZhy{}header\PYGZhy{}error\PYGZsq{}}\PYG{p}{;}
+      \PYG{n+nx}{displayMessage} \PYG{o}{=} \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div}\PYG{o}{\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{span}\PYG{o}{\PYGZgt{}\PYGZlt{}}\PYG{n+nx}{b}\PYG{o}{\PYGZgt{}}\PYG{n+nb}{Error}\PYG{o}{:} \PYG{o}{\PYGZlt{}}\PYG{err}{/b\PYGZgt{}\PYGZob{}this.state.lastError.message\PYGZcb{}\PYGZlt{}/span\PYGZgt{}}
+        \PYG{o}{\PYGZlt{}}\PYG{n+nx}{a} \PYG{n+nx}{className}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}pull\PYGZhy{}right option\PYGZdq{}} \PYG{n+nx}{onClick}\PYG{o}{=}\PYG{p}{\PYGZob{}}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{retryDecryption}\PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZgt{}}\PYG{n+nx}{Retry} \PYG{n+nx}{Decryption}\PYG{o}{\PYGZlt{}}\PYG{err}{/a\PYGZgt{}}
+      \PYG{o}{\PYGZlt{}}\PYG{err}{/div\PYGZgt{}}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{display} \PYG{o}{=} \PYG{k+kc}{false}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{display}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{n+nx}{className}\PYG{o}{=}\PYG{p}{\PYGZob{}}\PYG{n+nx}{className}\PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZgt{}}\PYG{p}{\PYGZob{}}\PYG{n+nx}{displayMessage}\PYG{p}{\PYGZcb{}}\PYG{o}{\PYGZlt{}}\PYG{err}{/div\PYGZgt{};}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+      \PYG{k}{return} \PYG{o}{\PYGZlt{}}\PYG{n+nx}{div} \PYG{o}{/\PYGZgt{}}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{retryDecryption}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{n+nx}{EmailPGPActions}\PYG{p}{.}\PYG{n+nx}{retryMessage}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{props}\PYG{p}{.}\PYG{n+nx}{message}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}onPGPStoreChange}\PYG{p}{(}\PYG{n+nx}{messageId}\PYG{p}{,} \PYG{n+nx}{state}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{messageId} \PYG{o}{===} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{props}\PYG{p}{.}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}received event\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{state}\PYG{p}{);}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{state} \PYG{o}{=} \PYG{n+nx}{state}\PYG{p}{;}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{forceUpdate}\PYG{p}{();}
+
+      \PYG{c+c1}{// Fixed in nylas/N1@39a142ddcb80c7e1fce22dfe1e0e628272154523}
+      \PYG{c+c1}{//if (state.decryptedMessage) \PYGZob{}}
+      \PYG{c+c1}{//  this.props.message.body = state.decryptedMessage;}
+      \PYG{c+c1}{//\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kr}{export} \PYG{k}{default} \PYG{n+nx}{MessageLoaderHeader}\PYG{p}{;}
+\end{Verbatim}

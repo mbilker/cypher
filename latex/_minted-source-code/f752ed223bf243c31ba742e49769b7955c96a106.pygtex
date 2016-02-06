@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{// Basic NylasEnv to fetch configuration directory}
+\PYG{k+kd}{function} \PYG{n+nx}{NylasEnvConstructor}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{n+nx}{NylasEnvConstructor}\PYG{p}{.}\PYG{n+nx}{prototype}\PYG{p}{.}\PYG{n+nx}{getConfigDirPath} \PYG{o}{=} \PYG{k+kd}{function}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+  \PYG{k}{return} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{env}\PYG{p}{.}\PYG{n+nx}{PGP\PYGZus{}CONFIG\PYGZus{}DIR\PYGZus{}PATH}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{n+nx}{module}\PYG{p}{.}\PYG{n+nx}{exports} \PYG{o}{=} \PYG{k}{new} \PYG{n+nx}{NylasEnvConstructor}\PYG{p}{();}
+\end{Verbatim}

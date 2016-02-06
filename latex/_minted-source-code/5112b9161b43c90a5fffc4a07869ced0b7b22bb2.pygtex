@@ -1,0 +1,367 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kr}{import} \PYG{n+nx}{fs} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}fs\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{path} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}path\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{n+nx}{NylasStore} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}nylas\PYGZhy{}store\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{p}{\PYGZob{}}\PYG{n+nx}{Utils}\PYG{p}{,} \PYG{n+nx}{FileDownloadStore}\PYG{p}{,} \PYG{n+nx}{MessageBodyProcessor}\PYG{p}{\PYGZcb{}} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}nylas\PYGZhy{}exports\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{n+nx}{MimeParser} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}mimeparser\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{n+nx}{EmailPGPFileDownloadStoreWatcher} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./email\PYGZhy{}pgp\PYGZhy{}file\PYGZhy{}download\PYGZhy{}store\PYGZhy{}watcher\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{EmailPGPActions} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./email\PYGZhy{}pgp\PYGZhy{}actions\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{n+nx}{InProcessDecrypter} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./decryption/in\PYGZhy{}process\PYGZhy{}decrypter\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{WorkerFrontend} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./worker\PYGZhy{}frontend\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{FlowError} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./flow\PYGZhy{}error.es6\PYGZsq{}}\PYG{p}{;}
+\PYG{k+kr}{import} \PYG{n+nx}{KeyStore} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}./worker/kbpgp/key\PYGZhy{}store\PYGZsq{}}\PYG{p}{;}
+
+\PYG{k+kr}{import} \PYG{n+nx}{smalltalk} \PYG{n+nx}{from} \PYG{l+s+s1}{\PYGZsq{}smalltalk\PYGZsq{}}\PYG{p}{;}
+
+\PYG{c+c1}{// THANK YOU GPGTOOLS! The `MimePart+GPGMail.m` is such a good guide to PGP}
+\PYG{c+c1}{// mail decryption}
+\PYG{k+kr}{class} \PYG{n+nx}{EmailPGPStore} \PYG{k+kr}{extends} \PYG{n+nx}{NylasStore} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{constructor}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k+kr}{super}\PYG{p}{();}
+
+    \PYG{c+c1}{// State\PYGZhy{}based variables for storing messages when resetting}
+    \PYG{c+c1}{// MessageBodyProcessor cache}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}cachedMessages} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+    \PYG{c+c1}{// Store status of message decryption for MessageLoaderHeader}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+    \PYG{c+c1}{// Binding `this` to each method that uses `this`}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}encryptMessage} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}encryptMessage}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}decryptMessage} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}decryptMessage}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}retryMessage} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}retryMessage}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{mainDecrypt} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{mainDecrypt}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}setState} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}setState}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}retrievePGPAttachment} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}retrievePGPAttachment}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}extractHTML} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}extractHTML}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}decryptAndResetCache} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}decryptAndResetCache}\PYG{p}{.}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k}{this}\PYG{p}{);}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{listenTo}\PYG{p}{(}\PYG{n+nx}{EmailPGPActions}\PYG{p}{.}\PYG{n+nx}{encryptMessage}\PYG{p}{,} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}encryptMessage}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{listenTo}\PYG{p}{(}\PYG{n+nx}{EmailPGPActions}\PYG{p}{.}\PYG{n+nx}{decryptMessage}\PYG{p}{,} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}decryptMessage}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{listenTo}\PYG{p}{(}\PYG{n+nx}{EmailPGPActions}\PYG{p}{.}\PYG{n+nx}{retryMessage}\PYG{p}{,} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}retryMessage}\PYG{p}{);}
+
+    \PYG{n+nx}{global}\PYG{p}{.}\PYG{n+nx}{\PYGZdl{}pgpEmailPGPStore} \PYG{o}{=} \PYG{k}{this}\PYG{p}{;}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// PUBLIC}
+
+  \PYG{c+c1}{// GPGTools (and other clients) send two attachments, where the first}
+  \PYG{c+c1}{// \PYGZdq{}metadata\PYGZdq{} attachment contains the string \PYGZdq{}Version: 1\PYGZdq{} and the second}
+  \PYG{c+c1}{// attachment is the encrypted message.}
+  \PYG{c+c1}{//}
+  \PYG{c+c1}{// Though, the \PYGZdq{}metadata\PYGZdq{} attachment\PYGZsq{}s `contentType` is}
+  \PYG{c+c1}{// \PYGZsq{}application/pgp\PYGZhy{}encrypted\PYGZsq{} and the encrypted message attachment is}
+  \PYG{c+c1}{// \PYGZsq{}application/octet\PYGZhy{}stream\PYGZsq{}, which is annoying to deal with.}
+  \PYG{n+nx}{shouldDecryptMessage}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{files}\PYG{p}{.}\PYG{n+nx}{length} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+sb}{`[PGP] }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{: Failed attachment test`}\PYG{p}{);}
+      \PYG{k}{return} \PYG{k+kc}{false}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k+kd}{let} \PYG{n+nx}{extensionTest} \PYG{o}{=} \PYG{p}{(}\PYG{n+nx}{file}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k+kd}{let} \PYG{n+nx}{ext} \PYG{o}{=} \PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{displayExtension}\PYG{p}{();}
+
+      \PYG{c+c1}{// [@\PYGZdq{}pgp\PYGZdq{}, @\PYGZdq{}gpg\PYGZdq{}, @\PYGZdq{}asc\PYGZdq{}]}
+      \PYG{c+c1}{// https://github.com/GPGTools/GPGMail/blob/master/Source/MimePart\PYGZpc{}2BGPGMail.m\PYGZsh{}L643}
+      \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{ext} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}pgp\PYGZsq{}} \PYG{o}{||}
+          \PYG{n+nx}{ext} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}gpg\PYGZsq{}} \PYG{o}{||}
+          \PYG{n+nx}{ext} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}asc\PYGZsq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{k+kc}{true}\PYG{p}{;}
+      \PYG{p}{\PYGZcb{}}
+
+      \PYG{k}{return} \PYG{k+kc}{false}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{files}\PYG{p}{.}\PYG{n+nx}{some}\PYG{p}{(}\PYG{n+nx}{extensionTest}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+sb}{`[PGP] }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{: Failed extension test`}\PYG{p}{);}
+      \PYG{k}{return} \PYG{k+kc}{false}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{k+kc}{true}\PYG{p}{;}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{haveCachedBody}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{o}{!!}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}cachedMessages}\PYG{p}{[}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{];}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{getCachedBody}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}cachedMessages}\PYG{p}{[}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{];}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{getState}\PYG{p}{(}\PYG{n+nx}{messageId}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state}\PYG{p}{[}\PYG{n+nx}{messageId}\PYG{p}{];}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// PRIVATE}
+
+  \PYG{c+c1}{// ACTION EVENTS}
+
+  \PYG{n+nx}{\PYGZus{}encryptMessage}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}decryptMessage}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[PGP] Told to decrypt\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{message}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}decryptAndResetCache}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}retryMessage}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state}\PYG{p}{[}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{]} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state}\PYG{p}{[}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{].}\PYG{n+nx}{decrypting}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[PGP] Told to retry decrypt, but in the middle of decryption\PYGZsq{}}\PYG{p}{);}
+      \PYG{k}{return} \PYG{k+kc}{false}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[PGP] Told to retry decrypt\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{message}\PYG{p}{);}
+      \PYG{k}{delete} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state}\PYG{p}{[}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{];}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}decryptAndResetCache}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// Utils}
+
+  \PYG{n+nx}{\PYGZus{}setState}\PYG{p}{(}\PYG{n+nx}{messageId}\PYG{p}{,} \PYG{n+nx}{state}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state}\PYG{p}{[}\PYG{n+nx}{messageId}\PYG{p}{]} \PYG{o}{=} \PYG{n+nb}{Object}\PYG{p}{.}\PYG{n+nx}{assign}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state}\PYG{p}{[}\PYG{n+nx}{messageId}\PYG{p}{]} \PYG{o}{||} \PYG{p}{\PYGZob{}\PYGZcb{},} \PYG{n+nx}{state}\PYG{p}{);}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{trigger}\PYG{p}{(}\PYG{n+nx}{messageId}\PYG{p}{,} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state}\PYG{p}{[}\PYG{n+nx}{messageId}\PYG{p}{]);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// PGP MAIN}
+
+  \PYG{c+c1}{// The main brains of this project. This retrieves the attachment and secret}
+  \PYG{c+c1}{// key (someone help me find a (secure) way to store the secret key) in}
+  \PYG{c+c1}{// parallel. We parse the HTML out of the content, then update the state which}
+  \PYG{c+c1}{// triggers a page update}
+  \PYG{n+nx}{mainDecrypt}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state}\PYG{p}{[}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{])} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+sb}{`[EmailPGPStore] Already decrypting }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{`}\PYG{p}{);}
+      \PYG{k}{return} \PYG{n+nb}{Promise}\PYG{p}{.}\PYG{n+nx}{reject}\PYG{p}{(}\PYG{l+s+sb}{`Already decrypting }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{`}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{group}\PYG{p}{(}\PYG{l+s+sb}{`[PGP] Message: }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{`}\PYG{p}{);}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}setState}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{,} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{decrypting}\PYG{o}{:} \PYG{k+kc}{true}
+    \PYG{p}{\PYGZcb{});}
+
+    \PYG{c+c1}{// More decryption engines will be implemented}
+    \PYG{k+kr}{const} \PYG{n+nx}{notify} \PYG{o}{=} \PYG{p}{(}\PYG{n+nx}{msg}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}setState}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{,} \PYG{p}{\PYGZob{}} \PYG{n+nx}{statusMessage}\PYG{o}{:} \PYG{n+nx}{msg} \PYG{p}{\PYGZcb{});}
+    \PYG{k+kr}{const} \PYG{n+nx}{decrypter} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}selectDecrypter}\PYG{p}{().}\PYG{n+nx}{bind}\PYG{p}{(}\PYG{k+kc}{null}\PYG{p}{,} \PYG{n+nx}{notify}\PYG{p}{);}
+    \PYG{k+kr}{const} \PYG{n+nx}{startDecrypt} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{();}
+
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}getAttachmentAndKey}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{,} \PYG{n+nx}{notify}\PYG{p}{).}\PYG{n+nx}{spread}\PYG{p}{(}\PYG{n+nx}{decrypter}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{((}\PYG{n+nx}{result}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k+kr}{const} \PYG{n+nx}{endDecrypt} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{(}\PYG{n+nx}{startDecrypt}\PYG{p}{);}
+      \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+sb}{`[EmailPGPStore] \PYGZpc{}cDecryption engine took }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{endDecrypt}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{*} \PYG{l+m+mi}{1}\PYG{n+nx}{e3} \PYG{o}{+} \PYG{n+nx}{endDecrypt}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{/} \PYG{l+m+mi}{1}\PYG{n+nx}{e6}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{ms`}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}color:blue\PYGZdq{}}\PYG{p}{);}
+
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}setState}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{,} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{rawMessage}\PYG{o}{:} \PYG{n+nx}{result}\PYG{p}{.}\PYG{n+nx}{text}\PYG{p}{,}
+        \PYG{n+nx}{signedBy}\PYG{o}{:} \PYG{n+nx}{result}\PYG{p}{.}\PYG{n+nx}{signedBy}
+      \PYG{p}{\PYGZcb{});}
+
+      \PYG{k}{return} \PYG{n+nx}{result}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}).}\PYG{n+nx}{then}\PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}extractHTML}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{((}\PYG{n+nx}{match}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}cachedMessages}\PYG{p}{[}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{]} \PYG{o}{=} \PYG{n+nx}{match}\PYG{p}{;}
+
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}setState}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{,} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{decrypting}\PYG{o}{:} \PYG{k+kc}{false}\PYG{p}{,}
+        \PYG{n+nx}{decryptedMessage}\PYG{o}{:} \PYG{n+nx}{match}\PYG{p}{,}
+        \PYG{n+nx}{statusMessage}\PYG{o}{:} \PYG{k+kc}{null}
+      \PYG{p}{\PYGZcb{});}
+
+      \PYG{k}{return} \PYG{n+nx}{match}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}).}\PYG{k}{catch}\PYG{p}{((}\PYG{n+nx}{error}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{error} \PYG{k}{instanceof} \PYG{n+nx}{FlowError}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{n+nx}{error}\PYG{p}{.}\PYG{n+nx}{title}\PYG{p}{);}
+      \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{n+nx}{error}\PYG{p}{.}\PYG{n+nx}{stack}\PYG{p}{);}
+      \PYG{p}{\PYGZcb{}}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}setState}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{,} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{decrypting}\PYG{o}{:} \PYG{k+kc}{false}\PYG{p}{,}
+        \PYG{n+nx}{done}\PYG{o}{:} \PYG{k+kc}{true}\PYG{p}{,}
+        \PYG{n+nx}{lastError}\PYG{o}{:} \PYG{n+nx}{error}
+      \PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{}).}\PYG{k}{finally}\PYG{p}{(()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{groupEnd}\PYG{p}{();}
+      \PYG{c+c1}{//delete this.\PYGZus{}state[message.id];}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// PGP HELPER INTERFACE}
+
+  \PYG{n+nx}{\PYGZus{}getKey}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{var} \PYG{n+nx}{keyLocation} \PYG{o}{=} \PYG{n+nx}{path}\PYG{p}{.}\PYG{n+nx}{join}\PYG{p}{(}\PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{env}\PYG{p}{.}\PYG{n+nx}{HOME}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}pgpkey\PYGZsq{}}\PYG{p}{);}
+    \PYG{k}{return} \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{readFileAsync}\PYG{p}{(}\PYG{n+nx}{keyLocation}\PYG{p}{);}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}retrievePGPAttachment}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{,} \PYG{n+nx}{notify}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}[EmailPGPStore] Attachments: \PYGZpc{}d\PYGZdq{}}\PYG{p}{,} \PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{files}\PYG{p}{.}\PYG{n+nx}{length}\PYG{p}{);}
+
+    \PYG{c+c1}{// Check for GPGTools\PYGZhy{}like message, even though we aren\PYGZsq{}t MIME parsed yet,}
+    \PYG{c+c1}{// this still applies because the `octet\PYGZhy{}stream` attachments take}
+    \PYG{c+c1}{// precedence}
+    \PYG{c+c1}{// https://github.com/GPGTools/GPGMail/blob/master/Source/MimePart\PYGZpc{}2BGPGMail.m\PYGZsh{}L665}
+    \PYG{k+kd}{var} \PYG{n+nx}{dataPart} \PYG{o}{=} \PYG{k+kc}{null}\PYG{p}{;}
+    \PYG{k+kd}{var} \PYG{n+nx}{dataIndex} \PYG{o}{=} \PYG{k+kc}{null}\PYG{p}{;}
+    \PYG{k+kd}{var} \PYG{n+nx}{lastContentType} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}\PYGZsq{}}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{files}\PYG{p}{.}\PYG{n+nx}{length} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k+kd}{let} \PYG{p}{\PYGZob{}}\PYG{n+nx}{files}\PYG{p}{\PYGZcb{}} \PYG{o}{=} \PYG{n+nx}{message}\PYG{p}{;}
+
+      \PYG{n+nx}{files}\PYG{p}{.}\PYG{n+nx}{forEach}\PYG{p}{((}\PYG{n+nx}{file}\PYG{p}{,} \PYG{n+nx}{i}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if} \PYG{p}{((}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{contentType} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}application/pgp\PYGZhy{}signature\PYGZsq{}}\PYG{p}{)} \PYG{o}{||} \PYG{c+c1}{// EmailPGP\PYGZhy{}style encryption}
+            \PYG{p}{((}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{contentType} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}application/octet\PYGZhy{}stream\PYGZsq{}} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{o}{!}\PYG{n+nx}{dataPart}\PYG{p}{)} \PYG{o}{||}
+             \PYG{p}{(}\PYG{n+nx}{lastContentType} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}application/pgp\PYGZhy{}encrypted\PYGZsq{}}\PYG{p}{))} \PYG{o}{||} \PYG{c+c1}{// GPGTools\PYGZhy{}style encryption}
+            \PYG{p}{(}\PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{contentType} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}application/pgp\PYGZhy{}encrypted\PYGZsq{}} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{o}{!}\PYG{n+nx}{dataPart}\PYG{p}{))} \PYG{p}{\PYGZob{}} \PYG{c+c1}{// Fallback}
+          \PYG{n+nx}{dataPart} \PYG{o}{=} \PYG{n+nx}{file}\PYG{p}{;}
+          \PYG{n+nx}{dataIndex} \PYG{o}{=} \PYG{n+nx}{i}\PYG{p}{;}
+          \PYG{n+nx}{lastContentType} \PYG{o}{=} \PYG{n+nx}{file}\PYG{p}{.}\PYG{n+nx}{contentType}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+      \PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{dataPart}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k+kd}{let} \PYG{n+nx}{path} \PYG{o}{=} \PYG{n+nx}{FileDownloadStore}\PYG{p}{.}\PYG{n+nx}{pathForFile}\PYG{p}{(}\PYG{n+nx}{dataPart}\PYG{p}{);}
+      \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+sb}{`[EmailPGPStore] Using file[}\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{dataIndex}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{] = \PYGZpc{}O`}\PYG{p}{,} \PYG{n+nx}{dataPart}\PYG{p}{);}
+
+      \PYG{c+c1}{// async fs.exists was throwing because the first argument was true,}
+      \PYG{c+c1}{// found fs.access as a suitable replacement}
+      \PYG{k}{return} \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{accessAsync}\PYG{p}{(}\PYG{n+nx}{path}\PYG{p}{,} \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{F\PYGZus{}OK} \PYG{o}{|} \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{R\PYGZus{}OK}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{(()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{n+nx}{fs}\PYG{p}{.}\PYG{n+nx}{readFileAsync}\PYG{p}{(}\PYG{n+nx}{path}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}utf8\PYGZsq{}}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{((}\PYG{n+nx}{text}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}[EmailPGPStore] Read attachment from disk\PYGZdq{}}\PYG{p}{);}
+          \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n+nx}{text}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{throw} \PYG{k}{new} \PYG{n+nx}{FlowError}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}No text in attachment\PYGZdq{}}\PYG{p}{,} \PYG{k+kc}{true}\PYG{p}{);}
+          \PYG{p}{\PYGZcb{}}
+          \PYG{k}{return} \PYG{n+nx}{text}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{});}
+      \PYG{p}{\PYGZcb{}).}\PYG{k}{catch}\PYG{p}{((}\PYG{n+nx}{err}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{notify}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Waiting for encrypted message attachment to download...\PYGZsq{}}\PYG{p}{);}
+        \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[EmailPGPStore] Attachment file inaccessable, creating pending promise\PYGZsq{}}\PYG{p}{);}
+        \PYG{k}{return} \PYG{n+nx}{EmailPGPFileDownloadStoreWatcher}\PYG{p}{.}\PYG{n+nx}{promiseForPendingFile}\PYG{p}{(}\PYG{n+nx}{dataPart}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{);}
+      \PYG{p}{\PYGZcb{});}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+      \PYG{k}{throw} \PYG{k}{new} \PYG{n+nx}{FlowError}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}No valid attachment\PYGZdq{}}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// Retrieves the attachment and encrypted secret key for code divergence later}
+  \PYG{n+nx}{\PYGZus{}getAttachmentAndKey}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{,} \PYG{n+nx}{notify}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kr}{const} \PYG{n+nx}{keys} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{};}
+    \PYG{k+kr}{const} \PYG{n+nx}{gpg} \PYG{o}{=} \PYG{n+nx}{KeyStore}\PYG{p}{.}\PYG{n+nx}{getKeysGPG}\PYG{p}{();}
+
+    \PYG{k}{for} \PYG{p}{(}\PYG{k+kd}{let} \PYG{n+nx}{key} \PYG{k}{of} \PYG{n+nx}{gpg}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n+nx}{key}\PYG{p}{)} \PYG{k}{continue}\PYG{p}{;}
+      \PYG{n+nx}{keys}\PYG{p}{[}\PYG{n+nx}{key}\PYG{p}{.}\PYG{n+nx}{key}\PYG{p}{]} \PYG{o}{=} \PYG{l+s+sb}{`[}\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{key}\PYG{p}{.}\PYG{n+nx}{type}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{] }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{key}\PYG{p}{.}\PYG{n+nx}{fpr}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{`}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{n+nb}{Promise}\PYG{p}{.}\PYG{n+nx}{all}\PYG{p}{([}
+      \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}retrievePGPAttachment}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{,} \PYG{n+nx}{notify}\PYG{p}{),}
+      \PYG{n+nx}{smalltalk}\PYG{p}{.}\PYG{n+nx}{dropdown}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}PGP Key\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}Which PGP key should be used for decryption of this message?\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{keys}\PYG{p}{)}
+    \PYG{p}{]).}\PYG{n+nx}{spread}\PYG{p}{((}\PYG{n+nx}{text}\PYG{p}{,} \PYG{n+nx}{pgpkey}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n+nx}{text}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{throw} \PYG{k}{new} \PYG{n+nx}{FlowError}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}No text in attachment\PYGZdq{}}\PYG{p}{,} \PYG{k+kc}{true}\PYG{p}{);}
+      \PYG{p}{\PYGZcb{}}
+      \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n+nx}{pgpkey}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{throw} \PYG{k}{new} \PYG{n+nx}{FlowError}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}No key in pgpkey variable\PYGZdq{}}\PYG{p}{,} \PYG{k+kc}{true}\PYG{p}{);}
+      \PYG{p}{\PYGZcb{}}
+      \PYG{k}{return} \PYG{p}{[}\PYG{n+nx}{text}\PYG{p}{,} \PYG{n+nx}{pgpkey}\PYG{p}{];}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}selectDecrypter}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k+kr}{const} \PYG{n+nx}{chosen} \PYG{o}{=} \PYG{l+s+s2}{\PYGZdq{}WORKER\PYGZus{}PROCESS\PYGZdq{}}\PYG{p}{;}
+    \PYG{n+nx}{decrypter} \PYG{o}{=} \PYG{n+nx}{WorkerFrontend}\PYG{p}{;} \PYG{c+c1}{// WORKER\PYGZus{}PROCESS}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{chosen} \PYG{o}{===} \PYG{l+s+s2}{\PYGZdq{}IN\PYGZus{}PROCESS\PYGZdq{}}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{ecrypter} \PYG{o}{=} \PYG{k}{new} \PYG{n+nx}{InProcessDecrypter}\PYG{p}{();} \PYG{c+c1}{// IN\PYGZus{}PROCESS}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{n+nx}{decrypter}\PYG{p}{.}\PYG{n+nx}{decrypt}\PYG{p}{;}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{c+c1}{// Uses regex to extract HTML component from a multipart message. Does not}
+  \PYG{c+c1}{// contribute a significant amount of time to the decryption process.}
+  \PYG{n+nx}{\PYGZus{}extractHTML}\PYG{p}{(}\PYG{n+nx}{result}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{k}{new} \PYG{n+nb}{Promise}\PYG{p}{((}\PYG{n+nx}{resolve}\PYG{p}{,} \PYG{n+nx}{reject}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k+kd}{let} \PYG{n+nx}{parser} \PYG{o}{=} \PYG{k}{new} \PYG{n+nx}{MimeParser}\PYG{p}{();}
+
+      \PYG{c+c1}{// Use MIME parsing to extract possible body}
+      \PYG{k+kd}{var} \PYG{n+nx}{matched}\PYG{p}{,} \PYG{n+nx}{lastContentType}\PYG{p}{;}
+      \PYG{k+kd}{let} \PYG{n+nx}{start} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{();}
+
+      \PYG{n+nx}{parser}\PYG{p}{.}\PYG{n+nx}{onbody} \PYG{o}{=} \PYG{p}{(}\PYG{n+nx}{node}\PYG{p}{,} \PYG{n+nx}{chunk}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if} \PYG{p}{((}\PYG{n+nx}{node}\PYG{p}{.}\PYG{n+nx}{contentType}\PYG{p}{.}\PYG{n+nx}{value} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}text/html\PYGZsq{}}\PYG{p}{)} \PYG{o}{||} \PYG{c+c1}{// HTML body}
+            \PYG{p}{(}\PYG{n+nx}{node}\PYG{p}{.}\PYG{n+nx}{contentType}\PYG{p}{.}\PYG{n+nx}{value} \PYG{o}{===} \PYG{l+s+s1}{\PYGZsq{}text/plain\PYGZsq{}} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{o}{!}\PYG{n+nx}{matched}\PYG{p}{))} \PYG{p}{\PYGZob{}} \PYG{c+c1}{// Plain text}
+          \PYG{n+nx}{matched} \PYG{o}{=} \PYG{k}{new} \PYG{n+nx}{Buffer}\PYG{p}{(}\PYG{n+nx}{chunk}\PYG{p}{).}\PYG{n+nx}{toString}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}utf8\PYGZsq{}}\PYG{p}{);}
+          \PYG{n+nx}{lastContentType} \PYG{o}{=} \PYG{n+nx}{node}\PYG{p}{.}\PYG{n+nx}{contentType}\PYG{p}{.}\PYG{n+nx}{value}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+      \PYG{p}{\PYGZcb{}}
+      \PYG{n+nx}{parser}\PYG{p}{.}\PYG{n+nx}{onend} \PYG{o}{=} \PYG{p}{()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+        \PYG{k+kd}{let} \PYG{n+nx}{end} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{(}\PYG{n+nx}{start}\PYG{p}{);}
+        \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+sb}{`[EmailPGPStore] \PYGZpc{}cParsed MIME in }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{end}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{*} \PYG{l+m+mi}{1}\PYG{n+nx}{e3} \PYG{o}{+} \PYG{n+nx}{end}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{/} \PYG{l+m+mi}{1}\PYG{n+nx}{e6}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{ms`}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}color:blue\PYGZdq{}}\PYG{p}{);}
+      \PYG{p}{\PYGZcb{}}
+
+      \PYG{n+nx}{parser}\PYG{p}{.}\PYG{n+nx}{write}\PYG{p}{(}\PYG{n+nx}{result}\PYG{p}{.}\PYG{n+nx}{text}\PYG{p}{);}
+      \PYG{n+nx}{parser}\PYG{p}{.}\PYG{n+nx}{end}\PYG{p}{();}
+
+      \PYG{c+c1}{// Fallback to regular expressions method}
+      \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n+nx}{matched}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{start} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{();}
+        \PYG{k+kd}{let} \PYG{n+nx}{matches} \PYG{o}{=} \PYG{l+s+sr}{/\PYGZbs{}n\PYGZhy{}\PYGZhy{}[\PYGZca{}\PYGZbs{}n\PYGZbs{}r]*\PYGZbs{}r?\PYGZbs{}nContent\PYGZhy{}Type: text\PYGZbs{}/html[\PYGZbs{}s\PYGZbs{}S]*?\PYGZbs{}r?\PYGZbs{}n\PYGZbs{}r?\PYGZbs{}n([\PYGZbs{}s\PYGZbs{}S]*?)\PYGZbs{}n\PYGZbs{}r?\PYGZbs{}n\PYGZhy{}\PYGZhy{}/gim}\PYG{p}{.}\PYG{n+nx}{exec}\PYG{p}{(}\PYG{n+nx}{text}\PYG{p}{);}
+        \PYG{k+kd}{let} \PYG{n+nx}{end} \PYG{o}{=} \PYG{n+nx}{process}\PYG{p}{.}\PYG{n+nx}{hrtime}\PYG{p}{(}\PYG{n+nx}{start}\PYG{p}{);}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{matches}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+sb}{`[EmailPGPStore] \PYGZpc{}cRegex found HTML in }\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{end}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{*} \PYG{l+m+mi}{1}\PYG{n+nx}{e3} \PYG{o}{+} \PYG{n+nx}{end}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{/} \PYG{l+m+mi}{1}\PYG{n+nx}{e6}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{ms`}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}color:blue\PYGZdq{}}\PYG{p}{);}
+          \PYG{n+nx}{matched} \PYG{o}{=} \PYG{n+nx}{matches}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{];}
+        \PYG{p}{\PYGZcb{}}
+      \PYG{p}{\PYGZcb{}}
+
+      \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{matched}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n+nx}{resolve}\PYG{p}{(}\PYG{n+nx}{matched}\PYG{p}{);}
+      \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{c+c1}{// REALLY FALLBACK TO RAW}
+        \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{error}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[EmailPGPStore] FALLBACK TO RAW DECRYPTED\PYGZsq{}}\PYG{p}{);}
+        \PYG{k+kd}{let} \PYG{n+nx}{formatted} \PYG{o}{=} \PYG{l+s+sb}{`\PYGZlt{}html\PYGZgt{}\PYGZlt{}head\PYGZgt{}\PYGZlt{}/head\PYGZgt{}\PYGZlt{}body\PYGZgt{}\PYGZlt{}b\PYGZgt{}FALLBACK TO RAW:\PYGZlt{}/b\PYGZgt{}\PYGZlt{}br\PYGZgt{}}\PYG{l+s+si}{\PYGZdl{}\PYGZob{}}\PYG{n+nx}{text}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+sb}{\PYGZlt{}/body\PYGZgt{}\PYGZlt{}/html\PYGZgt{}`}\PYG{p}{;}
+        \PYG{n+nx}{resolve}\PYG{p}{(}\PYG{n+nx}{formatted}\PYG{p}{);}
+        \PYG{c+c1}{//reject(new FlowError(\PYGZdq{}no HTML found in decrypted\PYGZdq{}));}
+      \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+
+  \PYG{n+nx}{\PYGZus{}decryptAndResetCache}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kd}{let} \PYG{n+nx}{key} \PYG{o}{=} \PYG{n+nx}{MessageBodyProcessor}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}key}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{);}
+
+    \PYG{k}{return} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{mainDecrypt}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{).}\PYG{n+nx}{then}\PYG{p}{(()} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{k}{if} \PYG{p}{(}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state}\PYG{p}{[}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{]} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{o}{!}\PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}state}\PYG{p}{[}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{].}\PYG{n+nx}{lastError}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{c+c1}{// Runs resetCache every run, and there can be many messages in a thread}
+        \PYG{c+c1}{// that are encrypted. TODO: need a way to track currently processing}
+        \PYG{c+c1}{// messages and run resetCache once, or only reprocess one message.}
+        \PYG{c+c1}{//MessageBodyProcessor.resetCache();}
+
+        \PYG{k+kd}{var} \PYG{n+nx}{messageIndex} \PYG{o}{=} \PYG{k+kc}{null}\PYG{p}{;}
+        \PYG{n+nx}{MessageBodyProcessor}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}recentlyProcessedA}\PYG{p}{.}\PYG{n+nx}{some}\PYG{p}{((\PYGZob{}}\PYG{n+nx}{key}\PYG{o}{:} \PYG{n+nx}{\PYGZus{}key}\PYG{p}{,} \PYG{n+nx}{body}\PYG{p}{\PYGZcb{},} \PYG{n+nx}{i}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+          \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{key} \PYG{o}{===} \PYG{n+nx}{\PYGZus{}key}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n+nx}{messageIndex} \PYG{o}{=} \PYG{n+nx}{i}\PYG{p}{;}
+            \PYG{k}{return} \PYG{k+kc}{true}\PYG{p}{;}
+          \PYG{p}{\PYGZcb{}}
+
+          \PYG{k}{return} \PYG{k+kc}{false}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{});}
+
+        \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{messageIndex} \PYG{o}{!==} \PYG{k+kc}{null}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+          \PYG{n+nx}{MessageBodyProcessor}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}recentlyProcessedA}\PYG{p}{.}\PYG{n+nx}{splice}\PYG{p}{(}\PYG{n+nx}{messageIndex}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{);}
+          \PYG{k}{delete} \PYG{n+nx}{MessageBodyProcessor}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}recentlyProcessedD}\PYG{p}{[}\PYG{n+nx}{key}\PYG{p}{];}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k+kd}{let} \PYG{n+nx}{processed} \PYG{o}{=} \PYG{n+nx}{MessageBodyProcessor}\PYG{p}{.}\PYG{n+nx}{process}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{);}
+        \PYG{n+nx}{MessageBodyProcessor}\PYG{p}{.}\PYG{n+nx}{\PYGZus{}subscriptions}\PYG{p}{.}\PYG{n+nx}{forEach}\PYG{p}{((\PYGZob{}}\PYG{n+nx}{message}\PYG{o}{:} \PYG{n+nx}{\PYGZus{}message}\PYG{p}{,} \PYG{n+nx}{callback}\PYG{p}{\PYGZcb{})} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+          \PYG{k}{if} \PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{.}\PYG{n+nx}{id} \PYG{o}{===} \PYG{n+nx}{\PYGZus{}message}\PYG{p}{.}\PYG{n+nx}{id}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n+nx}{callback}\PYG{p}{(}\PYG{n+nx}{processed}\PYG{p}{);}
+          \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{});}
+      \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}).}\PYG{k}{catch}\PYG{p}{((}\PYG{n+nx}{err}\PYG{p}{)} \PYG{o}{=\PYGZgt{}} \PYG{p}{\PYGZob{}}
+      \PYG{n+nx}{console}\PYG{p}{.}\PYG{n+nx}{log}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}[PGP \PYGZhy{} EmailPGPStore] \PYGZpc{}s\PYGZsq{}}\PYG{p}{,} \PYG{n+nx}{err}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{});}
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kr}{export} \PYG{k}{default} \PYG{k}{new} \PYG{n+nx}{EmailPGPStore}\PYG{p}{();}
+\end{Verbatim}

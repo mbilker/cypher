@@ -1,0 +1,19 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{// Error class to not print a stack trace}
+\PYG{c+c1}{// Useful for stopping a Promise chain}
+\PYG{k+kr}{class} \PYG{n+nx}{FlowError} \PYG{k+kr}{extends} \PYG{n+nb}{Error} \PYG{p}{\PYGZob{}}
+  \PYG{n+nx}{name} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}FlowError\PYGZsq{}}\PYG{p}{;}
+
+  \PYG{n+nx}{constructor}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{,} \PYG{n+nx}{display} \PYG{o}{=} \PYG{k+kc}{false}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kr}{super}\PYG{p}{(}\PYG{n+nx}{message}\PYG{p}{);}
+    \PYG{n+nb}{Error}\PYG{p}{.}\PYG{n+nx}{captureStackTrace}\PYG{p}{(}\PYG{k}{this}\PYG{p}{,} \PYG{n+nx}{arguments}\PYG{p}{.}\PYG{n+nx}{callee}\PYG{p}{);}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{message} \PYG{o}{=} \PYG{n+nx}{message}\PYG{p}{;}
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{display} \PYG{o}{=} \PYG{n+nx}{display}\PYG{p}{;}
+
+    \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{title} \PYG{o}{=} \PYG{k}{this}\PYG{p}{.}\PYG{n+nx}{message}\PYG{p}{;}
+  \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kr}{export} \PYG{k}{default} \PYG{n+nx}{FlowError}\PYG{p}{;}
+\end{Verbatim}
