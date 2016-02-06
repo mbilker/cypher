@@ -77,12 +77,12 @@ class ComposerLoader extends React.Component {
     console.log('submit');
     console.log(username);
 
-    return KeybaseStore.keybaseRemote.publicKeyForUsername(username).then((armoredKey) => {
+    return KeybaseStore.keybaseRemote.publicKeyForUsername(username).then(armoredKey => {
       if (!armoredKey) {
         throw new Error("No public key for username " + username);
       }
 
-      return this._importPublicKey(armoredKey).then((publicKey) => {
+      return this._importPublicKey(armoredKey).then(publicKey => {
         return [
           DraftStore.sessionForClientId(this.props.draftClientId),
           publicKey
@@ -94,7 +94,7 @@ class ComposerLoader extends React.Component {
         let fingerprint = kbpgp.util.format_fingerprint(publicKey.get_pgp_fingerprint());
         let bodyHeader = this._formatBodyHeader(username, fingerprint);
 
-        return this._encryptMessage(text, publicKey).then((pgpMessage) => {
+        return this._encryptMessage(text, publicKey).then(pgpMessage => {
           let temporaryDir = path.join(this.temporaryAttachmentLocation, this.props.draftClientId);
           let attachmentPath = path.join(temporaryDir, 'encrypted.asc');
 
@@ -116,7 +116,7 @@ class ComposerLoader extends React.Component {
           session.changes.add({ body });
           session.changes.commit();
         });
-      }).catch((err) => {
+      }).catch(err => {
         console.log(err);
       });
     });
@@ -157,10 +157,10 @@ class ComposerLoader extends React.Component {
   }
 
   _ensureConfigurationDirectoryExists() {
-    fs.access(this.temporaryAttachmentLocation, fs.F_OK, (err) => {
+    fs.access(this.temporaryAttachmentLocation, fs.F_OK, err => {
       if (err) {
         console.log('[PGP] Temporary attachment directory missing, creating');
-        fs.mkdir(this.temporaryAttachmentLocation, (err) => {
+        fs.mkdir(this.temporaryAttachmentLocation, err => {
           if (err) {
             console.error('[PGP] Temporary attachment directory creation unsuccessful', err);
           } else {
