@@ -2,6 +2,7 @@ import kbpgp from 'kbpgp';
 import os from 'os';
 import child_process from 'child_process';
 
+import EventProcessor from '../event-processor';
 import {log} from '../logger';
 import KeyStore from './key-store';
 
@@ -46,19 +47,22 @@ class KbpgpDecryptRoutine {
     let keyId = secretKey.get_pgp_key_id();
     let keyIdHex = keyId.toString('hex');
     let cachedKey = KeyStore.lookupKeyManager(keyId);
-    let isLocked = this._controller.isWaitingForPassphrase(keyIdHex);
+    let isLocked = EventProcessor.isWaitingForPassphrase(keyIdHex);
     if (cachedKey) {
       log('[InProcessDecrypter] Found cached key for %s', secretKey.get_pgp_key_id().toString('hex'));
+
       return Promise.resolve(cachedKey);
     } else if (isLocked) {
       return isLocked.promise;
     } else {
       return this._decryptKey(secretKey).then(secretKey => {
         KeyStore.addKeyManager(secretKey);
-        return this._controller.completedPassphrasePromise(keyIdHex);
+
+        return EventProcessor.completedPassphrasePromise(keyIdHex);
       }, err => {
-        this._controller.completedPassphrasePromise(keyIdHex, {err});
-        throw err;
+        EventProcessor.completedPassphrasePromise(keyIdHex, {err});
+
+        return Promise.reject(err);
       });
     }
   }
@@ -95,7 +99,7 @@ class KbpgpDecryptRoutine {
       // Since the first argument is undefined, the rejected promise does not
       // propagate to the `catch` receiver in `EventProcessor`. Create an Error
       // here to ensure the error is delivered to `EventProcessor`
-      throw new Error('Passphrase dialog cancelled');
+      return Promise.reject(new Error('Passphrase dialog cancelled'));
     });
   }
 
@@ -122,17 +126,18 @@ class KbpgpDecryptRoutine {
         stderr.push(data);
       });
       child.on('close', (code) => {
+        // GPG throws code 2 when it cannot verify one-pass signature packet
+        // inside armored message
         if (code !== 0 && code !== 2) {
-          log(Buffer.concat(stdout).toString('utf8'));
-          log(Buffer.concat(stderr).toString('utf8'));
           return deferred.reject(new Error(`GPG decrypt failed with code ${code}`));
         }
 
         const elapsed = process.hrtime(startTime);
         const output = Buffer.concat(stdout);
+        const error = Buffer.concat(stderr);
         const literals = [output];
 
-        log(output);
+        log(error.toString('utf8'));
 
         deferred.resolve({literals, elapsed});
       });
@@ -171,14 +176,8 @@ class KbpgpDecryptRoutine {
 // Singleton to manage each decryption session, converts stringified Buffers
 // back to Buffers for kbpgp
 class KbpgpDecryptController {
-  constructor(eventProcessor) {
-    this._eventProcessor = eventProcessor;
-
-    this._waitingForPassphrase = {};
-
+  constructor() {
     this.decrypt = this.decrypt.bind(this);
-    this.isWaitingForPassphrase = this.isWaitingForPassphrase.bind(this);
-    this.requestPassphrase = this.requestPassphrase.bind(this);
   }
 
   // TODO: figure out a way to prompt the user to pick which PGP key to use to
@@ -193,42 +192,6 @@ class KbpgpDecryptController {
     }
 
     return new KbpgpDecryptRoutine(this, notify).run(armored, secretKey);
-  }
-
-  isWaitingForPassphrase(keyId) {
-    return this._waitingForPassphrase[keyId];
-  }
-
-  completedPassphrasePromise(keyId, err) {
-    if (!this._waitingForPassphrase[keyId]) {
-      throw new Error('No pending promise for that keyId');
-    }
-
-    if (err) {
-      this._waitingForPassphrase[keyId].reject(err);
-      return err;
-    }
-
-    this._waitingForPassphrase[keyId].resolve();
-  }
-
-  requestPassphrase(keyId, askString) {
-    if (this._waitingForPassphrase[keyId]) {
-      return this._waitingForPassphrase[keyId].promise;
-    }
-
-    this._waitingForPassphrase[keyId] = {};
-    this._waitingForPassphrase[keyId].promise = new Promise((resolve, reject) => {
-      this._waitingForPassphrase[keyId].resolve = resolve;
-      this._waitingForPassphrase[keyId].reject = reject;
-    }).then(() => {
-      delete this._waitingForPassphrase[keyId];
-    }, err => {
-      delete this._waitingForPassphrase[keyId];
-      return Promise.reject(err);
-    });
-
-    return this._eventProcessor.requestPassphrase(askString);
   }
 }
 
