@@ -42,12 +42,12 @@ class KeybaseSidebar extends React.Component
     return MessageStore.items()[0]
 
   componentDidMount: =>
-    @unsubscribe = []
-    @unsubscribe.push FocusedContactsStore.listen @_onChange
-    @unsubscribe.push EmailPGPStore.listen @_onPGPStoreChange
+    @unsubscribes = []
+    @unsubscribes.push FocusedContactsStore.listen @_onChange
+    @unsubscribes.push EmailPGPStore.listen @_onPGPStoreChange
 
   componentWillUnmount: =>
-    @unsubscribe?()
+    unsubscribe?() for unsubscribe in @unsubscribes
 
   render: =>
     msg = @getMessage()
