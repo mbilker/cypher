@@ -73,7 +73,7 @@ class EmailPGPStore extends NylasStore {
       }
 
       return false;
-    }
+    };
 
     if (!message.files.some(extensionTest)) {
       console.log(`[PGP] ${message.id}: Failed extension test`);
@@ -292,11 +292,11 @@ class EmailPGPStore extends NylasStore {
           matched = new Buffer(chunk).toString('utf8');
           lastContentType = node.contentType.value;
         }
-      }
+      };
       parser.onend = () => {
         let end = process.hrtime(start);
         console.log(`[EmailPGPStore] %cParsed MIME in ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
-      }
+      };
 
       parser.write(result.text);
       parser.end();
