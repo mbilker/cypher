@@ -2,8 +2,21 @@ import kbpgp from 'kbpgp';
 import os from 'os';
 import child_process from 'child_process';
 
+import EventProcessor from '../event-processor';
 import {log} from '../logger';
 import KeyStore from './key-store';
+
+const unboxAsync = (options) => {
+  return new Promise((resolve, reject) => {
+    kbpgp.unbox(options, (err, literals) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(literals);
+      }
+    });
+  });
+}
 
 class KbpgpDecryptRoutine {
   constructor(controller, notify) {
@@ -34,19 +47,22 @@ class KbpgpDecryptRoutine {
     let keyId = secretKey.get_pgp_key_id();
     let keyIdHex = keyId.toString('hex');
     let cachedKey = KeyStore.lookupKeyManager(keyId);
-    let isLocked = this._controller.isWaitingForPassphrase(keyIdHex);
+    let isLocked = EventProcessor.isWaitingForPassphrase(keyIdHex);
     if (cachedKey) {
       log('[InProcessDecrypter] Found cached key for %s', secretKey.get_pgp_key_id().toString('hex'));
+
       return Promise.resolve(cachedKey);
     } else if (isLocked) {
       return isLocked.promise;
     } else {
       return this._decryptKey(secretKey).then(secretKey => {
         KeyStore.addKeyManager(secretKey);
-        return this._controller.completedPassphrasePromise(keyIdHex);
+
+        return EventProcessor.completedPassphrasePromise(keyIdHex);
       }, err => {
-        this._controller.completedPassphrasePromise(keyIdHex, {err});
-        throw err;
+        EventProcessor.completedPassphrasePromise(keyIdHex, {err});
+
+        return Promise.reject(err);
       });
     }
   }
@@ -83,57 +99,75 @@ class KbpgpDecryptRoutine {
       // Since the first argument is undefined, the rejected promise does not
       // propagate to the `catch` receiver in `EventProcessor`. Create an Error
       // here to ensure the error is delivered to `EventProcessor`
-      throw new Error('Passphrase dialog cancelled');
+      return Promise.reject(new Error('Passphrase dialog cancelled'));
     });
   }
 
   run(armored, identifier) {
-    let startTime = process.hrtime();
-    let method = 'GPG_DECRYPT';
+    const platform = os.platform();
+    const method = 'GPG_DECRYPT';
+    const startTime = process.hrtime();
 
-    if (method === 'GPG_DECRYPT') {
-      if ((os.platform() === 'linux' || os.platform() === 'darwin') && !process.env.PATH.includes('/usr/local/bin')) {
+    if (method === 'GPG_DECRYPT' && (platform === 'linux' || platform === 'darwin')) {
+      if (!process.env.PATH.includes('/usr/local/bin')) {
         process.env.PATH += ":/usr/local/bin";
       }
 
       //var key = child_process.execSync(`gpg --export-secret-keys -a ${identifier}`);
-      const decrypted = child_process.spawnSync('gpg', ['--decrypt'], { input: armored });
-      log(decrypted.stdout);
-      log(decrypted.stderr.toString());
-      const literals = [decrypted.stdout];
-      const elapsed = process.hrtime(startTime);
+      let stdout = [];
+      let stderr = [];
 
-      return Promise.resolve({literals, elapsed});
+      const deferred = Promise.defer();
+      const child = child_process.spawn('gpg', ['--decrypt']);
+      child.stdout.on('data', (data) => {
+        stdout.push(data);
+      });
+      child.stderr.on('data', (data) => {
+        stderr.push(data);
+      });
+      child.on('close', (code) => {
+        // GPG throws code 2 when it cannot verify one-pass signature packet
+        // inside armored message
+        if (code !== 0 && code !== 2) {
+          return deferred.reject(new Error(`GPG decrypt failed with code ${code}`));
+        }
+
+        const elapsed = process.hrtime(startTime);
+        const output = Buffer.concat(stdout);
+        const error = Buffer.concat(stderr);
+        const literals = [output];
+
+        log(error.toString('utf8'));
+
+        deferred.resolve({literals, elapsed});
+      });
+      child.stdin.write(armored);
+      child.stdin.end();
+
+      return deferred.promise;
     } else {
+      let startDecrypt;
+
       return this._importKey(key).then(this._checkCache).then(() => {
-        return new Promise((resolve, reject) => {
-          log('[KbpgpDecryptRoutine] inside the unbox closure');
-          this._notify(null);
+        this._notify(null);
+        startDecrypt = process.hrtime();
+      }).then(() => unboxAsync({keyfetch: KeyStore, armored})).then((literals) => {
+        const decryptTime = process.hrtime(startDecrypt);
+        const elapsed = process.hrtime(startTime);
 
-          let startDecrypt = process.hrtime();
-          kbpgp.unbox({keyfetch: KeyStore, armored}, (err, literals) => {
-            if (err) {
-              reject(err, literals);
-            } else {
-              let decryptTime = process.hrtime(startDecrypt);
-              let elapsed = process.hrtime(startTime);
+        this._notify(`Message decrypted in ${decryptTime[0] * 1e3 + decryptTime[1] / 1e6}ms`);
 
-              this._notify(`Message decrypted in ${decryptTime[0] * 1e3 + decryptTime[1] / 1e6}ms`);
+        const ds = literals[0].get_data_signer();
+        let km = signedBy = null;
+        if (ds) {
+          km = ds.get_key_manager();
+        }
+        if (km) {
+          signedBy = km.get_pgp_fingerprint().toString('hex');
+          console.log(`Signed by PGP fingerprint: ${signedBy}`);
+        }
 
-              const ds = literals[0].get_data_signer();
-              let km = signedBy = null;
-              if (ds) {
-                km = ds.get_key_manager();
-              }
-              if (km) {
-                signedBy = km.get_pgp_fingerprint().toString('hex');
-                console.log(`Signed by PGP fingerprint: ${signedBy}`);
-              }
-
-              resolve({literals, signedBy, elapsed});
-            }
-          });
-        });
+        return {literals, signedBy, elapsed};
       });
     }
   }
@@ -142,14 +176,8 @@ class KbpgpDecryptRoutine {
 // Singleton to manage each decryption session, converts stringified Buffers
 // back to Buffers for kbpgp
 class KbpgpDecryptController {
-  constructor(eventProcessor) {
-    this._eventProcessor = eventProcessor;
-
-    this._waitingForPassphrase = {};
-
+  constructor() {
     this.decrypt = this.decrypt.bind(this);
-    this.isWaitingForPassphrase = this.isWaitingForPassphrase.bind(this);
-    this.requestPassphrase = this.requestPassphrase.bind(this);
   }
 
   // TODO: figure out a way to prompt the user to pick which PGP key to use to
@@ -164,42 +192,6 @@ class KbpgpDecryptController {
     }
 
     return new KbpgpDecryptRoutine(this, notify).run(armored, secretKey);
-  }
-
-  isWaitingForPassphrase(keyId) {
-    return this._waitingForPassphrase[keyId];
-  }
-
-  completedPassphrasePromise(keyId, err) {
-    if (!this._waitingForPassphrase[keyId]) {
-      throw new Error('No pending promise for that keyId');
-    }
-
-    if (err) {
-      this._waitingForPassphrase[keyId].reject(err);
-      return err;
-    }
-
-    this._waitingForPassphrase[keyId].resolve();
-  }
-
-  requestPassphrase(keyId, askString) {
-    if (this._waitingForPassphrase[keyId]) {
-      return this._waitingForPassphrase[keyId].promise;
-    }
-
-    this._waitingForPassphrase[keyId] = {};
-    this._waitingForPassphrase[keyId].promise = new Promise((resolve, reject) => {
-      this._waitingForPassphrase[keyId].resolve = resolve;
-      this._waitingForPassphrase[keyId].reject = reject;
-    }).then(() => {
-      delete this._waitingForPassphrase[keyId];
-    }, err => {
-      delete this._waitingForPassphrase[keyId];
-      throw err;
-    });
-
-    return this._eventProcessor.requestPassphrase(askString);
   }
 }
 

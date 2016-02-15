@@ -7,9 +7,12 @@ import KbpgpDecryptController from './kbpgp/kbpgp-decrypt';
 class EventProcessor {
   constructor() {
     this._pendingPromises = {};
+    this._waitingForPassphrase = {};
 
     this._kbpgpDecryptController = new KbpgpDecryptController(this);
 
+    this.isWaitingForPassphrase = this.isWaitingForPassphrase.bind(this);
+    this.completedPassphrasePromise = this.completedPassphrasePromise.bind(this);
     this.requestPassphrase = this.requestPassphrase.bind(this);
     this._sendError = this._sendError.bind(this);
     this._handleDecryptMessage = this._handleDecryptMessage.bind(this);
@@ -18,7 +21,39 @@ class EventProcessor {
     process.on('message', this._onFrontendMessage);
   }
 
-  requestPassphrase(message) {
+  isWaitingForPassphrase(keyId) {
+    return this._waitingForPassphrase[keyId];
+  }
+
+  completedPassphrasePromise(keyId, err) {
+    if (!this._waitingForPassphrase[keyId]) {
+      throw new Error('No pending promise for that keyId');
+    }
+
+    if (err) {
+      this._waitingForPassphrase[keyId].reject(err);
+      return err;
+    }
+
+    this._waitingForPassphrase[keyId].resolve();
+  }
+
+  requestPassphrase(keyId, askString) {
+    if (this._waitingForPassphrase[keyId]) {
+      return this._waitingForPassphrase[keyId].promise;
+    }
+
+    this._waitingForPassphrase[keyId] = {};
+    this._waitingForPassphrase[keyId].promise = new Promise((resolve, reject) => {
+      this._waitingForPassphrase[keyId].resolve = resolve;
+      this._waitingForPassphrase[keyId].reject = reject;
+    }).then(() => {
+      delete this._waitingForPassphrase[keyId];
+    }, err => {
+      delete this._waitingForPassphrase[keyId];
+      return Promise.reject(err);
+    });
+
     let id = uuid();
 
     return new Promise((resolve, reject) => {
