@@ -153,14 +153,14 @@ class KeybaseSidebar extends React.Component
 
         Promise.all(promises).then (results) =>
           console.log results
+          ###
           results.forEach (res) =>
-            ###
             @setState
               data: res.proofs_summary
               name: res.basics.username
               profile: res.profile
               cryptoaddress: res.cryptocurrency_addresses
-            ###
+          ###
 
   _getStateFromStores: =>
     contact: FocusedContactsStore.focusedContact()

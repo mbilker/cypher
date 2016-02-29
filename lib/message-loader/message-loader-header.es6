@@ -6,16 +6,16 @@
 
 import {Utils, MessageBodyProcessor, React} from 'nylas-exports';
 
-import EmailPGPActions from '../email-pgp-actions';
-import EmailPGPStore from '../email-pgp-store';
-import FlowError from '../flow-error';
+import EmailPGPActions from '../flux/actions/email-pgp-actions';
+import EmailPGPStore from '../flux/stores/email-pgp-store';
+import FlowError from '../utils/flow-error';
 
 class MessageLoaderHeader extends React.Component {
-  static displayName = 'MessageLoader'
+  static displayName = 'MessageLoader';
 
   static propTypes = {
     message: React.PropTypes.object.isRequired
-  }
+  };
 
   constructor(props) {
     super(props);

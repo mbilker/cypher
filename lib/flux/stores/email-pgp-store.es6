@@ -16,9 +16,14 @@ import KeyStore from './worker/kbpgp/key-store';
 
 import smalltalk from 'smalltalk';
 
-// THANK YOU GPGTOOLS! The `MimePart+GPGMail.m` is such a good guide to PGP
-// mail decryption
+/**
+ * The main management class for the PGP plugin for the decryption function.
+ * Handles almost all the decrpytion processing.
+ * @class EmailPGPStore
+ */
 class EmailPGPStore extends NylasStore {
+  // THANK YOU GPGTOOLS! The `MimePart+GPGMail.m` is such a good guide to PGP
+  // mail decryption
   constructor() {
     super();
 
@@ -30,16 +35,14 @@ class EmailPGPStore extends NylasStore {
     this._state = {};
 
     // Binding `this` to each method that uses `this`
-    this._encryptMessage = this._encryptMessage.bind(this);
     this._decryptMessage = this._decryptMessage.bind(this);
     this._retryMessage = this._retryMessage.bind(this);
     this.mainDecrypt = this.mainDecrypt.bind(this);
-    this._setState = this._setState.bind(this);
-    this._retrievePGPAttachment = this._retrievePGPAttachment.bind(this);
-    this._extractHTML = this._extractHTML.bind(this);
-    this._decryptAndResetCache = this._decryptAndResetCache.bind(this);
+    //this._setState = this._setState.bind(this);
+    //this._retrievePGPAttachment = this._retrievePGPAttachment.bind(this);
+    //this._extractHTML = this._extractHTML.bind(this);
+    //this._decryptAndResetCache = this._decryptAndResetCache.bind(this);
 
-    this.listenTo(EmailPGPActions.encryptMessage, this._encryptMessage);
     this.listenTo(EmailPGPActions.decryptMessage, this._decryptMessage);
     this.listenTo(EmailPGPActions.retryMessage, this._retryMessage);
 
@@ -55,6 +58,9 @@ class EmailPGPStore extends NylasStore {
   // Though, the "metadata" attachment's `contentType` is
   // 'application/pgp-encrypted' and the encrypted message attachment is
   // 'application/octet-stream', which is annoying to deal with.
+  /**
+   * @param {object} message - the message from
+   */
   shouldDecryptMessage(message) {
     if (message.files.length < 1) {
       console.log(`[PGP] ${message.id}: Failed attachment test`);
@@ -98,9 +104,6 @@ class EmailPGPStore extends NylasStore {
   // PRIVATE
 
   // ACTION EVENTS
-
-  _encryptMessage(message) {
-  }
 
   _decryptMessage(message) {
     console.log('[PGP] Told to decrypt', message);

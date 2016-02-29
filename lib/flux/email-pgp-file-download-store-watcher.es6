@@ -1,13 +1,12 @@
 import fs from 'fs';
 import {FileDownloadStore} from 'nylas-exports';
 
-import FlowError from './flow-error';
+import FlowError from '../utils/flow-error';
 
 class EmailPGPFileDownloadStoreWatcher {
   constructor() {
     // Object of promises of attachments needed for decryption
-    this._pendingPromises = {};
-    this._watchingFileIds = {};
+    this._deferreds = {};
 
     this.promiseForPendingFile = this.promiseForPendingFile.bind(this);
     this.getFilePromise = this.getFilePromise.bind(this);
@@ -19,20 +18,21 @@ class EmailPGPFileDownloadStoreWatcher {
   // PUBLIC
 
   promiseForPendingFile(fileId) {
-    if (this._pendingPromises[fileId]) {
-      return this._pendingPromises[fileId];
+    if (this._deferreds[fileId]) {
+      return this._deferreds[fileId];
     }
 
-    return this._pendingPromises[fileId] = new Promise((resolve, reject) => {
-      this._watchingFileIds[fileId] = { resolve, reject };
-    }).then((text) => {
-      delete this._pendingPromises[fileId];
+    this._deferreds[fileId] = Promise.defer();
+    this._deferreds.promise.then((text) => {
+      delete this._deferreds[fileId];
       return text;
     });
+
+    return this._deferreds[fileId];
   }
 
   getFilePromise(fileId) {
-    return this._pendingPromises[fileId];
+    return this._deferreds[fileId];
   }
 
   unlisten() {
@@ -44,27 +44,27 @@ class EmailPGPFileDownloadStoreWatcher {
   // PRIVATE
 
   _onDownloadStoreChange() {
-    let changes = FileDownloadStore.downloadDataForFiles(Object.keys(this._watchingFileIds));
+    let changes = FileDownloadStore.downloadDataForFiles(Object.keys(this._deferreds));
     console.log('Download Store Changes:', changes);
     Object.keys(changes).forEach((fileId) => {
       let file = changes[fileId];
 
-      if (file.state === 'finished' && this._watchingFileIds[file.fileId]) {
+      if (file.state === 'finished' && this._deferreds[file.fileId]) {
         console.log(`Checking ${file.fileId}`);
         // TODO: Dedupe the file reading logic into separate method
         fs.accessAsync(file.targetPath, fs.F_OK | fs.R_OK).then(() => {
           console.log(`Found downloaded attachment ${fileId}`);
           return fs.readFileAsync(file.targetPath, 'utf8').then((text) => {
-            if (!this._watchingFileIds[file.fileId] || !this._watchingFileIds[file.fileId].resolve) {
+            if (!this._deferreds[file.fileId] || !this._deferreds[file.fileId].resolve) {
               console.error('watching promise undefined');
             } else {
-              this._watchingFileIds[file.fileId].resolve(text);
-              delete this._watchingFileIds[file.fileId];
+              this._deferreds[file.fileId].resolve(text);
+              delete this._deferreds[file.fileId];
             }
           });
         }).catch((err) => {
-          this._watchingFileIds[file.fileId].reject(new FlowError('Downloaded attachment inaccessable', true));
-          delete this._watchingFileIds[file.fileId];
+          this._deferreds[file.fileId].reject(new FlowError('Downloaded attachment inaccessable', true));
+          delete this._deferreds[file.fileId];
         });
       }
     });
