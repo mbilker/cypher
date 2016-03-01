@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "babel-core": "^6.3.26",
+    "babel-eslint": "^5.0.0",
     "babel-plugin-transform-class-properties": "^6.3.13",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.3.16",
     "babel-plugin-transform-function-bind": "^6.3.13",
@@ -46,6 +47,7 @@
     "bluebird": "^3.1.1",
     "clean-css": "^3.4.8",
     "cssstats": "^2.1.2",
+    "eslint": "^2.2.0",
     "filesize": "^3.1.4",
     "postcss": "^5.0.12",
     "postcss-cssnext": "^2.2.0",
