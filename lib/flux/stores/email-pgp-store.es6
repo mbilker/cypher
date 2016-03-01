@@ -5,68 +5,15 @@ import NylasStore from 'nylas-store';
 import {Utils, FileDownloadStore, MessageBodyProcessor} from 'nylas-exports';
 
 import EmailPGPFileDownloadStoreWatcher from '../email-pgp-file-download-store-watcher';
-import EmailPGPActions from '../actions/email-pgp-actions';
+import Actions from '../actions/email-pgp-actions';
 
-import {selectDecrypter} from '../../decrypter';
-import FlowError from '../../utils/flow-error';
+import DecryptionRequest from '../tasks/decryption-request';
 import {extractHTML} from '../../utils/html-parser';
+import FlowError from '../../utils/flow-error';
 import KeyStore from '../../worker/kbpgp/key-store';
+import {selectDecrypter} from '../../decryption';
 
 import smalltalk from 'smalltalk';
-
-class DecryptionRequest {
-  constructor(parent, messageId, decrypter) {
-    this.store = parent;
-    this.messageId = messageId;
-    this.decrypter = decrypter;
-  }
-
-  setState(state) {
-    this.store._setState(this.messageId, state);
-  }
-
-  notify(msg) {
-    this.setState({ statusMessage: msg });
-  }
-
-  run() {
-    console.group(`[PGP] Message: ${message.id}`);
-
-    this.setState({ decrypting: true });
-
-    const startDecrypt = process.hrtime();
-    return this._getAttachmentAndKey(message, notify).spread(decrypter).then((result) => {
-      const endDecrypt = process.hrtime(startDecrypt);
-      console.log(`[EmailPGPStore] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
-
-      this.setState({ rawMessage: result.text, signedBy: result.signedBy });
-      return result;
-    }).then(extractHTML).then((match) => {
-      this.store.cacheMessage(message.id, match);
-      this.setState({
-        decrypting: false,
-        decryptedMessage: match,
-        statusMessage: null
-      });
-
-      return match;
-    }).catch((error) => {
-      if (error instanceof FlowError) {
-        console.log(error.title);
-      } else {
-        console.log(error.stack);
-      }
-      this._setState(message.id, {
-        decrypting: false,
-        done: true,
-        lastError: error
-      });
-    }).finally(() => {
-      console.groupEnd();
-      //delete this._state[message.id];
-    });
-  }
-}
 
 /**
  * The main management class for the PGP plugin for the decryption function.
@@ -97,8 +44,8 @@ class EmailPGPStore extends NylasStore {
     //this._extractHTML = this._extractHTML.bind(this);
     //this._decryptAndResetCache = this._decryptAndResetCache.bind(this);
 
-    this.listenTo(EmailPGPActions.decryptMessage, this._decryptMessage);
-    this.listenTo(EmailPGPActions.retryMessage, this._retryMessage);
+    this.listenTo(Actions.decryptMessage, this._decryptMessage);
+    this.listenTo(Actions.retryMessage, this._retryMessage);
 
     global.$pgpEmailPGPStore = this;
   }
@@ -200,52 +147,29 @@ class EmailPGPStore extends NylasStore {
       return Promise.reject(`Already decrypting ${message.id}`);
     }
 
-    // More decryption engines will be implemented
-    const notify = (msg) => this._setState(message.id, { statusMessage: msg });
-    const startDecrypt = process.hrtime();
+    console.group(`[PGP] Message: ${message.id}`);
 
     const request = new DecryptionRequest(this, message, decrypter);
+    request.run().catch((error) => {
+      if (error instanceof FlowError) {
+        console.log(error.title);
+      } else {
+        console.log(error.stack);
+      }
 
-    return this._getAttachmentAndKey(message, notify)
-      .spread(decrypter)
-      .then((result) => {
-        const endDecrypt = process.hrtime(startDecrypt);
-        console.log(`[EmailPGPStore] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
+      this._setState(message.id, {
+        decrypting: false,
+        done: true,
+        lastError: error
+      });
+    }).finally(() => {
+      console.groupEnd();
+      //delete this._state[message.id];
+    });
+  }
 
-        this._setState(message.id, {
-          rawMessage: result.text,
-          signedBy: result.signedBy
-        });
-
-        return result;
-      })
-      .then(this._extractHTML)
-      .then((match) => {
-        this._cachedMessages[message.id] = match;
-
-        this._setState(message.id, {
-          decrypting: false,
-          decryptedMessage: match,
-          statusMessage: null
-        });
-
-        return match;
-      }).catch((error) => {
-        if (error instanceof FlowError) {
-          console.log(error.title);
-        } else {
-          console.log(error.stack);
-        }
-        this._setState(message.id, {
-          decrypting: false,
-          done: true,
-          lastError: error
-        });
-      })
-      .finally(() => {
-        console.groupEnd();
-        //delete this._state[message.id];
-        });
+  cacheMessage(messageId, result) {
+    this._cachedMessages[messageId] = result;
   }
 
   // PGP HELPER INTERFACE
@@ -255,7 +179,7 @@ class EmailPGPStore extends NylasStore {
     return fs.readFileAsync(keyLocation);
   }
 
-  _retrievePGPAttachment(message, notify) {
+  retrievePGPAttachment(message, notify) {
     console.log("[EmailPGPStore] Attachments: %d", message.files.length);
 
     // Check for GPGTools-like message, even though we aren't MIME parsed yet,
@@ -300,7 +224,7 @@ class EmailPGPStore extends NylasStore {
         return EmailPGPFileDownloadStoreWatcher.promiseForPendingFile(dataPart.id);
       });
     } else {
-      throw new FlowError("No valid attachment");
+      return Promise.reject(new FlowError("No valid attachment"));
     }
   }
 

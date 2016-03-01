@@ -8,7 +8,7 @@ import smalltalk from 'smalltalk';
 import uuid from 'uuid';
 
 import proto from './worker/worker-protocol';
-import FlowError from './flow-error';
+import FlowError from './utils/flow-error';
 
 const debug = debugInitialize('WorkerFrontend');
 

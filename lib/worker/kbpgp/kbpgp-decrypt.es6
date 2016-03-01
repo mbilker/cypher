@@ -48,6 +48,7 @@ class KbpgpDecryptRoutine {
     let keyIdHex = keyId.toString('hex');
     let cachedKey = KeyStore.lookupKeyManager(keyId);
     let isLocked = EventProcessor.isWaitingForPassphrase(keyIdHex);
+
     if (cachedKey) {
       log('[InProcessDecrypter] Found cached key for %s', secretKey.get_pgp_key_id().toString('hex'));
 

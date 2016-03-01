@@ -8,7 +8,7 @@ _ = require('lodash')
 kbpgp = require('kbpgp')
 {PKESK} = require('kbpgp/lib/openpgp/packet/sess')
 
-EmailPGPStore = require('./email-pgp-store');
+EmailPGPStore = require('./flux/stores/email-pgp-store');
 Keybase = new (require './keybase/keybase-integration')
 proto = require('./worker/worker-protocol')
 WorkerFrontend = require('./worker-frontend')

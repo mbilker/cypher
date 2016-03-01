@@ -1,7 +1,7 @@
 import {MessageViewExtension} from 'nylas-exports';
 
-import EmailPGPStore from '../email-pgp-store';
-import Actions from '../email-pgp-actions';
+import EmailPGPStore from '../flux/stores/email-pgp-store';
+import Actions from '../flux/actions/email-pgp-actions';
 
 class MessageLoaderExtension extends MessageViewExtension {
   // CANNOT crash here. If we do, the whole app stops working
