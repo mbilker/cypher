@@ -149,6 +149,7 @@ class EmailPGPStore extends NylasStore {
 
     console.group(`[PGP] Message: ${message.id}`);
 
+    const decrypter = selectDecrypter();
     const request = new DecryptionRequest(this, message, decrypter);
     request.run().catch((error) => {
       if (error instanceof FlowError) {
