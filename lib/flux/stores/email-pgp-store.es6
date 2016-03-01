@@ -4,26 +4,80 @@ import path from 'path';
 import NylasStore from 'nylas-store';
 import {Utils, FileDownloadStore, MessageBodyProcessor} from 'nylas-exports';
 
-import MimeParser from 'mimeparser';
+import EmailPGPFileDownloadStoreWatcher from '../email-pgp-file-download-store-watcher';
+import EmailPGPActions from '../actions/email-pgp-actions';
 
-import EmailPGPFileDownloadStoreWatcher from './email-pgp-file-download-store-watcher';
-import EmailPGPActions from './email-pgp-actions';
-
-import InProcessDecrypter from './decryption/in-process-decrypter';
-import WorkerFrontend from './worker-frontend';
-import FlowError from './flow-error.es6';
-import KeyStore from './worker/kbpgp/key-store';
+import {selectDecrypter} from '../../decrypter';
+import FlowError from '../../utils/flow-error';
+import {extractHTML} from '../../utils/html-parser';
+import KeyStore from '../../worker/kbpgp/key-store';
 
 import smalltalk from 'smalltalk';
+
+class DecryptionRequest {
+  constructor(parent, messageId, decrypter) {
+    this.store = parent;
+    this.messageId = messageId;
+    this.decrypter = decrypter;
+  }
+
+  setState(state) {
+    this.store._setState(this.messageId, state);
+  }
+
+  notify(msg) {
+    this.setState({ statusMessage: msg });
+  }
+
+  run() {
+    console.group(`[PGP] Message: ${message.id}`);
+
+    this.setState({ decrypting: true });
+
+    const startDecrypt = process.hrtime();
+    return this._getAttachmentAndKey(message, notify).spread(decrypter).then((result) => {
+      const endDecrypt = process.hrtime(startDecrypt);
+      console.log(`[EmailPGPStore] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
+
+      this.setState({ rawMessage: result.text, signedBy: result.signedBy });
+      return result;
+    }).then(extractHTML).then((match) => {
+      this.store.cacheMessage(message.id, match);
+      this.setState({
+        decrypting: false,
+        decryptedMessage: match,
+        statusMessage: null
+      });
+
+      return match;
+    }).catch((error) => {
+      if (error instanceof FlowError) {
+        console.log(error.title);
+      } else {
+        console.log(error.stack);
+      }
+      this._setState(message.id, {
+        decrypting: false,
+        done: true,
+        lastError: error
+      });
+    }).finally(() => {
+      console.groupEnd();
+      //delete this._state[message.id];
+    });
+  }
+}
 
 /**
  * The main management class for the PGP plugin for the decryption function.
  * Handles almost all the decrpytion processing.
+ *
+ * THANK YOU GPGTOOLS! The `MimePart+GPGMail.m` is such a good guide to PGP
+ * mail decryption.
+ *
  * @class EmailPGPStore
  */
 class EmailPGPStore extends NylasStore {
-  // THANK YOU GPGTOOLS! The `MimePart+GPGMail.m` is such a good guide to PGP
-  // mail decryption
   constructor() {
     super();
 
@@ -51,15 +105,21 @@ class EmailPGPStore extends NylasStore {
 
   // PUBLIC
 
-  // GPGTools (and other clients) send two attachments, where the first
-  // "metadata" attachment contains the string "Version: 1" and the second
-  // attachment is the encrypted message.
-  //
-  // Though, the "metadata" attachment's `contentType` is
-  // 'application/pgp-encrypted' and the encrypted message attachment is
-  // 'application/octet-stream', which is annoying to deal with.
   /**
-   * @param {object} message - the message from
+   * The quick check method if the message has a valid attachment.
+   *
+   * Returns true only if there is at least one attachment and one of the
+   * attachments has the 'pgp', 'gpg', or 'asc' extensions.
+   *
+   * GPGTools (and other clients) send two attachments, where the first
+   * "metadata" attachment contains the string "Version: 1" and the second
+   * attachment is the encrypted message.
+   *
+   * Though, the "metadata" attachment's `contentType` is
+   * 'application/pgp-encrypted' and the encrypted message attachment is
+   * 'application/octet-stream', which is annoying to deal with.
+   *
+   * @param {object} message - the message to check for appropriate attachment
    */
   shouldDecryptMessage(message) {
     if (message.files.length < 1) {
@@ -140,52 +200,52 @@ class EmailPGPStore extends NylasStore {
       return Promise.reject(`Already decrypting ${message.id}`);
     }
 
-    console.group(`[PGP] Message: ${message.id}`);
-
-    this._setState(message.id, {
-      decrypting: true
-    });
-
     // More decryption engines will be implemented
     const notify = (msg) => this._setState(message.id, { statusMessage: msg });
-    const decrypter = this._selectDecrypter().bind(null, notify);
     const startDecrypt = process.hrtime();
 
-    return this._getAttachmentAndKey(message, notify).spread(decrypter).then((result) => {
-      const endDecrypt = process.hrtime(startDecrypt);
-      console.log(`[EmailPGPStore] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
+    const request = new DecryptionRequest(this, message, decrypter);
 
-      this._setState(message.id, {
-        rawMessage: result.text,
-        signedBy: result.signedBy
-      });
+    return this._getAttachmentAndKey(message, notify)
+      .spread(decrypter)
+      .then((result) => {
+        const endDecrypt = process.hrtime(startDecrypt);
+        console.log(`[EmailPGPStore] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
 
-      return result;
-    }).then(this._extractHTML).then((match) => {
-      this._cachedMessages[message.id] = match;
+        this._setState(message.id, {
+          rawMessage: result.text,
+          signedBy: result.signedBy
+        });
 
-      this._setState(message.id, {
-        decrypting: false,
-        decryptedMessage: match,
-        statusMessage: null
-      });
+        return result;
+      })
+      .then(this._extractHTML)
+      .then((match) => {
+        this._cachedMessages[message.id] = match;
 
-      return match;
-    }).catch((error) => {
-      if (error instanceof FlowError) {
-        console.log(error.title);
-      } else {
-        console.log(error.stack);
-      }
-      this._setState(message.id, {
-        decrypting: false,
-        done: true,
-        lastError: error
-      });
-    }).finally(() => {
-      console.groupEnd();
-      //delete this._state[message.id];
-    });
+        this._setState(message.id, {
+          decrypting: false,
+          decryptedMessage: match,
+          statusMessage: null
+        });
+
+        return match;
+      }).catch((error) => {
+        if (error instanceof FlowError) {
+          console.log(error.title);
+        } else {
+          console.log(error.stack);
+        }
+        this._setState(message.id, {
+          decrypting: false,
+          done: true,
+          lastError: error
+        });
+      })
+      .finally(() => {
+        console.groupEnd();
+        //delete this._state[message.id];
+        });
   }
 
   // PGP HELPER INTERFACE
@@ -265,65 +325,6 @@ class EmailPGPStore extends NylasStore {
         throw new FlowError("No key in pgpkey variable", true);
       }
       return [text, pgpkey];
-    });
-  }
-
-  _selectDecrypter() {
-    const chosen = "WORKER_PROCESS";
-    decrypter = WorkerFrontend; // WORKER_PROCESS
-
-    if (chosen === "IN_PROCESS") {
-      ecrypter = new InProcessDecrypter(); // IN_PROCESS
-    }
-
-    return decrypter.decrypt;
-  }
-
-  // Uses regex to extract HTML component from a multipart message. Does not
-  // contribute a significant amount of time to the decryption process.
-  _extractHTML(result) {
-    return new Promise((resolve, reject) => {
-      let parser = new MimeParser();
-
-      // Use MIME parsing to extract possible body
-      var matched, lastContentType;
-      let start = process.hrtime();
-
-      parser.onbody = (node, chunk) => {
-        if ((node.contentType.value === 'text/html') || // HTML body
-            (node.contentType.value === 'text/plain' && !matched)) { // Plain text
-          matched = new Buffer(chunk).toString('utf8');
-          lastContentType = node.contentType.value;
-        }
-      };
-      parser.onend = () => {
-        let end = process.hrtime(start);
-        console.log(`[EmailPGPStore] %cParsed MIME in ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
-      };
-
-      parser.write(result.text);
-      parser.end();
-
-      // Fallback to regular expressions method
-      if (!matched) {
-        start = process.hrtime();
-        let matches = /\n--[^\n\r]*\r?\nContent-Type: text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)\n\r?\n--/gim.exec(text);
-        let end = process.hrtime(start);
-        if (matches) {
-          console.log(`[EmailPGPStore] %cRegex found HTML in ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
-          matched = matches[1];
-        }
-      }
-
-      if (matched) {
-        resolve(matched);
-      } else {
-        // REALLY FALLBACK TO RAW
-        console.error('[EmailPGPStore] FALLBACK TO RAW DECRYPTED');
-        let formatted = `<html><head></head><body><b>FALLBACK TO RAW:</b><br>${text}</body></html>`;
-        resolve(formatted);
-        //reject(new FlowError("no HTML found in decrypted"));
-      }
     });
   }
 
