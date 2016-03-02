@@ -1,6 +1,7 @@
 import {extractHTML} from '../../utils/html-parser';
 import {selectDecrypter} from '../../decryption';
 import CacheActions from '../actions/message-cache-actions';
+import FlowError from '../../utils/flow-error';
 
 export default class DecryptionRequest {
   constructor(parent, message) {
@@ -11,6 +12,7 @@ export default class DecryptionRequest {
     this.setState = this.setState.bind(this);
     this.notify = this.notify.bind(this);
     this.onMatch = this.onMatch.bind(this);
+    this.onError = this.onError.bind(this);
     this.run = this.run.bind(this);
   }
 
@@ -20,6 +22,20 @@ export default class DecryptionRequest {
 
   notify(msg) {
     this.setState({ statusMessage: msg });
+  }
+
+  onError(err) {
+    if (error instanceof FlowError) {
+      console.log(error.title);
+    } else {
+      console.log(error.stack);
+    }
+
+    this.setState({
+      decrypting: false,
+      done: true,
+      lastError: error
+    });
   }
 
   onMatch(match) {
@@ -50,6 +66,7 @@ export default class DecryptionRequest {
         return result;
       })
       .then(extractHTML)
-      .then(this.onMatch);
+      .then(this.onMatch)
+      .catch(this.onError);
   }
 }
