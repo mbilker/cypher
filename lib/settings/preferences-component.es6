@@ -95,7 +95,7 @@ class PreferencesComponent extends React.Component {
     let { uid, session_token } = this.state;
 
     if (uid && session_token) {
-      let body = `uid: ${uid}\nsession_token: ${session_token}`;
+      const body = `uid: ${uid}\nsession_token: ${session_token}`;
 
       // Using substitution causes <span>s to be used, causes incorrect line
       // breaks
