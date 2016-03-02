@@ -4,7 +4,7 @@ import {FileDownloadStore} from 'nylas-exports';
 import FlowError from '../utils/flow-error';
 import Logger from '../utils/Logger';
 
-class EmailPGPFileDownloadStoreWatcher {
+class FileDownloadStoreWatcher {
   constructor() {
     // Object of promises of attachments needed for decryption
     this._deferreds = new Map();
@@ -13,7 +13,7 @@ class EmailPGPFileDownloadStoreWatcher {
     this.getFilePromise = this.getFilePromise.bind(this);
     this._onDownloadStoreChange = this._onDownloadStoreChange.bind(this);
 
-    this.log = Logger.create(`EmailPGPFileDownloadStoreWatcher`);
+    this.log = Logger.create(`FileDownloadStoreWatcher`);
 
     this._storeUnlisten = FileDownloadStore.listen(this._onDownloadStoreChange);
   }
@@ -81,4 +81,4 @@ class EmailPGPFileDownloadStoreWatcher {
   }
 }
 
-export default new EmailPGPFileDownloadStoreWatcher();
+export default new FileDownloadStoreWatcher();
