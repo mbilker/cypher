@@ -17,7 +17,7 @@ export default class DecryptionRequest {
   }
 
   setState(state) {
-    this.store._setState(this.messageId, state);
+    this.store.setState(this.messageId, state);
   }
 
   notify(msg) {
