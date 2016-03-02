@@ -11,9 +11,12 @@ export default class DecryptionRequest {
 
     this.setState = this.setState.bind(this);
     this.notify = this.notify.bind(this);
+    this.afterDecrypt = this.afterDecrypt.bind(this);
     this.onMatch = this.onMatch.bind(this);
     this.onError = this.onError.bind(this);
     this.run = this.run.bind(this);
+
+    this.startDecrypt = null;
   }
 
   setState(state) {
@@ -22,6 +25,26 @@ export default class DecryptionRequest {
 
   notify(msg) {
     this.setState({ statusMessage: msg });
+  }
+
+  afterDecrypt(result) {
+    const endDecrypt = process.hrtime(this.startDecrypt);
+    console.log(`[DecryptionRequest] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
+
+    this.setState({ rawMessage: result.text, signedBy: result.signedBy });
+    return result;
+  }
+
+  onMatch(match) {
+    CacheActions.store(this.messageId, match);
+
+    this.setState({
+      decrypting: false,
+      decryptedMessage: match,
+      statusMessage: null
+    });
+
+    return match;
   }
 
   onError(err) {
@@ -38,33 +61,15 @@ export default class DecryptionRequest {
     });
   }
 
-  onMatch(match) {
-    CacheActions.store(this.messageId, match);
-
-    this.setState({
-      decrypting: false,
-      decryptedMessage: match,
-      statusMessage: null
-    });
-
-    return match;
-  }
-
   run() {
     this.setState({ decrypting: true });
 
     const decrypter = selectDecrypter().bind(null, this.notify);
-    const startDecrypt = process.hrtime();
+    this.startDecrypt = process.hrtime();
 
     return this.store.getAttachmentAndKey(this.message, this.notify)
       .spread(decrypter)
-      .then((result) => {
-        const endDecrypt = process.hrtime(startDecrypt);
-        console.log(`[DecryptionRequest] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
-
-        this.setState({ rawMessage: result.text, signedBy: result.signedBy });
-        return result;
-      })
+      .then(this.afterDecrypt)
       .then(extractHTML)
       .then(this.onMatch)
       .catch(this.onError);
