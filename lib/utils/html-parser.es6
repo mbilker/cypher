@@ -2,7 +2,7 @@ import MimeParser from 'mimeparser';
 
 // Uses regex to extract HTML component from a multipart message. Does not
 // contribute a significant amount of time to the decryption process.
-export function extractHTML(text) {
+export function extractHTML({text}) {
   return new Promise((resolve, reject) => {
     let parser = new MimeParser();
 
@@ -22,7 +22,7 @@ export function extractHTML(text) {
       console.log(`[EmailPGPStore] %cParsed MIME in ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
     };
 
-    parser.write(result.text);
+    parser.write(text);
     parser.end();
 
     // Fallback to regular expressions method

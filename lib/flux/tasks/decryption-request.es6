@@ -1,8 +1,17 @@
+import {extractHTML} from '../../utils/html-parser';
+import {selectDecrypter} from '../../decryption';
+import CacheActions from '../actions/message-cache-actions';
+
 export default class DecryptionRequest {
-  constructor(parent, messageId, decrypter) {
+  constructor(parent, message) {
     this.store = parent;
-    this.messageId = messageId;
-    this.decrypter = decrypter;
+    this.message = message;
+    this.messageId = message.id;
+
+    this.setState = this.setState.bind(this);
+    this.notify = this.notify.bind(this);
+    this.onMatch = this.onMatch.bind(this);
+    this.run = this.run.bind(this);
   }
 
   setState(state) {
@@ -14,7 +23,8 @@ export default class DecryptionRequest {
   }
 
   onMatch(match) {
-    this.store.cacheMessage(message.id, match);
+    CacheActions.store(this.messageId, match);
+
     this.setState({
       decrypting: false,
       decryptedMessage: match,
@@ -27,12 +37,14 @@ export default class DecryptionRequest {
   run() {
     this.setState({ decrypting: true });
 
+    const decrypter = selectDecrypter().bind(null, this.notify);
     const startDecrypt = process.hrtime();
-    return this.store.getAttachmentAndKey(message, notify)
+
+    return this.store.getAttachmentAndKey(this.message, this.notify)
       .spread(decrypter)
       .then((result) => {
         const endDecrypt = process.hrtime(startDecrypt);
-        console.log(`[EmailPGPStore] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
+        console.log(`[DecryptionRequest] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
 
         this.setState({ rawMessage: result.text, signedBy: result.signedBy });
         return result;

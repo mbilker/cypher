@@ -19,7 +19,7 @@ class EmailPGPFileDownloadStoreWatcher {
 
   promiseForPendingFile(fileId) {
     if (this._deferreds[fileId]) {
-      return this._deferreds[fileId];
+      return this._deferreds[fileId].promise;
     }
 
     this._deferreds[fileId] = Promise.defer();
@@ -28,7 +28,7 @@ class EmailPGPFileDownloadStoreWatcher {
       return text;
     });
 
-    return this._deferreds[fileId];
+    return this._deferreds[fileId].promise;
   }
 
   getFilePromise(fileId) {
