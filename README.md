@@ -1,6 +1,6 @@
 
 # Cypher
-## Matt Bilker <me@mbilker.us>
+- Matt Bilker <me@mbilker.us>
 
 **SLIGHTLY VOLATILE**
 
