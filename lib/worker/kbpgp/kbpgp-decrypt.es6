@@ -120,12 +120,8 @@ class KbpgpDecryptRoutine {
 
       const deferred = Promise.defer();
       const child = child_process.spawn('gpg', ['--decrypt']);
-      child.stdout.on('data', (data) => {
-        stdout.push(data);
-      });
-      child.stderr.on('data', (data) => {
-        stderr.push(data);
-      });
+      child.stdout.on('data', (data) => stdout.push(data));
+      child.stderr.on('data', (data) => stderr.push(data));
       child.on('close', (code) => {
         // GPG throws code 2 when it cannot verify one-pass signature packet
         // inside armored message

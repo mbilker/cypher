@@ -2,6 +2,9 @@ import {extractHTML} from '../../utils/html-parser';
 import {selectDecrypter} from '../../decryption';
 import CacheActions from '../actions/message-cache-actions';
 import FlowError from '../../utils/flow-error';
+import Logger from '../../utils/Logger';
+
+const log = Logger.create(`DecryptionRequest`);
 
 export default class DecryptionRequest {
   constructor(parent, message) {
@@ -29,7 +32,7 @@ export default class DecryptionRequest {
 
   afterDecrypt(result) {
     const endDecrypt = process.hrtime(this.startDecrypt);
-    console.log(`[DecryptionRequest] %cDecryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`, "color:blue");
+    log.info(`Decryption engine took ${endDecrypt[0] * 1e3 + endDecrypt[1] / 1e6}ms`);
 
     this.setState({ rawMessage: result.text, signedBy: result.signedBy });
     return result;

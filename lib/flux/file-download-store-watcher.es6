@@ -48,7 +48,7 @@ class FileDownloadStoreWatcher {
   // PRIVATE
 
   _onDownloadStoreChange() {
-    let changes = FileDownloadStore.downloadDataForFiles([...this._deferreds.keys()]));
+    let changes = FileDownloadStore.downloadDataForFiles([...this._deferreds.keys()]);
     this.log.info('Download Store Changes:', changes);
     Object.keys(changes).forEach((fileId) => {
       let file = changes[fileId];

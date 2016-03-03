@@ -1,5 +1,9 @@
 import MimeParser from 'mimeparser';
 
+import Logger from './Logger';
+
+const log = Logger.create(`MimeParser`);
+
 // Uses regex to extract HTML component from a multipart message. Does not
 // contribute a significant amount of time to the decryption process.
 export function extractHTML({text}) {
@@ -19,7 +23,7 @@ export function extractHTML({text}) {
     };
     parser.onend = () => {
       let end = process.hrtime(start);
-      console.log(`[EmailPGPStore] %cParsed MIME in ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
+      log.info(`Parsed MIME in ${end[0] * 1e3 + end[1] / 1e6}ms`);
     };
 
     parser.write(text);
@@ -31,7 +35,7 @@ export function extractHTML({text}) {
       let matches = /\n--[^\n\r]*\r?\nContent-Type: text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)\n\r?\n--/gim.exec(text);
       let end = process.hrtime(start);
       if (matches) {
-        console.log(`[EmailPGPStore] %cRegex found HTML in ${end[0] * 1e3 + end[1] / 1e6}ms`, "color:blue");
+        log.info(`Regex found HTML in ${end[0] * 1e3 + end[1] / 1e6}ms`);
         matched = matches[1];
       }
     }
@@ -40,7 +44,7 @@ export function extractHTML({text}) {
       resolve(matched);
     } else {
       // REALLY FALLBACK TO RAW
-      console.error('[EmailPGPStore] FALLBACK TO RAW DECRYPTED');
+      log.error('FALLBACK TO RAW DECRYPTED');
       let formatted = `<html><head></head><body><b>FALLBACK TO RAW:</b><br>${text}</body></html>`;
       resolve(formatted);
       //reject(new FlowError("no HTML found in decrypted"));
