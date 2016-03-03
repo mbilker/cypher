@@ -1,15 +1,15 @@
 {
-  "name": "email-pgp",
+  "name": "cypher",
   "main": "./lib/main",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git+https://github.com/mbilker/cypher.git"
   },
   "engines": {
-    "atom": ">=0.3.22"
+    "nylas": ">=0.4.10"
   },
-  "description": "Enter a description of your package!",
+  "description": "Privacy extensions for N1",
   "dependencies": {
     "debug": "^2.2.0",
     "kbpgp": "git+https://github.com/mbilker/kbpgp.git",
