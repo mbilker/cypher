@@ -8,7 +8,7 @@ _ = require('lodash')
 kbpgp = require('kbpgp')
 {PKESK} = require('kbpgp/lib/openpgp/packet/sess')
 
-EmailPGPStore = require('./flux/stores/email-pgp-store');
+PGPStore = require('./flux/stores/pgp-store');
 Keybase = new (require './keybase/keybase-integration')
 proto = require('./worker/worker-protocol')
 WorkerFrontend = require('./worker-frontend')
@@ -44,7 +44,7 @@ class KeybaseSidebar extends React.Component
   componentDidMount: =>
     @unsubscribes = []
     @unsubscribes.push FocusedContactsStore.listen @_onChange
-    @unsubscribes.push EmailPGPStore.listen @_onPGPStoreChange
+    @unsubscribes.push PGPStore.listen @_onPGPStoreChange
 
   componentWillUnmount: =>
     unsubscribe?() for unsubscribe in @unsubscribes
@@ -52,7 +52,7 @@ class KeybaseSidebar extends React.Component
   render: =>
     msg = @getMessage()
 
-    if not EmailPGPStore.shouldDecryptMessage msg
+    if not PGPStore.shouldDecryptMessage msg
       return <span></span>
 
     if @state.contact

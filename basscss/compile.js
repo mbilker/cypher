@@ -67,7 +67,7 @@ function compile() {
     [
       '/*',
       '',
-      '    Basscss for email-pgp',
+      '    Basscss for cypher',
       '    http://basscss.com',
       '',
       '    ' + filesize(stats.size),

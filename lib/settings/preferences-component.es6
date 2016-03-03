@@ -163,7 +163,7 @@ class PreferencesComponent extends React.Component {
       uid = '',
       csrf_token = '',
       session_token = ''
-    } = NylasEnv.config.get('email-pgp.keybase') || {};
+    } = NylasEnv.config.get('cypher.keybase') || {};
 
     return {
       error: '',

@@ -12,7 +12,7 @@ import {log, error} from '../logger';
 class HKPCacher {
   constructor() {
     this._memCache = {};
-    this._cacheDirectory = path.join(NylasEnv.getConfigDirPath(), 'email-pgp', 'pubkey-cache');
+    this._cacheDirectory = path.join(NylasEnv.getConfigDirPath(), 'cypher', 'pubkey-cache');
 
     this.cacheResult = this.cacheResult.bind(this);
     this.isCached = this.isCached.bind(this);

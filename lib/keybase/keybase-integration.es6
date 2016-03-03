@@ -16,7 +16,7 @@ class KeybaseRemote {
   }
 
   loadPreviousLogin() {
-    let { username, uid, csrf_token, session_token } = NylasEnv.config.get('email-pgp.keybase') || {};
+    let { username, uid, csrf_token, session_token } = NylasEnv.config.get('cypher.keybase') || {};
 
     if (username && uid && csrf_token && session_token) {
       console.log('[PGP] Found Keybase stored login, loading into node-keybase');

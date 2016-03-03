@@ -16,7 +16,7 @@ class KeybaseStore extends NylasStore {
 
     this._cachedPrimarySigChain = null;
 
-    this._configurationDirPath = path.join(NylasEnv.getConfigDirPath(), 'email-pgp');
+    this._configurationDirPath = path.join(NylasEnv.getConfigDirPath(), 'cypher');
 
     this.getPrimarySigChain = this.getPrimarySigChain.bind(this);
     this.getTrackedUsers = this.getTrackedUsers.bind(this);
@@ -86,10 +86,10 @@ class KeybaseStore extends NylasStore {
         console.log('[PGP] Keybase login error: Bad Username or Email');
         promise = Promise.resolve(false);
       } else {
-        NylasEnv.config.set('email-pgp.keybase.username', username);
-        NylasEnv.config.set('email-pgp.keybase.uid', res.uid);
-        NylasEnv.config.set('email-pgp.keybase.csrf_token', res.csrf_token);
-        NylasEnv.config.set('email-pgp.keybase.session_token', res.session);
+        NylasEnv.config.set('cypher.keybase.username', username);
+        NylasEnv.config.set('cypher.keybase.uid', res.uid);
+        NylasEnv.config.set('cypher.keybase.csrf_token', res.csrf_token);
+        NylasEnv.config.set('cypher.keybase.session_token', res.session);
 
         promise = fs.writeFileAsync(path.join(this._configurationDirPath, 'keybase_login.json'), JSON.stringify({
           username: username,
@@ -194,7 +194,7 @@ class KeybaseStore extends NylasStore {
   }
 
   _loadSavedCredentials() {
-    let { username, uid, csrf_token, session_token } = NylasEnv.config.get('email-pgp.keybase') || {};
+    let { username, uid, csrf_token, session_token } = NylasEnv.config.get('cypher.keybase') || {};
     this.username = username;
     this.uid = uid;
     this.csrf_token = csrf_token;
