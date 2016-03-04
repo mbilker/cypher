@@ -1,6 +1,6 @@
 import {Contact, File, Message, React} from 'nylas-exports';
 
-import EmailPGPStore from '../lib/email-pgp-store';
+import PGPStore from '../lib/flux/stores/pgp-store';
 import MessageLoaderHeader from '../lib/message-loader/message-loader-header';
 
 let ReactTestUtils = React.addons.TestUtils;
