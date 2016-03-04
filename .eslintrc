@@ -1,6 +1,17 @@
 {
+  "extends": "airbnb",
   "parser": "babel-eslint",
+  "globals": {
+    "NylasEnv": false
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "jasmine": true
+  },
   "rules": {
-    "strict": 0
+    "strict": 0,
+    "no-console": 0,
+    "comma-dangle": 0
   }
 }
