@@ -1,4 +1,4 @@
-import MimeParser from 'mimeparser';
+import MimeParser from 'emailjs-mime-parser';
 
 import Logger from './Logger';
 
