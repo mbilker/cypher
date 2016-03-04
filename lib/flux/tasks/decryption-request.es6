@@ -51,16 +51,16 @@ export default class DecryptionRequest {
   }
 
   onError(err) {
-    if (error instanceof FlowError) {
-      console.log(error.title);
+    if (err instanceof FlowError) {
+      log.error(err.title);
     } else {
-      console.log(error.stack);
+      log.error(err.stack);
     }
 
     this.setState({
       decrypting: false,
       done: true,
-      lastError: error
+      lastError: err
     });
   }
 
