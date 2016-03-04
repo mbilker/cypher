@@ -68,7 +68,7 @@ class EventProcessor {
 
   _handleDecryptMessage(message) {
     let {id} = message;
-    let notify = (result) => {
+    const notify = (result) => {
       process.send({ method: proto.PROMISE_NOTIFY, id, result });
     }
 
@@ -77,7 +77,7 @@ class EventProcessor {
       signedBy = '',
       elapsed
     }) => {
-      process.send({ method: proto.DECRYPTION_RESULT, id, result: { text: literals[0].toString(), signedBy: signedBy }, elapsed });
+      process.send({ method: proto.DECRYPTION_RESULT, id, result: { text: literals[0].toString(), signedBy }, elapsed });
     }).catch((err) => {
       this._sendError(err);
       process.send({ method: proto.PROMISE_REJECT, id, result: err.message });

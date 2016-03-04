@@ -21,7 +21,7 @@ const unboxAsync = (options) => {
 class KbpgpDecryptRoutine {
   constructor(controller, notify) {
     this._controller = controller;
-    this._notify = notify;
+    this.notify = notify;
 
     this._importKey = this._importKey.bind(this);
     this._checkCache = this._checkCache.bind(this);
@@ -73,13 +73,13 @@ class KbpgpDecryptRoutine {
       return Promise.resolve(secretKey);
     }
 
-    this._notify('Waiting for passphrase...');
+    this.notify('Waiting for passphrase...');
 
     let keyId = secretKey.get_pgp_key_id().toString('hex');
     let askString = `PGP Key with fingerprint <tt>${keyId}</tt> needs to be decrypted`;
     return this._controller.requestPassphrase(keyId, askString).then(passphrase => {
       return new Promise((resolve, reject) => {
-        this._notify('Unlocking secret key...');
+        this.notify('Unlocking secret key...');
 
         let startTime = process.hrtime();
         secretKey.unlock_pgp({ passphrase }, (err) => {
@@ -90,7 +90,7 @@ class KbpgpDecryptRoutine {
           let elapsed = process.hrtime(startTime);
           let msg = `Secret key unlocked secret key in ${elapsed[0] * 1e3 + elapsed[1] / 1e6}ms`;
 
-          this._notify(msg);
+          this.notify(msg);
           log('[KbpgpDecryptRoutine] %s', msg);
 
           resolve(secretKey);
@@ -114,6 +114,8 @@ class KbpgpDecryptRoutine {
         process.env.PATH += ":/usr/local/bin";
       }
 
+      this.notify('Waiting for GPG...');
+
       //var key = child_process.execSync(`gpg --export-secret-keys -a ${identifier}`);
       let stdout = [];
       let stderr = [];
@@ -128,6 +130,8 @@ class KbpgpDecryptRoutine {
         if (code !== 0 && code !== 2) {
           return deferred.reject(new Error(`GPG decrypt failed with code ${code}`));
         }
+
+        this.notify(null);
 
         const elapsed = process.hrtime(startTime);
         const output = Buffer.concat(stdout);
@@ -145,27 +149,31 @@ class KbpgpDecryptRoutine {
     } else {
       let startDecrypt;
 
-      return this._importKey(key).then(this._checkCache).then(() => {
-        this._notify(null);
-        startDecrypt = process.hrtime();
-      }).then(() => unboxAsync({keyfetch: KeyStore, armored})).then((literals) => {
-        const decryptTime = process.hrtime(startDecrypt);
-        const elapsed = process.hrtime(startTime);
+      return this._importKey(key)
+        .then(this._checkCache)
+        .then(() => {
+          this._notify(null);
+          startDecrypt = process.hrtime();
+        })
+        .then(() => unboxAsync({keyfetch: KeyStore, armored}))
+        .then((literals) => {
+          const decryptTime = process.hrtime(startDecrypt);
+          const elapsed = process.hrtime(startTime);
 
-        this._notify(`Message decrypted in ${decryptTime[0] * 1e3 + decryptTime[1] / 1e6}ms`);
+          this.notify(`Message decrypted in ${decryptTime[0] * 1e3 + decryptTime[1] / 1e6}ms`);
 
-        const ds = literals[0].get_data_signer();
-        let km = signedBy = null;
-        if (ds) {
-          km = ds.get_key_manager();
-        }
-        if (km) {
-          signedBy = km.get_pgp_fingerprint().toString('hex');
-          console.log(`Signed by PGP fingerprint: ${signedBy}`);
-        }
+          const ds = literals[0].get_data_signer();
+          let km = signedBy = null;
+          if (ds) {
+            km = ds.get_key_manager();
+          }
+          if (km) {
+            signedBy = km.get_pgp_fingerprint().toString('hex');
+            console.log(`Signed by PGP fingerprint: ${signedBy}`);
+          }
 
-        return {literals, signedBy, elapsed};
-      });
+          return {literals, signedBy, elapsed};
+        });
     }
   }
 }
