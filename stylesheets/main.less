@@ -1,5 +1,4 @@
 @import "ui-variables";
-@import "ui-mixins";
 
 @import (inline) "../basscss/compiled.min.css";
 
@@ -55,13 +54,29 @@
   }
 }
 
-/*
-.pgp-menu-picker {
-  .form {
-    padding-top: 2px;
-    padding-right: 2px;
-    padding-bottom: 2px;
-    padding-left: 10px;
+.pgp-composer {
+  .menu {
+    width: 300px;
+
+    .item {
+      padding-top: 0;
+      padding-right: @padding-base-horizontal;
+    }
+  }
+
+  .divider {
+    border-top: 1px solid @border-color-divider;
+  }
+
+  .submit-section {
+    padding: @padding-base-vertical  @padding-base-horizontal;
+    padding-bottom: @padding-base-vertical * 1.2;
+    .btn {
+      width: 100%;
+    }
+  }
+
+  .keybase-username {
+    display: block;
   }
 }
-*/

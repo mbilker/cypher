@@ -46,19 +46,30 @@ class ComposerLoader extends React.Component {
 
   render() {
     let button = <button className="btn btn-toolbar">
-      PGP Encrypt
-      <RetinaImg mode={RetinaImg.Mode.ContentPreserve}
-                 name="toolbar-chevron.png" />
+      Encrypt
+      <RetinaImg name="toolbar-chevron.png" mode={RetinaImg.Mode.ContentPreserve} />
     </button>
 
-    return <Popover ref="popover"
-                    className="pgp pgp-menu-picker pull-right"
-                    buttonComponent={button}>
-      <form className="form col-12 m2">
-        <label>Keybase Username:</label>
-        <input className="field mb2 block" type="text" placeholder="(e.g. max)" onChange={this.onChange} />
-        <button className="btn mb1 block" onClick={this.onSubmit}>Encrypt</button>
-      </form>
+    return <Popover ref="popover" className="pgp-composer" buttonComponent={button}>
+      <div className="menu">
+        <div className="header-container">
+          <span>PGP Encrypt:</span>
+        </div>
+
+        <div className="content-container">
+          <div className="item">
+            <label>Keybase Username:</label>
+            <input className="keybase-username" type="text" placeholder="(e.g. max)" onChange={this.onChange} />
+          </div>
+        </div>
+
+        <div className="footer-container">
+          <div className="divider" />
+          <div className="submit-section">
+            <button className="btn" onClick={this.onSubmit}>Encrypt</button>
+          </div>
+        </div>
+      </div>
     </Popover>
   }
 
