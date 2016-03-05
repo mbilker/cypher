@@ -177,9 +177,15 @@ class PreferencesComponent extends React.Component {
   }
 
   loginToKeybase() {
+    let { username, passphrase } = this.state;
+    if (username === '' || passphrase === '') {
+      this.setState({
+        error: 'Please provide a username and passphrase!'
+      });
+      return;
+    }
     console.log('[PGP] Keybase Login');
 
-    let { username, passphrase } = this.state;
     //console.log('%s %s', username, passphrase);
 
     this.setState(Object.assign({}, this.defaultState, {
