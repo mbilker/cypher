@@ -34,3 +34,7 @@ or safe at all.
 - [ ] Better detection of PGP encrypted emails
 - [x] Text input for passphrase
 - [ ] Spec tests for all features
+
+## Commands
+
+- `npm run compile:basscss`: Compiles the `base.css` file in the `basscss` folder
