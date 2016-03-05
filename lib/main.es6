@@ -51,8 +51,8 @@ class PGPMain {
     if (windowType === 'default') {
       this._state = state;
       this._tab = new PreferencesUIStore.TabItem({
-        tabId: "PGP",
-        displayName: "PGP Mail",
+        tabId: "cypher",
+        displayName: "Cypher",
         component: PreferencesComponent
       });
 
