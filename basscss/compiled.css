@@ -1,0 +1,451 @@
+/*
+
+    Basscss for cypher
+    http://basscss.com
+
+    6.89 KB
+    1.53 KB Gzipped
+    164 Rules
+    166 Selectors
+    208 Declarations
+    57 Properties
+
+*/
+
+
+.pgp table{
+  border-collapse:separate;
+  border-spacing:0;
+  max-width:100%;
+  width:100%;
+}
+
+.pgp th{
+  text-align:left;
+  font-weight:bold;
+}
+
+.pgp th,
+.pgp td{
+  padding:.25rem 1rem;
+  line-height:inherit;
+}
+
+.pgp th{ vertical-align:bottom }
+.pgp td{ vertical-align:top }
+
+.pgp .font-family-inherit{ font-family:inherit }
+.pgp .font-size-inherit{ font-size:inherit }
+.pgp .text-decoration-none{ text-decoration:none }
+
+.pgp .bold{ font-weight:bold }
+.pgp .regular{ font-weight:normal }
+.pgp .italic{ font-style:italic }
+.pgp .caps{ text-transform:uppercase; letter-spacing:.2em; }
+
+.pgp .left-align{ text-align:left }
+.pgp .center{ text-align:center }
+.pgp .right-align{ text-align:right }
+.pgp .justify{ text-align:justify }
+
+.pgp .nowrap{ white-space:nowrap }
+.pgp .break-word{ word-wrap:break-word }
+
+.pgp .line-height-1{ line-height:1 }
+.pgp .line-height-2{ line-height:1.125 }
+.pgp .line-height-3{ line-height:1.25 }
+.pgp .line-height-4{ line-height:1.5 }
+
+.pgp .list-style-none{ list-style:none }
+.pgp .underline{ text-decoration:underline }
+
+.pgp .truncate{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.pgp .list-reset{
+  list-style:none;
+  padding-left:0;
+}
+
+.pgp .inline{ display:inline }
+.pgp .block{ display:block }
+.pgp .inline-block{ display:inline-block }
+.pgp .table{ display:table }
+.pgp .table-cell{ display:table-cell }
+
+.pgp .overflow-hidden{ overflow:hidden }
+.pgp .overflow-scroll{ overflow:scroll }
+.pgp .overflow-auto{ overflow:auto }
+
+.pgp .clearfix:before,
+.pgp .clearfix:after{
+  content:" ";
+  display:table
+}
+.pgp .clearfix:after{ clear:both }
+
+.pgp .left{ float:left }
+.pgp .right{ float:right }
+
+.pgp .fit{ max-width:100% }
+
+.pgp .border-box{ box-sizing:border-box }
+.pgp .m0{ margin:0 }
+.pgp .mt0{ margin-top:0 }
+.pgp .mr0{ margin-right:0 }
+.pgp .mb0{ margin-bottom:0 }
+.pgp .ml0{ margin-left:0 }
+
+.pgp .m1{ margin:.5rem }
+.pgp .mt1{ margin-top:.5rem }
+.pgp .mr1{ margin-right:.5rem }
+.pgp .mb1{ margin-bottom:.5rem }
+.pgp .ml1{ margin-left:.5rem }
+
+.pgp .m2{ margin:1rem }
+.pgp .mt2{ margin-top:1rem }
+.pgp .mr2{ margin-right:1rem }
+.pgp .mb2{ margin-bottom:1rem }
+.pgp .ml2{ margin-left:1rem }
+
+.pgp .m3{ margin:2rem }
+.pgp .mt3{ margin-top:2rem }
+.pgp .mr3{ margin-right:2rem }
+.pgp .mb3{ margin-bottom:2rem }
+.pgp .ml3{ margin-left:2rem }
+
+.pgp .m4{ margin:4rem }
+.pgp .mt4{ margin-top:4rem }
+.pgp .mr4{ margin-right:4rem }
+.pgp .mb4{ margin-bottom:4rem }
+.pgp .ml4{ margin-left:4rem }
+
+.pgp .mxn1{ margin-left:-.5rem; margin-right:-.5rem; }
+.pgp .mxn2{ margin-left:-1rem; margin-right:-1rem; }
+.pgp .mxn3{ margin-left:-2rem; margin-right:-2rem; }
+.pgp .mxn4{ margin-left:-4rem; margin-right:-4rem; }
+
+.pgp .mx-auto{ margin-left:auto; margin-right:auto; }
+.pgp .p0{ padding:0 }
+
+.pgp .p1{ padding:.5rem }
+.pgp .py1{ padding-top:.5rem; padding-bottom:.5rem }
+.pgp .px1{ padding-left:.5rem; padding-right:.5rem }
+
+.pgp .p2{ padding:1rem }
+.pgp .py2{ padding-top:1rem; padding-bottom:1rem }
+.pgp .px2{ padding-left:1rem; padding-right:1rem }
+
+.pgp .p3{ padding:2rem }
+.pgp .py3{ padding-top:2rem; padding-bottom:2rem }
+.pgp .px3{ padding-left:2rem; padding-right:2rem }
+
+.pgp .p4{ padding:4rem }
+.pgp .py4{ padding-top:4rem; padding-bottom:4rem }
+.pgp .px4{ padding-left:4rem; padding-right:4rem }
+
+.pgp .relative{ position:relative }
+.pgp .absolute{ position:absolute }
+.pgp .fixed{ position:fixed }
+
+.pgp .top-0{ top:0 }
+.pgp .right-0{ right:0 }
+.pgp .bottom-0{ bottom:0 }
+.pgp .left-0{ left:0 }
+
+.pgp .z1{ z-index:1 }
+.pgp .z2{ z-index:2 }
+.pgp .z3{ z-index:3 }
+.pgp .z4{ z-index:4 }
+
+.pgp .container{
+  max-width:64rem;
+  margin-left:auto;
+  margin-right:auto;
+}
+.pgp .col{
+  float:left;
+  box-sizing:border-box;
+}
+
+.pgp .col-right{
+  float:right;
+  box-sizing:border-box;
+}
+
+.pgp .col-1{
+  width:8.33333%;
+}
+
+.pgp .col-2{
+  width:16.66667%;
+}
+
+.pgp .col-3{
+  width:25%;
+}
+
+.pgp .col-4{
+  width:33.33333%;
+}
+
+.pgp .col-5{
+  width:41.66667%;
+}
+
+.pgp .col-6{
+  width:50%;
+}
+
+.pgp .col-7{
+  width:58.33333%;
+}
+
+.pgp .col-8{
+  width:66.66667%;
+}
+
+.pgp .col-9{
+  width:75%;
+}
+
+.pgp .col-10{
+  width:83.33333%;
+}
+
+.pgp .col-11{
+  width:91.66667%;
+}
+
+.pgp .col-12{
+  width:100%;
+}
+@media (min-width: 40em){
+
+  .pgp .sm-col{
+    float:left;
+    box-sizing:border-box;
+  }
+
+  .pgp .sm-col-right{
+    float:right;
+    box-sizing:border-box;
+  }
+
+  .pgp .sm-col-1{
+    width:8.33333%;
+  }
+
+  .pgp .sm-col-2{
+    width:16.66667%;
+  }
+
+  .pgp .sm-col-3{
+    width:25%;
+  }
+
+  .pgp .sm-col-4{
+    width:33.33333%;
+  }
+
+  .pgp .sm-col-5{
+    width:41.66667%;
+  }
+
+  .pgp .sm-col-6{
+    width:50%;
+  }
+
+  .pgp .sm-col-7{
+    width:58.33333%;
+  }
+
+  .pgp .sm-col-8{
+    width:66.66667%;
+  }
+
+  .pgp .sm-col-9{
+    width:75%;
+  }
+
+  .pgp .sm-col-10{
+    width:83.33333%;
+  }
+
+  .pgp .sm-col-11{
+    width:91.66667%;
+  }
+
+  .pgp .sm-col-12{
+    width:100%;
+  }
+
+}
+@media (min-width: 52em){
+
+  .pgp .md-col{
+    float:left;
+    box-sizing:border-box;
+  }
+
+  .pgp .md-col-right{
+    float:right;
+    box-sizing:border-box;
+  }
+
+  .pgp .md-col-1{
+    width:8.33333%;
+  }
+
+  .pgp .md-col-2{
+    width:16.66667%;
+  }
+
+  .pgp .md-col-3{
+    width:25%;
+  }
+
+  .pgp .md-col-4{
+    width:33.33333%;
+  }
+
+  .pgp .md-col-5{
+    width:41.66667%;
+  }
+
+  .pgp .md-col-6{
+    width:50%;
+  }
+
+  .pgp .md-col-7{
+    width:58.33333%;
+  }
+
+  .pgp .md-col-8{
+    width:66.66667%;
+  }
+
+  .pgp .md-col-9{
+    width:75%;
+  }
+
+  .pgp .md-col-10{
+    width:83.33333%;
+  }
+
+  .pgp .md-col-11{
+    width:91.66667%;
+  }
+
+  .pgp .md-col-12{
+    width:100%;
+  }
+
+}
+@media (min-width: 64em){
+
+  .pgp .lg-col{
+    float:left;
+    box-sizing:border-box;
+  }
+
+  .pgp .lg-col-right{
+    float:right;
+    box-sizing:border-box;
+  }
+
+  .pgp .lg-col-1{
+    width:8.33333%;
+  }
+
+  .pgp .lg-col-2{
+    width:16.66667%;
+  }
+
+  .pgp .lg-col-3{
+    width:25%;
+  }
+
+  .pgp .lg-col-4{
+    width:33.33333%;
+  }
+
+  .pgp .lg-col-5{
+    width:41.66667%;
+  }
+
+  .pgp .lg-col-6{
+    width:50%;
+  }
+
+  .pgp .lg-col-7{
+    width:58.33333%;
+  }
+
+  .pgp .lg-col-8{
+    width:66.66667%;
+  }
+
+  .pgp .lg-col-9{
+    width:75%;
+  }
+
+  .pgp .lg-col-10{
+    width:83.33333%;
+  }
+
+  .pgp .lg-col-11{
+    width:91.66667%;
+  }
+
+  .pgp .lg-col-12{
+    width:100%;
+  }
+
+}
+
+.pgp .border{
+  border-style:solid;
+  border-width:1px;
+  border-color:rgba(0,0,0,.125);
+}
+
+.pgp .border-top{
+  border-top-style:solid;
+  border-top-width:1px;
+  border-top-color:rgba(0,0,0,.125);
+}
+
+.pgp .border-right{
+  border-right-style:solid;
+  border-right-width:1px;
+  border-right-color:rgba(0,0,0,.125);
+}
+
+.pgp .border-bottom{
+  border-bottom-style:solid;
+  border-bottom-width:1px;
+  border-bottom-color:rgba(0,0,0,.125);
+}
+
+.pgp .border-left{
+  border-left-style:solid;
+  border-left-width:1px;
+  border-left-color:rgba(0,0,0,.125);
+}
+
+.pgp .border-none{ border:0 }
+
+.pgp .rounded{ border-radius:3px }
+.pgp .circle{ border-radius:50% }
+
+.pgp .rounded-top{ border-radius:3px 3px 0 0 }
+.pgp .rounded-right{ border-radius:0 3px 3px 0 }
+.pgp .rounded-bottom{ border-radius:0 0 3px 3px }
+.pgp .rounded-left{ border-radius:3px 0 0 3px }
+
+.pgp .not-rounded{ border-radius:0 }
