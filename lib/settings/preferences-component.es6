@@ -53,14 +53,13 @@ class PreferencesComponent extends React.Component {
     return <div className="pgp container-pgp-mail">
       <section>
         <h2>Keybase Login</h2>
-        <div><i>Sorry, tab to next field does not work</i></div>
         {this._renderError()}
         <Flexbox className="keybase-username item">
           <div className="setting-name">
             <label htmlFor="account.username">Username/Email:</label>
           </div>
           <div className="setting-value">
-            <input id="account.username" type="text" placeholder="(e.g. max)" value={this.state.username} onChange={this.onChangeUsername} />
+            <input id="account.username" type="text" placeholder="(e.g. max)" value={this.state.username} onChange={this.onChangeUsername} tabIndex="1" />
           </div>
         </Flexbox>
         <Flexbox className="keybase-password item">
@@ -68,11 +67,11 @@ class PreferencesComponent extends React.Component {
             <label htmlFor="account.passphrase">Passphrase:</label>
           </div>
           <div className="setting-value">
-            <input id="account.passphrase" type="password" value={this.state.passphrase} onChange={this.onChangePassphrase} />
+            <input id="account.passphrase" type="password" value={this.state.passphrase} onChange={this.onChangePassphrase} tabIndex="2" />
           </div>
         </Flexbox>
         {this._renderUserLoginInfo()}
-        <button className="btn" onClick={this.loginToKeybase}>Login</button>
+        <button className="btn" onClick={this.loginToKeybase} tabIndex="3" >Login</button>
       </section>
       <section>
         <h2>SigChain Status</h2>
