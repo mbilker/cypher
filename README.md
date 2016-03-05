@@ -37,4 +37,4 @@ or safe at all.
 
 # License
 
-This software is licensed under the GPLv3. For more information see https://www.gnu.org/licenses/gpl-3.0.txt and https://www.gnu.org/licenses/gpl-3.0.txt
+This software is licensed under the GPLv3. For more information see https://www.gnu.org/licenses/gpl-3.0.txt and http://choosealicense.com/licenses/gpl-3.0/.
