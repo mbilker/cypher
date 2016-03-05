@@ -34,3 +34,7 @@ or safe at all.
 - [ ] Better detection of PGP encrypted emails
 - [x] Text input for passphrase
 - [ ] Spec tests for all features
+
+# License
+
+This software is licensed under the GPLv3. For more information see https://www.gnu.org/licenses/gpl-3.0.txt and https://www.gnu.org/licenses/gpl-3.0.txt
