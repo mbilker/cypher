@@ -9,6 +9,8 @@
   "engines": {
     "nylas": ">=0.4.10"
   },
+  "title": "Cypher",
+  "icon": "./assets/icon.png",
   "description": "Privacy extensions for N1",
   "dependencies": {
     "debug": "^2.2.0",

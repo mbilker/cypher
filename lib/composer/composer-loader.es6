@@ -46,8 +46,8 @@ class ComposerLoader extends React.Component {
 
   render() {
     let button = <button className="btn btn-toolbar">
-      Encrypt
-      <RetinaImg name="toolbar-chevron.png" mode={RetinaImg.Mode.ContentPreserve} />
+      <RetinaImg url="nylas://cypher/assets/icon-composer-encrypt@2x.png" mode={RetinaImg.Mode.ContentIsMask} />
+      <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
     </button>
 
     return <Popover ref="popover" className="pgp-composer" buttonComponent={button}>

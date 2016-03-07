@@ -37,7 +37,7 @@
 }
 
 .smalltalk .page > .close-button {
-  background-image: url(nylas://cypher/images/IDR_CLOSE_DIALOG.png);
+  background-image: url(nylas://cypher/assets/IDR_CLOSE_DIALOG.png);
   background-position: center;
   background-repeat: no-repeat;
   height: 14px;
@@ -49,7 +49,7 @@
 }
 
 .smalltalk .page > .close-button:hover {
-  background-image: url(nylas://cypher/images/IDR_CLOSE_DIALOG_H.png);
+  background-image: url(nylas://cypher/assets/IDR_CLOSE_DIALOG_H.png);
 }
 
 .smalltalk .page header {
