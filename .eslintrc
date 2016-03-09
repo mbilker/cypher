@@ -12,6 +12,16 @@
   "rules": {
     "strict": 0,
     "no-console": 0,
-    "comma-dangle": 0
+    "comma-dangle": 0,
+    "react/sort-comp": [2, {
+      "order": [
+        'displayName',
+        'containerStyles',
+        'static-methods',
+        'lifecycle',
+        'everything-else',
+        'render'
+      ]
+    }]
   }
 }
