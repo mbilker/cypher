@@ -1,3 +1,5 @@
+/** @babel */
+
 // Adds a button to encrypt the message body with a PGP user key from Keybase.
 // User needs to specify which user to encrypt with. Script will download the
 // key and present the user's Keybase profile to ensure verification.
@@ -19,11 +21,11 @@ const SPAN_STYLES = "font-family:monospace,monospace;white-space:pre;";
 const rimrafPromise = Promise.promisify(rimraf);
 
 class ComposerLoader extends React.Component {
-  static displayName = 'ComposerLoader'
+  static displayName = 'ComposerLoader';
 
   static propTypes = {
     draftClientId: React.PropTypes.string.isRequired
-  }
+  };
 
   constructor(props) {
     super(props);

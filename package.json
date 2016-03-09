@@ -15,6 +15,8 @@
   "dependencies": {
     "debug": "^2.2.0",
     "emailjs-mime-parser": "^1.0.0",
+    "eslint-config-airbnb": "^6.1.0",
+    "eslint-plugin-react": "^4.2.1",
     "kbpgp": "git+https://github.com/mbilker/kbpgp.git",
     "libkeybase": "^1.2.22",
     "lodash": "^4.0.0",
