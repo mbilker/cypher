@@ -4,7 +4,7 @@ import {FileDownloadStore} from 'nylas-exports';
 import FlowError from '../utils/flow-error';
 import Logger from '../utils/Logger';
 
-class FileDownloadStoreWatcher {
+class DownloadWatcher {
   constructor() {
     // Object of promises of attachments needed for decryption
     this._deferreds = new Map();
@@ -13,7 +13,7 @@ class FileDownloadStoreWatcher {
     this.getFilePromise = this.getFilePromise.bind(this);
     this._onDownloadStoreChange = this._onDownloadStoreChange.bind(this);
 
-    this.log = Logger.create(`FileDownloadStoreWatcher`);
+    this.log = Logger.create('DownloadWatcher');
 
     this._storeUnlisten = FileDownloadStore.listen(this._onDownloadStoreChange);
   }
@@ -45,6 +45,20 @@ class FileDownloadStoreWatcher {
     }
   }
 
+  fetchFile(filePath) {
+    // async fs.exists was throwing because the first argument was true,
+    // found fs.access as a suitable replacement
+    return fs.accessAsync(filePath, fs.F_OK | fs.R_OK).then(() =>
+      fs.readFileAsync(filePath, 'utf8')
+    ).then((text) => {
+      this.log.info('Read attachment from disk');
+      if (!text) {
+        return Promise.reject(new FlowError('No text in attachment', true));
+      }
+      return text;
+    });
+  }
+
   // PRIVATE
 
   _onDownloadStoreChange() {
@@ -56,19 +70,15 @@ class FileDownloadStoreWatcher {
       if (file.state === 'finished' && this._deferreds.has(file.fileId)) {
         this.log.info(`Checking ${file.fileId}`);
 
-        // TODO: Dedupe the file reading logic into separate method
-        fs.accessAsync(file.targetPath, fs.F_OK | fs.R_OK).then(() => {
-          this.log.info(`Found downloaded attachment ${fileId}`);
-
-          return fs.readFileAsync(file.targetPath, 'utf8').then((text) => {
-            const deferred = this._deferreds.get(file.fileId);
-            if (deferred && deferred.resolve) {
-              deferred.resolve(text);
-              this._deferreds.delete(file.fileId);
-            } else {
-              console.error('watching promise undefined');
-            }
-          });
+        this.fetchFile(file.targetPath).then((text) => {
+          const deferred = this._deferreds.get(file.fileId);
+          if (deferred && deferred.resolve) {
+            this.log.info(`Found downloaded attachment ${fileId}`);
+            deferred.resolve(text);
+            this._deferreds.delete(file.fileId);
+          } else {
+            console.error('watching promise undefined');
+          }
         }).catch((err) => {
           const deferred = this._deferreds.get(file.fileId);
           if (deferred && deferred.reject) {
@@ -81,4 +91,4 @@ class FileDownloadStoreWatcher {
   }
 }
 
-export default new FileDownloadStoreWatcher();
+export default new DownloadWatcher();
