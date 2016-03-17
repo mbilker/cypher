@@ -2,6 +2,8 @@
 
 @import (inline) "../basscss/compiled.min.css";
 
+//@pgp-info-color: #0F7982;
+
 .pgp-message-header {
   display: block;
   background-color: mix(@background-primary, #f0ad4e, 80%);
@@ -20,17 +22,17 @@
 .pgp-message-header-error {
   background-color: mix(@background-primary, #A03232, 80%);
   border: 1px solid darken(mix(@background-primary, #A03232, 50%), 25%);
-  color: mix(@text-color-subtle, @text-color-alert, 80%);
+  color: mix(@text-color-subtle, #e64d65, 80%);
 }
 .pgp-message-header-info {
-  background-color: mix(@background-primary, @nylas-blue-dark, 80%);
-  border: 1px solid darken(mix(@background-primary, @nylas-blue-dark, 50%), 25%);
-  color: mix(@text-color-subtle, @nylas-blue-dark, 80%);
+  background-color: mix(@background-primary, @blue-dark, 80%);
+  border: 1px solid darken(mix(@background-primary, @blue-dark, 50%), 25%);
+  color: mix(@text-color-subtle, @blue-dark, 80%);
 }
 .pgp-message-header-success {
-  background-color: mix(@background-primary, @text-color-success, 80%);
-  border: 1px solid darken(mix(@background-primary, @text-color-success, 50%), 10%);
-  color: mix(@text-color-subtle, @text-color-success, 80%);
+  background-color: mix(@background-primary, @color-success, 80%);
+  border: 1px solid darken(mix(@background-primary, @color-success, 50%), 10%);
+  color: mix(@text-color-subtle, @color-success, 80%);
 }
 
 .container-pgp-mail {
@@ -47,10 +49,10 @@
   .keybase-sigchain {
     .btn-primary {
       color: @text-color-selected;
-      background-color: @info-color;
+      background-color: @color-info;
     }
 
-    .bg-green { background-color: @state-success-bg }
+    .bg-green { background-color: #dff0d8 }
   }
 }
 
