@@ -61,7 +61,7 @@
     "postcss-selector-prefix": "^2.0.0",
     "request": "^2.67.0"
   },
-  "license": "MIT",
+  "license": "GPL-3.0",
   "windowTypes": {
     "default": true,
     "composer": true
