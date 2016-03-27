@@ -7,26 +7,28 @@ import Logger from '../utils/Logger';
 class DownloadWatcher {
   constructor() {
     // Object of promises of attachments needed for decryption
-    this._deferreds = new Map();
+    this.deferreds = new Map();
 
     this.promiseForPendingFile = this.promiseForPendingFile.bind(this);
     this.getFilePromise = this.getFilePromise.bind(this);
-    this._onDownloadStoreChange = this._onDownloadStoreChange.bind(this);
+    this.onDownloadStoreChange = this.onDownloadStoreChange.bind(this);
 
     this.log = Logger.create('DownloadWatcher');
 
-    this._storeUnlisten = FileDownloadStore.listen(this._onDownloadStoreChange);
+    this._storeUnlisten = FileDownloadStore.listen(this.onDownloadStoreChange);
+
+    global.$pgpDownloadWatcher = this;
   }
 
   // PUBLIC
 
   promiseForPendingFile(fileId) {
-    if (this._deferreds.has(fileId)) {
-      return this._deferreds.get(fileId).promise;
+    if (this.deferreds.has(fileId)) {
+      return this.deferreds.get(fileId).promise;
     }
 
     const deferred = Promise.defer();
-    this._deferreds.set(fileId, deferred);
+    this.deferreds.set(fileId, deferred);
 
     return deferred.promise;
     //.then((text) => {
@@ -36,7 +38,7 @@ class DownloadWatcher {
   }
 
   getFilePromise(fileId) {
-    return this._deferreds[fileId];
+    return this.deferreds[fileId];
   }
 
   unlisten() {
@@ -59,31 +61,45 @@ class DownloadWatcher {
     });
   }
 
-  // PRIVATE
+  /**
+   * @private
+   * Handles the downloaded files and checks if PGP attachments have been fully
+   * downloaded.
+   *
+   * If the file is in the 'finished' state, then it will read the
+   * file from disk and tell the {PGPStore} that the file has downloaded via a
+   * promise.
+   *
+   * If there was an error reading the file from disk, then it will tell
+   * {PGPStore} the error to display to the user.
+   *
+   * TODO: Figure out why this does not handle more than one file.
+   */
+  onDownloadStoreChange() {
+    let changes = FileDownloadStore.downloadDataForFiles([...this.deferreds.keys()]);
 
-  _onDownloadStoreChange() {
-    let changes = FileDownloadStore.downloadDataForFiles([...this._deferreds.keys()]);
     this.log.info('Download Store Changes:', changes);
     Object.keys(changes).forEach((fileId) => {
-      let file = changes[fileId];
+      const file = changes[fileId];
 
-      if (file.state === 'finished' && this._deferreds.has(file.fileId)) {
+      if (file && file.state === 'finished' && this.deferreds.has(file.fileId)) {
         this.log.info(`Checking ${file.fileId}`);
 
         this.fetchFile(file.targetPath).then((text) => {
-          const deferred = this._deferreds.get(file.fileId);
+          const deferred = this.deferreds.get(file.fileId);
           if (deferred && deferred.resolve) {
             this.log.info(`Found downloaded attachment ${fileId}`);
             deferred.resolve(text);
             this._deferreds.delete(file.fileId);
           } else {
-            console.error('watching promise undefined');
+            this.log.error('watching promise undefined');
           }
         }).catch((err) => {
-          const deferred = this._deferreds.get(file.fileId);
+          const deferred = this.deferreds.get(file.fileId);
           if (deferred && deferred.reject) {
+            this.log.error('Download attachment inaccessable', err);
             deferred.reject(new FlowError('Downloaded attachment inaccessable', true));
-            this._deferreds.delete(file.fileId);
+            this.deferreds.delete(file.fileId);
           }
         });
       }
