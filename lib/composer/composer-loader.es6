@@ -1,9 +1,5 @@
 /** @babel */
 
-// Adds a button to encrypt the message body with a PGP user key from Keybase.
-// User needs to specify which user to encrypt with. Script will download the
-// key and present the user's Keybase profile to ensure verification.
-
 import fs from 'fs';
 import path from 'path';
 
@@ -14,12 +10,18 @@ import kbpgp from 'kbpgp';
 import rimraf from 'rimraf';
 
 import {KeybaseStore} from '../keybase';
+import Logger from '../utils/Logger';
 import MIMEWriter from './mime-writer';
 
 const NO_OP = () => {};
 const SPAN_STYLES = "font-family:monospace,monospace;white-space:pre;";
 const rimrafPromise = Promise.promisify(rimraf);
 
+/**
+ * Adds a button to encrypt the message body with a PGP user key from Keybase.
+ * User needs to specify which user to encrypt with. Script will download the
+ * key and present the user's Keybase profile to ensure verification.
+ */
 class ComposerLoader extends React.Component {
   static displayName = 'ComposerLoader';
 
@@ -30,69 +32,67 @@ class ComposerLoader extends React.Component {
   constructor(props) {
     super(props);
 
-    this.render = this.render.bind(this);
+    this.onClick = this.onClick.bind(this);
     this.onChange = this.onChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
-    this._hidePopover = this._hidePopover.bind(this);
     this._ensureConfigurationDirectoryExists = this._ensureConfigurationDirectoryExists.bind(this);
+    this.render = this.render.bind(this);
 
     this.temporaryAttachmentLocation = path.join(KeybaseStore._configurationDirPath, 'attachments');
     this._ensureConfigurationDirectoryExists();
 
-    this.state = {
-      username: ''
-    }
+    this.log = Logger.create(`ComposerLoader(${props.draftClientId})`);
+
+    this.state = { username: '' };
 
     global.$pgpComposer = this;
   }
 
-  render() {
-    let button = <button className="btn btn-toolbar">
-      <RetinaImg url="nylas://cypher/assets/icon-composer-encrypt@2x.png" mode={RetinaImg.Mode.ContentIsMask} />
-      <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
-    </button>
-
-    return <Popover ref="popover" className="pgp-composer" buttonComponent={button}>
-      <div className="menu">
-        <div className="header-container">
-          <span>PGP Encrypt:</span>
-        </div>
-
-        <div className="content-container">
-          <div className="item">
-            <label>Keybase Username:</label>
-            <input className="keybase-username" type="text" placeholder="(e.g. max)" onChange={this.onChange} />
+  onClick(e) {
+    const buttonRect = React.findDOMNode(this).getBoundingClientRect();
+    const popover = (
+      <div className="pgp-composer">
+        <div className="menu">
+          <div className="header-container">
+            <span>PGP Encrypt:</span>
           </div>
-        </div>
 
-        <div className="footer-container">
-          <div className="divider" />
-          <div className="submit-section">
-            <button className="btn" onClick={this.onSubmit}>Encrypt</button>
+          <div className="content-container">
+            <div className="item">
+              <label>Keybase Username:</label>
+              <input className="keybase-username" type="text" placeholder="(e.g. max)" onChange={this.onChange} />
+            </div>
+          </div>
+
+          <div className="footer-container">
+            <div className="divider"></div>
+            <div className="submit-section">
+              <button className="btn" onClick={this.onSubmit}>Encrypt</button>
+            </div>
           </div>
         </div>
       </div>
-    </Popover>
+    );
+
+    Actions.openPopover(popover, { originRect: buttonRect, direction: 'up' });
   }
 
   onChange(e) {
-    console.log('change', e);
+    this.log.info('change', e);
     this.setState({
       username: e.target.value
     });
   }
 
   onSubmit(e) {
-    this._hidePopover();
+    Actions.closePopover();
 
     let {username, fingerprint} = this.state;
 
-    console.log('submit');
-    console.log(username);
-
+    this.log.info('submit', username);
     return KeybaseStore.keybaseRemote.publicKeyForUsername(username).then(armoredKey => {
       if (!armoredKey) {
-        throw new Error("No public key for username " + username);
+        return Promise.reject(new Error(`No public key for username ${username}`));
       }
 
       return this._importPublicKey(armoredKey).then(publicKey => {
@@ -130,13 +130,9 @@ class ComposerLoader extends React.Component {
           session.changes.commit();
         });
       }).catch(err => {
-        console.log(err);
+        this.log.error(err);
       });
     });
-  }
-
-  _hidePopover() {
-    this.refs.popover.close();
   }
 
   _formatBodyHeader(username, fingerprint) {
@@ -172,16 +168,26 @@ class ComposerLoader extends React.Component {
   _ensureConfigurationDirectoryExists() {
     fs.access(this.temporaryAttachmentLocation, fs.F_OK, err => {
       if (err) {
-        console.log('[PGP] Temporary attachment directory missing, creating');
+        this.log.info('Temporary attachment directory missing, creating');
         fs.mkdir(this.temporaryAttachmentLocation, err => {
           if (err) {
-            console.error('[PGP] Temporary attachment directory creation unsuccessful', err);
+            this.log.error('Temporary attachment directory creation unsuccessful', err);
           } else {
-            console.log('[PGP] Temporary attachment directory creation successful');
+            this.log.info('Temporary attachment directory creation successful');
           }
         });
       }
     });
+  }
+
+  render() {
+    //return <Popover ref="popover" className="pgp-composer" buttonComponent={button}>
+    return (
+      <button className="btn btn-toolbar" onClick={this.onClick}>
+        <RetinaImg url="nylas://cypher/assets/icon-composer-encrypt@2x.png" mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
+      </button>
+    );
   }
 }
 
