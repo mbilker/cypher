@@ -90,7 +90,7 @@ class DownloadWatcher {
           if (deferred && deferred.resolve) {
             this.log.info(`Found downloaded attachment ${fileId}`);
             deferred.resolve(text);
-            this._deferreds.delete(file.fileId);
+            this.deferreds.delete(file.fileId);
           } else {
             this.log.error('watching promise undefined');
           }
