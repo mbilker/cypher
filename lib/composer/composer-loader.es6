@@ -3,8 +3,8 @@
 import fs from 'fs';
 import path from 'path';
 
-import {Actions, DraftStore, QuotedHTMLTransformer, React, Utils} from 'nylas-exports';
-import {Menu, GeneratedForm, Popover, RetinaImg} from 'nylas-component-kit';
+import { Actions, DraftStore, QuotedHTMLTransformer, React, Utils } from 'nylas-exports';
+import { Menu, GeneratedForm, Popover, RetinaImg } from 'nylas-component-kit';
 
 import kbpgp from 'kbpgp';
 import rimraf from 'rimraf';
@@ -29,6 +29,12 @@ class ComposerLoader extends React.Component {
     draftClientId: React.PropTypes.string.isRequired
   };
 
+  temporaryAttachmentLocation = path.join(KeybaseStore._configurationDirPath, 'attachments');
+
+  state = {
+    username: '',
+  };
+
   constructor(props) {
     super(props);
 
@@ -38,12 +44,9 @@ class ComposerLoader extends React.Component {
     this._ensureConfigurationDirectoryExists = this._ensureConfigurationDirectoryExists.bind(this);
     this.render = this.render.bind(this);
 
-    this.temporaryAttachmentLocation = path.join(KeybaseStore._configurationDirPath, 'attachments');
-    this._ensureConfigurationDirectoryExists();
-
     this.log = Logger.create(`ComposerLoader(${props.draftClientId})`);
 
-    this.state = { username: '' };
+    this._ensureConfigurationDirectoryExists();
 
     global.$pgpComposer = this;
   }
