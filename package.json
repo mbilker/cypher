@@ -22,7 +22,6 @@
     "lodash": "^4.0.0",
     "mimelib": "^0.2.19",
     "node-keybase": "0.0.5",
-    "openpgp": "^2.2.0",
     "request": "^2.67.0",
     "rimraf": "^2.5.1",
     "smalltalk": "git+https://github.com/mbilker/smalltalk.git",
