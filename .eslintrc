@@ -15,6 +15,7 @@
       "order": [
         'displayName',
         'containerStyles',
+        'defaultState',
         'static-methods',
         'lifecycle',
         'everything-else',
