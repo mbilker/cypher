@@ -52,35 +52,36 @@ class PreferencesComponent extends React.Component {
   render() {
     return (
       <div className="container-pgp-mail">
-      <section>
-        <h2>Keybase Login</h2>
-        {this._renderError()}
-        <Flexbox className="keybase-username">
-          <div className="setting-name">
-            <label htmlFor="account.username">Username/Email:</label>
-          </div>
-          <div className="setting-value">
-            <input id="account.username" type="text" placeholder="(e.g. max)" value={this.state.username} onChange={this.onChangeUsername} tabIndex="1" />
-          </div>
-        </Flexbox>
-        <Flexbox className="keybase-password">
-          <div className="setting-name">
-            <label htmlFor="account.passphrase">Passphrase:</label>
-          </div>
-          <div className="setting-value">
-            <input id="account.passphrase" type="password" value={this.state.passphrase} onChange={this.onChangePassphrase} tabIndex="2" />
-          </div>
-        </Flexbox>
-        {this._renderUserLoginInfo()}
-        <button className="btn" onClick={this.loginToKeybase} tabIndex="3">Login</button>
-      </section>
-      <section>
-        <h2>SigChain Status</h2>
-        <Flexbox className="keybase-sigchain">
-          {this._renderSigChain()}
-        </Flexbox>
-      </section>
-    </div>
+        <section>
+          <h2>Keybase Login</h2>
+          {this._renderError()}
+          <Flexbox className="keybase-username">
+            <div className="setting-name">
+              <label htmlFor="account.username">Username/Email:</label>
+            </div>
+            <div className="setting-value">
+              <input id="account.username" type="text" placeholder="(e.g. max)" value={this.state.username} onChange={this.onChangeUsername} tabIndex="1" />
+            </div>
+          </Flexbox>
+          <Flexbox className="keybase-password">
+            <div className="setting-name">
+              <label htmlFor="account.passphrase">Passphrase:</label>
+            </div>
+            <div className="setting-value">
+              <input id="account.passphrase" type="password" value={this.state.passphrase} onChange={this.onChangePassphrase} tabIndex="2" />
+            </div>
+          </Flexbox>
+          {this._renderUserLoginInfo()}
+          <button className="btn" onClick={this.loginToKeybase} tabIndex="3">Login</button>
+        </section>
+        <section>
+          <h2>SigChain Status</h2>
+          <Flexbox className="keybase-sigchain">
+            {this._renderSigChain()}
+          </Flexbox>
+        </section>
+      </div>
+    );
   }
 
   _renderError() {
