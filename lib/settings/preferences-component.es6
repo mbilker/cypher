@@ -1,7 +1,7 @@
-import {React} from 'nylas-exports';
-import {Flexbox} from 'nylas-component-kit';
+import { React } from 'nylas-exports';
+import { Flexbox } from 'nylas-component-kit';
 
-import {KeybaseActions, KeybaseStore} from '../keybase';
+import { KeybaseActions, KeybaseStore } from '../keybase';
 
 class PreferencesComponent extends React.Component {
   static displayName = 'PreferencesComponent';
@@ -50,11 +50,12 @@ class PreferencesComponent extends React.Component {
   }
 
   render() {
-    return <div className="pgp container-pgp-mail">
+    return (
+      <div className="container-pgp-mail">
       <section>
         <h2>Keybase Login</h2>
         {this._renderError()}
-        <Flexbox className="keybase-username item">
+        <Flexbox className="keybase-username">
           <div className="setting-name">
             <label htmlFor="account.username">Username/Email:</label>
           </div>
@@ -62,7 +63,7 @@ class PreferencesComponent extends React.Component {
             <input id="account.username" type="text" placeholder="(e.g. max)" value={this.state.username} onChange={this.onChangeUsername} tabIndex="1" />
           </div>
         </Flexbox>
-        <Flexbox className="keybase-password item">
+        <Flexbox className="keybase-password">
           <div className="setting-name">
             <label htmlFor="account.passphrase">Passphrase:</label>
           </div>
@@ -71,11 +72,11 @@ class PreferencesComponent extends React.Component {
           </div>
         </Flexbox>
         {this._renderUserLoginInfo()}
-        <button className="btn" onClick={this.loginToKeybase} tabIndex="3" >Login</button>
+        <button className="btn" onClick={this.loginToKeybase} tabIndex="3">Login</button>
       </section>
       <section>
         <h2>SigChain Status</h2>
-        <Flexbox className="keybase-sigchain item">
+        <Flexbox className="keybase-sigchain">
           {this._renderSigChain()}
         </Flexbox>
       </section>
@@ -84,9 +85,11 @@ class PreferencesComponent extends React.Component {
 
   _renderError() {
     if (this.state.error !== '') {
-      return <div className="statusBox errorBox">
-        Error: {this.state.error}
-      </div>
+      return (
+        <div className="statusBox errorBox">
+          Error: {this.state.error}
+        </div>
+      );
     }
   }
 

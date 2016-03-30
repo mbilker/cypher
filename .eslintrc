@@ -10,9 +10,8 @@
     "jasmine": true
   },
   "rules": {
-    "strict": 0,
-    "no-console": 0,
-    "react/sort-comp": [2, {
+    "no-console": [1],
+    "react/sort-comp": [1, {
       "order": [
         'displayName',
         'containerStyles',
