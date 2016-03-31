@@ -1,3 +1,6 @@
+/** @babel */
+/* eslint no-console: 0 */
+
 import util from 'util';
 
 import proto from './worker-protocol';
