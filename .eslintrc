@@ -17,6 +17,7 @@
         'containerStyles',
         'defaultState',
         'static-methods',
+        'state',
         'lifecycle',
         'everything-else',
         'render'
