@@ -13,7 +13,6 @@
   "icon": "./assets/icon.png",
   "description": "Privacy extensions for N1",
   "dependencies": {
-    "debug": "^2.2.0",
     "emailjs-mime-parser": "^1.0.0",
     "eslint-config-airbnb": "^6.1.0",
     "eslint-plugin-react": "^4.2.1",
