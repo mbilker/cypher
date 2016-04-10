@@ -1,2 +1,5 @@
 /node_modules
 /kbpgp
+
+/latex
+!/latex/source-code.tex

@@ -1,10 +1,11 @@
-import {Contact, File, Message, React} from 'nylas-exports';
+/** @babel */
+
+import { Contact, File, Message, React, ReactDOM, ReactTestUtils } from 'nylas-exports';
 
 import PGPStore from '../lib/flux/stores/pgp-store';
 import MessageLoaderHeader from '../lib/message-loader/message-loader-header';
 
-let ReactTestUtils = React.addons.TestUtils;
-let me = new Contact({
+const me = new Contact({
   name: TEST_ACCOUNT_NAME,
   email: TEST_ACCOUNT_EMAIL
 });
@@ -36,17 +37,17 @@ describe("MessageLoaderHeader", function() {
     });
 
     it("should have no child elements", function() {
-      expect(React.findDOMNode(this.component).childElementCount).toEqual(0);
+      expect(ReactDOM.findDOMNode(this.component).childElementCount).toEqual(0);
     });
   });
 
   describe("when decrypting", function() {
     beforeEach(function() {
-      this.component.setState({decrypting: true});
+      this.component.setState({ decrypting: true });
     });
 
     it("should have one single child element", function() {
-      expect(React.findDOMNode(this.component).childElementCount).toEqual(1);
+      expect(ReactDOM.findDOMNode(this.component).childElementCount).toEqual(1);
     });
   });
 

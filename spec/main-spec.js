@@ -1,4 +1,6 @@
-import {ComponentRegistry, ExtensionRegistry, PreferencesUIStore} from 'nylas-exports';
+/** @babel */
+
+import { ComponentRegistry, ExtensionRegistry, PreferencesUIStore } from 'nylas-exports';
 
 import PGPMain from '../lib/main';
 import MessageLoaderExtension from '../lib/message-loader/message-loader-extension';
