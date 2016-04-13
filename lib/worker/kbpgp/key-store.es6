@@ -1,3 +1,5 @@
+/** @babel */
+
 import kbpgp from 'kbpgp';
 
 import HKP from './hkp';
