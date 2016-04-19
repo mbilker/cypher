@@ -52,13 +52,7 @@ class KeyStore {
     var ret_i, key_material, err, obj, km, _ref;
     var key_material = err = obj = km = null;
 
-    key_ids = (() => {
-      var _results = [];
-      for (var _i = 0, _len = key_ids.length; _i < _len; _i++) {
-        _results.push(hexkid(key_ids[_i]));
-      }
-      return _results;
-    })();
+    const key_ids = key_ids.map((key_id) => hexkid(key_id));
 
     let check_for_key = () => {
       for (var _i = 0, _len = key_ids.length; _i < _len; _i++) {
@@ -75,11 +69,9 @@ class KeyStore {
     check_for_key();
 
     if (km == null) {
-      let promises = key_ids.map((k) => {
-        return this.fetchRemotePublicKey(k).then((kmm, warn) => {
-          this.addKeyManager(kmm);
-        });
-      });
+      let promises = key_ids.map((k) =>
+        this.fetchRemotePublicKey(k).then((kmm, warn) => this.addKeyManager(kmm))
+      );
 
       Promise.all(promises).then(() => {
         check_for_key();
@@ -100,7 +92,7 @@ class KeyStore {
 
   // Pick the best key to fill the flags asked for by the flags.
   // See C.openpgp.key_flags for ideas of what the flags might be.
-  findBestKey({key_id, flags}, cb) {
+  findBestKey({ key_id, flags }, cb) {
     let kid = hexkid(key_id);
     let km = this._kms[kid];
 
@@ -120,7 +112,6 @@ class KeyStore {
   lookupKeyManager(key_id) {
     return this._kms[hexkid(key_id)];
   }
-
 }
 
 export default new KeyStore();

@@ -194,7 +194,7 @@ class KeybaseStore extends NylasStore {
   }
 
   _loadSavedCredentials() {
-    let { username, uid, csrf_token, session_token } = NylasEnv.config.get('cypher.keybase') || {};
+    const { username, uid, csrf_token, session_token } = NylasEnv.config.get('cypher.keybase') || {};
     this.username = username;
     this.uid = uid;
     this.csrf_token = csrf_token;
