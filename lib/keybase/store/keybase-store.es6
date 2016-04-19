@@ -170,7 +170,7 @@ class KeybaseStore extends NylasStore {
           this._cachedPrimarySigChain = res;
         }
 
-        this.trigger({ username, uid, res });
+        this.trigger({ type: 'VERIFIED_SIGCHAIN', username, uid, res });
         return res;
       });
     });
