@@ -17,6 +17,7 @@
     "eslint-config-airbnb": "^6.1.0",
     "eslint-plugin-react": "^4.2.1",
     "kbpgp": "^2.0.53",
+    "libkeybase": "^1.2.24",
     "lodash": "^4.0.0",
     "mimelib": "^0.2.19",
     "node-keybase": "0.0.5",
