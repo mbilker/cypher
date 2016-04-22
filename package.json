@@ -16,8 +16,7 @@
     "emailjs-mime-parser": "^1.0.0",
     "eslint-config-airbnb": "^6.1.0",
     "eslint-plugin-react": "^4.2.1",
-    "kbpgp": "git+https://github.com/mbilker/kbpgp.git",
-    "libkeybase": "^1.2.22",
+    "kbpgp": "^2.0.53",
     "lodash": "^4.0.0",
     "mimelib": "^0.2.19",
     "node-keybase": "0.0.5",
@@ -34,8 +33,7 @@
     "babel-plugin-transform-function-bind": "^6.3.13",
     "babel-preset-es2015": "^6.3.13",
     "babel-preset-react": "^6.3.13",
-    "eslint": "^2.2.0",
-    "request": "^2.67.0"
+    "eslint": "^2.2.0"
   },
   "license": "GPL-3.0",
   "windowTypes": {
