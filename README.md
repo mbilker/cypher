@@ -1,8 +1,8 @@
 
+**NEW**: Nylas is developing their [own implementation](https://github.com/nylas/N1/tree/wip/keybase) (unstable)
+
 # Cypher
 - Matt Bilker <me@mbilker.us>
-
-**SLIGHTLY VOLATILE**
 
 Small package for decrypting PGP-encrypted email.
 
@@ -18,6 +18,8 @@ or safe at all.
 
 ## TODO
 
+- Key Management
+  - [ ] Store keys
 - Encryption
   - [x] Form to enter Keybase username
   - [ ] Allow for method of encryption to be set in settings (e.g. smart card through GPG)
