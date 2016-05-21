@@ -62,6 +62,16 @@ class PGPStore extends NylasStore {
    * @param {object} message - the message to check for appropriate attachment
    */
   shouldDecryptMessage(message) {
+    if (!message) {
+      this.log.error('No message passed as argument');
+      return false;
+    }
+
+    if (!message.files) {
+      this.log.error(`${message.id}: No files array as part of message`);
+      return false;
+    }
+
     if (message.files.length < 1) {
       this.log.info(`${message.id}: Failed attachment test`);
       return false;

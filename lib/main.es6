@@ -95,4 +95,5 @@ class PGPMain {
   }
 }
 
-export default new PGPMain();
+const { activate, serialize, deactivate } = new PGPMain();
+export { activate, serialize, deactivate };

@@ -14,7 +14,7 @@ class MessageLoaderExtension extends MessageViewExtension {
   // CANNOT crash here. If we do, the whole app stops working
   // properly and the main screen is stuck with the message
   // viewer
-  static formatMessageBody(message) {
+  static formatMessageBody({ message }) {
     // Check for a cached message body for a decrypted message
     // If we have one we should return the cached message so the
     // proper message body is displayed
