@@ -159,10 +159,10 @@ class KeybaseStore extends NylasStore {
         return sigs;
       }, () => {
         const cachedFile = path.join(this._configurationDirPath, cachedSigchain);
-        return fs.accessAsync(cachedFile, fs.F_OK).then(() =>
-          fs.readFileAsync(cachedFile)
-        ).then(JSON.parse);
-        // throw err;
+
+        return fs.accessAsync(cachedFile, fs.F_OK)
+          .then(() => fs.readFileAsync(cachedFile))
+          .then(JSON.parse);
       }).then((sigBlobs) =>
         replayAsync({
           sig_blobs: sigBlobs,

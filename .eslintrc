@@ -23,5 +23,16 @@
         'render'
       ]
     }]
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [
+          ".es6",
+          ".jsx",
+          ".js"
+        ]
+      }
+    }
   }
 }

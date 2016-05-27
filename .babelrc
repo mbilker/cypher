@@ -1,9 +1,0 @@
-{
-  "sourceMaps": "inline",
-  "presets": ["es2015", "react"],
-  "plugins": [
-    "transform-class-properties",
-    "transform-es2015-modules-commonjs",
-    "transform-function-bind"
-  ]
-}
